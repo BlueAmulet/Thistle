@@ -94,13 +94,28 @@ public class ConsoleDriver {
 				while (!databuf.isEmpty()) {
 					int character = databuf.getFirst();
 					switch (character) {
-					case 13:
+					case 8:
+						int dX = this.X - 1;
+						int dY = this.Y;
+						if (dX <= 0) {
+							dX = this.W;
+							if (dY > 1)
+								dY = dY - 1;
+							else {
+								dX = 1;
+							}
+						}
+						machine.invoke(gpuADDR, "set", new Object[] { (double) dX, (double) dY, " " });
+						this.X = dX;
+						this.Y = dY;
 						break;
 					case 10:
 						this.X = 1;
 						this.Y = this.Y + 1;
 						if (this.Y > this.H)
 							scroll();
+						break;
+					case 13:
 						break;
 					default:
 						machine.invoke(gpuADDR, "set", new Object[] { (double) this.X, (double) this.Y, Character.toString((char) character) });
