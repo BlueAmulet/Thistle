@@ -102,6 +102,7 @@ public class SymonArchitecture implements Architecture {
 				}
 			}
 			vm.run();
+			console.flush();
 
 			return new ExecutionResult.Sleep(0);
 		} catch (Throwable t) {
@@ -112,6 +113,7 @@ public class SymonArchitecture implements Architecture {
 	public void runSynchronized() {
 		try {
 			vm.run();
+			console.flush();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

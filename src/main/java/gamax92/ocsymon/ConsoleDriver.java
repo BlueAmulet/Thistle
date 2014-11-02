@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
+import li.cil.oc.api.machine.LimitReachedException;
 import li.cil.oc.api.machine.Machine;
 import li.cil.oc.api.network.Network;
 import li.cil.oc.api.network.Node;
@@ -25,6 +26,7 @@ public class ConsoleDriver {
 	private boolean canRead = false;
 
 	private LinkedList<Integer> fifo = new LinkedList<Integer>();
+	private LinkedList<Integer> databuf = new LinkedList<Integer>();
 
 	private int X = 1;
 	private int Y = 1;
@@ -82,28 +84,38 @@ public class ConsoleDriver {
 	// TODO: needs ANSI escape codes.
 	public void write(int character) {
 		if (canWrite) {
-			switch (character) {
-			case 13:
-				break;
-			case 10:
-				this.X = 1;
-				this.Y = this.Y + 1;
-				if (this.Y > this.H)
-					scroll();
-				break;
-			default:
-				try {
-					machine.invoke(gpuADDR, "set", new Object[] { (double) this.X, (double) this.Y, Character.toString((char) character) });
-				} catch (Exception e) {
-					e.printStackTrace();
+			databuf.add(character);
+		}
+	}
+
+	public void flush() {
+		if (canWrite) {
+			try {
+				while (!databuf.isEmpty()) {
+					int character = databuf.getFirst();
+					switch (character) {
+					case 13:
+						break;
+					case 10:
+						this.X = 1;
+						this.Y = this.Y + 1;
+						if (this.Y > this.H)
+							scroll();
+						break;
+					default:
+						machine.invoke(gpuADDR, "set", new Object[] { (double) this.X, (double) this.Y, Character.toString((char) character) });
+						this.X = this.X + 1;
+						if (this.X > this.W) {
+							this.Y = this.Y + 1;
+							this.X = 1;
+							if (this.Y > this.H)
+								scroll();
+						}
+					}
+					databuf.removeFirst();
 				}
-				this.X = this.X + 1;
-				if (this.X > this.W) {
-					this.Y = this.Y + 1;
-					this.X = 1;
-					if (this.Y > this.H)
-						scroll();
-				}
+			} catch (LimitReachedException e) {} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}
