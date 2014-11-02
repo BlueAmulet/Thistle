@@ -1,0 +1,12 @@
+/.classpath
+/.project
+/bin
+.minecraft
+/.settings
+/dist
+/.pydevproject
+/.gradle
+/eclipse
+/build
+/lib
+
