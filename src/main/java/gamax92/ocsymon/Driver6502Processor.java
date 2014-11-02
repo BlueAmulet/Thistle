@@ -10,7 +10,7 @@ import net.minecraft.item.ItemStack;
 
 public class Driver6502Processor extends DriverItem implements Processor {
 	protected Driver6502Processor() {
-		super(new ItemStack(OCSymon.cpuPseudoProcessor));
+		super(new ItemStack(OCSymon.cpu6502Processor));
 	}
 
 	// We want our item to be a cpu component, i.e. it can be placed into

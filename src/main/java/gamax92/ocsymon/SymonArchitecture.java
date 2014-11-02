@@ -93,7 +93,7 @@ public class SymonArchitecture implements Architecture {
 					signal = machine.popSignal();
 					if (signal != null) {
 						if (signal.name().equals("key_down")) {
-							int character = (int)(double)(Double)signal.args()[1]; // castception
+							short character = (short)(double)(Double)signal.args()[1]; // castception
 							if (character != 0) // Not a character
 								console.pushChar(character);
 						}

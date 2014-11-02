@@ -25,8 +25,8 @@ public class ConsoleDriver {
 	private boolean canWrite = false;
 	private boolean canRead = false;
 
-	private LinkedList<Integer> fifo = new LinkedList<Integer>();
-	private LinkedList<Integer> databuf = new LinkedList<Integer>();
+	private LinkedList<Short> fifo = new LinkedList<Short>();
+	private LinkedList<Short> databuf = new LinkedList<Short>();
 
 	private int X = 1;
 	private int Y = 1;
@@ -38,8 +38,6 @@ public class ConsoleDriver {
 		this.machine = machine;
 		Map<String, String> components = this.machine.components();
 		Iterator<Map.Entry<String, String>> entries = components.entrySet().iterator();
-
-		Object[] response;
 
 		while (entries.hasNext()) {
 			Map.Entry<String, String> entry = entries.next();
@@ -54,22 +52,17 @@ public class ConsoleDriver {
 		}
 		if (gpuADDR != null && screenADDR != null) {
 			try {
-				// Attempt to setup the GPU
-				machine.invoke(gpuADDR, "bind", new Object[] { screenADDR });
-				response = machine.invoke(gpuADDR, "getResolution", new Object[] {});
-				this.W = (Integer) response[0];
-				this.H = (Integer) response[1];
-				machine.invoke(gpuADDR, "setResolution", new Object[] { (double) this.W, (double) this.H });
-				machine.invoke(gpuADDR, "setBackground", new Object[] { (double) 0x000000 });
-				machine.invoke(gpuADDR, "setForeground", new Object[] { (double) 0xFFFFFF });
-				machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) 1, (double) this.W, (double) this.H, " " });
 				canWrite = true;
+				// Attempt to setup the GPU
+				for (short i = -1; i >= -6; i--)
+					databuf.add(i);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
+	// TODO: Move this to the databuf
 	private void scroll() {
 		// Try to scroll the screen upwards.
 		try {
@@ -81,19 +74,41 @@ public class ConsoleDriver {
 		this.Y = this.H;
 	}
 
-	// TODO: needs ANSI escape codes.
-	public void write(int character) {
+	public void write(short character) {
 		if (canWrite) {
 			databuf.add(character);
 		}
 	}
 
+	// TODO: needs ANSI escape codes.
+	// TODO: Combine multiple characters in one "set"
 	public void flush() {
 		if (canWrite) {
 			try {
 				while (!databuf.isEmpty()) {
-					int character = databuf.getFirst();
+					short character = databuf.getFirst();
 					switch (character) {
+					// Special cases, characters are not negative
+					case -1:
+						machine.invoke(gpuADDR, "bind", new Object[] { screenADDR });
+						break;
+					case -2:
+						Object[] response = machine.invoke(gpuADDR, "getResolution", new Object[] {});
+						this.W = (Integer) response[0];
+						this.H = (Integer) response[1];
+						break;
+					case -3:
+						machine.invoke(gpuADDR, "setResolution", new Object[] { (double) this.W, (double) this.H });
+						break;
+					case -4:
+						machine.invoke(gpuADDR, "setBackground", new Object[] { (double) 0x000000 });
+						break;
+					case -5:
+						machine.invoke(gpuADDR, "setForeground", new Object[] { (double) 0xFFFFFF });
+						break;
+					case -6:
+						machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) 1, (double) this.W, (double) this.H, " " });
+						break;
 					case 8:
 						int dX = this.X - 1;
 						int dY = this.Y;
@@ -135,7 +150,7 @@ public class ConsoleDriver {
 		}
 	}
 
-	public void pushChar(int character) {
+	public void pushChar(short character) {
 		fifo.add(character);
 	}
 
@@ -143,7 +158,7 @@ public class ConsoleDriver {
 		return !fifo.isEmpty();
 	}
 
-	public int read() {
+	public short read() {
 		return fifo.removeFirst();
 	}
 }

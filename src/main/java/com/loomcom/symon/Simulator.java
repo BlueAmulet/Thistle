@@ -53,12 +53,6 @@ public class Simulator {
 	// The console
 	public ConsoleDriver console;
 
-	private MAIN_CMD command = MAIN_CMD.NONE;
-
-	public static enum MAIN_CMD {
-		NONE, SELECTMACHINE
-	}
-
 	public Simulator(Class machineClass) throws Exception {
 		this.machine = (Machine) machineClass.getConstructors()[0].newInstance();
 	}
@@ -93,7 +87,7 @@ public class Simulator {
 		// output ready.
 		if (machine.getAcia() != null && machine.getAcia().hasTxChar()) {
 			// This is thread-safe
-			console.write(machine.getAcia().txRead());
+			console.write((short) machine.getAcia().txRead());
 		}
 
 		// If a key has been pressed, fill the ACIA.
