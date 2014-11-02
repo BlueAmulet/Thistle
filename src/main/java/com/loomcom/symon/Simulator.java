@@ -23,17 +23,14 @@
 
 package com.loomcom.symon;
 
-import com.loomcom.symon.devices.Memory;
-import com.loomcom.symon.exceptions.FifoUnderrunException;
-import com.loomcom.symon.exceptions.MemoryAccessException;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-import com.loomcom.symon.exceptions.SymonException;
-import com.loomcom.symon.machines.Machine;
-
 import gamax92.ocsymon.ConsoleDriver;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.loomcom.symon.devices.Memory;
+import com.loomcom.symon.exceptions.MemoryAccessException;
+import com.loomcom.symon.machines.Machine;
 
 /**
  * Symon Simulator Interface and Control.
@@ -87,7 +84,7 @@ public class Simulator {
 		// output ready.
 		if (machine.getAcia() != null && machine.getAcia().hasTxChar()) {
 			// This is thread-safe
-			console.write((short) machine.getAcia().txRead());
+			console.write(machine.getAcia().txRead());
 		}
 
 		// If a key has been pressed, fill the ACIA.

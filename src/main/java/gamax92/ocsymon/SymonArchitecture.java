@@ -1,16 +1,15 @@
 package gamax92.ocsymon;
 
 import li.cil.oc.api.machine.Architecture;
-import li.cil.oc.api.machine.Callback;
 import li.cil.oc.api.machine.ExecutionResult;
-import li.cil.oc.api.machine.LimitReachedException;
 import li.cil.oc.api.machine.Machine;
 import li.cil.oc.api.machine.Signal;
-import li.cil.oc.api.network.Component;
-import li.cil.oc.api.network.Node;
 import net.minecraft.nbt.NBTTagCompound;
 
-/** This is the class you implement; Architecture is from the OC API. */
+import com.loomcom.symon.Cpu;
+import com.loomcom.symon.devices.Acia;
+import com.loomcom.symon.devices.Memory;
+
 @Architecture.Name("6502 Symon")
 public class SymonArchitecture implements Architecture {
 	private final Machine machine;
@@ -31,52 +30,10 @@ public class SymonArchitecture implements Architecture {
 	}
 
 	public boolean initialize() {
-		// Set up new VM here, and register all API callbacks you want to
-		// provide to it.
+		// Set up new VM here
 		console = new ConsoleDriver(machine);
 		vm = new SymonVM();
 		vm.simulator.console = console;
-		vm.setApiFunction("invoke", new SymonNativeFunction() {
-			public Object invoke(Object[] args) {
-				final String address = (String) args[0];
-				final String method = (String) args[1];
-				final Object[] params = (Object[]) args[2];
-				try {
-					return new Object[] { true, machine.invoke(address, method, params) };
-				} catch (LimitReachedException e) {
-					// Perform logic also used to sleep / perform synchronized calls.
-					// In this example we'll follow a protocol where if this returns
-					// (true, something) the call succeeded, if it returns (false)
-					// the limit was reached.
-					// The script running in the VM is then supposed to return control
-					// to the caller initiating the current execution (e.g. by yielding
-					// if supported, or just returning, when in an event driven system).
-					return new Object[] { false };
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					return new Object[] { false };
-				}
-			}
-		});
-		vm.setApiFunction("isDirect", new SymonNativeFunction() {
-			public Object invoke(Object[] args) {
-				final String address = (String) args[0];
-				final String method = (String) args[1];
-				final Node node = machine.node().network().node(address);
-				if (node instanceof Component) {
-					final Component component = (Component) node;
-					if (component.canBeSeenFrom(machine.node())) {
-						final Callback callback = machine.methods(node.host()).get(method);
-						if (callback != null) {
-							return callback.direct();
-						}
-					}
-				}
-				return false;
-			}
-		});
-		// ... more callbacks.
 		return true;
 	}
 
@@ -86,14 +43,15 @@ public class SymonArchitecture implements Architecture {
 
 	public ExecutionResult runThreaded(boolean isSynchronizedReturn) {
 		try {
-			Signal signal = null;
 			if (!isSynchronizedReturn) {
 				// Since our machine is a memory mapped one, parse signals here
+				// TODO: Signal device
+				Signal signal = null;
 				while (true) {
 					signal = machine.popSignal();
 					if (signal != null) {
 						if (signal.name().equals("key_down")) {
-							short character = (short)(double)(Double)signal.args()[1]; // castception
+							int character = (int) (double) (Double) signal.args()[1]; // castception
 							if (character != 0) // Not a character
 								console.pushChar(character);
 						}
@@ -123,11 +81,91 @@ public class SymonArchitecture implements Architecture {
 	public void onConnect() {
 	}
 
-	// Use this to load the VM state, if it can be persisted.
+	// TODO: Needs more things
 	public void load(NBTTagCompound nbt) {
+		// Restore Machine
+
+		// Restore Acia
+		if (nbt.hasKey("acia")) {
+			Acia mACIA = vm.simulator.machine.getAcia();
+			NBTTagCompound aciaTag = nbt.getCompoundTag("acia");
+			mACIA.setBaudRate(aciaTag.getInteger("baudRate"));
+		}
+
+		// Restore Cpu
+		if (nbt.hasKey("acia")) {
+			Cpu mCPU = vm.simulator.machine.getCpu();
+			NBTTagCompound cpuTag = nbt.getCompoundTag("cpu");
+			mCPU.setAccumulator(cpuTag.getInteger("rA"));
+			mCPU.setProcessorStatus(cpuTag.getInteger("rP"));
+			mCPU.setProgramCounter(cpuTag.getInteger("rPC"));
+			mCPU.setStackPointer(cpuTag.getInteger("rSP"));
+			mCPU.setXRegister(cpuTag.getInteger("rX"));
+			mCPU.setYRegister(cpuTag.getInteger("rY"));
+		}
+
+		// Restore Ram
+		if (nbt.hasKey("ram")) {
+			Memory mRAM = vm.simulator.machine.getRam();
+			NBTTagCompound ramTag = nbt.getCompoundTag("ram");
+			int[] mem = ramTag.getIntArray("mem");
+			System.arraycopy(mem, 0, mRAM.getDmaAccess(), 0, mem.length);
+		}
+
+		// Restore Rom
+		if (nbt.hasKey("rom")) {
+			Memory mROM = vm.simulator.machine.getRom();
+			NBTTagCompound romTag = nbt.getCompoundTag("rom");
+			int[] mem = romTag.getIntArray("mem");
+			System.arraycopy(mem, 0, mROM.getDmaAccess(), 0, mem.length);
+		}
+
+		this.console.load(nbt);
 	}
 
-	// Use this to save the VM state, if it can be persisted.
+	// TODO: Needs more things
 	public void save(NBTTagCompound nbt) {
+		// Persist Machine
+
+		// Persist Acia
+		Acia mACIA = vm.simulator.machine.getAcia();
+		if (mACIA != null) {
+			NBTTagCompound aciaTag = new NBTTagCompound();
+			aciaTag.setInteger("baudRate", mACIA.getBaudRate());
+			nbt.setTag("acia", aciaTag);
+		}
+
+		// Persist Cpu
+		Cpu mCPU = vm.simulator.machine.getCpu();
+		if (mCPU != null) {
+			NBTTagCompound cpuTag = new NBTTagCompound();
+			cpuTag.setInteger("rA", mCPU.getAccumulator());
+			cpuTag.setInteger("rP", mCPU.getProcessorStatus());
+			cpuTag.setInteger("rPC", mCPU.getProgramCounter());
+			cpuTag.setInteger("rSP", mCPU.getStackPointer());
+			cpuTag.setInteger("rX", mCPU.getXRegister());
+			cpuTag.setInteger("rY", mCPU.getYRegister());
+			nbt.setTag("cpu", cpuTag);
+		}
+
+		// Persist Ram
+		Memory mRAM = vm.simulator.machine.getRam();
+		if (mRAM != null) {
+			NBTTagCompound ramTag = new NBTTagCompound();
+			int[] mem = mRAM.getDmaAccess();
+			ramTag.setIntArray("mem", mem);
+			nbt.setTag("ram", ramTag);
+		}
+
+		// Persist Rom
+		Memory mROM = vm.simulator.machine.getRom();
+		if (mROM != null) {
+			NBTTagCompound romTag = new NBTTagCompound();
+			int[] mem = mROM.getDmaAccess();
+			romTag.setIntArray("mem", mem);
+			nbt.setTag("rom", romTag);
+		}
+
+		this.console.save(nbt);
 	}
 }

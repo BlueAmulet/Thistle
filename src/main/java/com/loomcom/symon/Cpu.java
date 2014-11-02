@@ -25,8 +25,6 @@ package com.loomcom.symon;
 
 import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.util.HexUtil;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * This class provides a simulation of the MOS 6502 CPU's state machine.

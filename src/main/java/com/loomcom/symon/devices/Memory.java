@@ -23,15 +23,14 @@
 
 package com.loomcom.symon.devices;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.loomcom.symon.exceptions.*;
-import com.loomcom.symon.machines.SymonMachine;
-
-import javax.swing.*;
+import com.loomcom.symon.exceptions.MemoryAccessException;
+import com.loomcom.symon.exceptions.MemoryRangeException;
 
 public class Memory extends Device {
 

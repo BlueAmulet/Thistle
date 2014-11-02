@@ -23,13 +23,13 @@
 
 package com.loomcom.symon.devices;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.MemoryRange;
 import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.exceptions.MemoryRangeException;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * A memory-mapped IO Device.

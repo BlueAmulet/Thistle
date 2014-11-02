@@ -24,14 +24,17 @@
 
 package com.loomcom.symon.machines;
 
-import com.loomcom.symon.Bus;
-import com.loomcom.symon.Cpu;
-import com.loomcom.symon.devices.*;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
-import java.io.File;
 import java.io.InputStream;
 import java.util.logging.Logger;
+
+import com.loomcom.symon.Bus;
+import com.loomcom.symon.Cpu;
+import com.loomcom.symon.devices.Acia;
+import com.loomcom.symon.devices.Acia6551;
+import com.loomcom.symon.devices.Memory;
+import com.loomcom.symon.devices.Pia;
+import com.loomcom.symon.devices.Via6522;
+import com.loomcom.symon.exceptions.MemoryRangeException;
 
 public class SymonMachine implements Machine {
 

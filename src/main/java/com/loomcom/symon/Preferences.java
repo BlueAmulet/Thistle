@@ -23,7 +23,7 @@
 
 package com.loomcom.symon;
 
-import javax.swing.*;
+import javax.swing.JDialog;
 
 public interface Preferences {
 

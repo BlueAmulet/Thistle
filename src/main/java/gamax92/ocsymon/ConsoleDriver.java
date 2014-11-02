@@ -6,8 +6,7 @@ import java.util.Map;
 
 import li.cil.oc.api.machine.LimitReachedException;
 import li.cil.oc.api.machine.Machine;
-import li.cil.oc.api.network.Network;
-import li.cil.oc.api.network.Node;
+import net.minecraft.nbt.NBTTagCompound;
 
 /*
  * So, Symon communicates via a dummy terminal (It used JTerminal, which acts
@@ -25,8 +24,8 @@ public class ConsoleDriver {
 	private boolean canWrite = false;
 	private boolean canRead = false;
 
-	private LinkedList<Short> fifo = new LinkedList<Short>();
-	private LinkedList<Short> databuf = new LinkedList<Short>();
+	private LinkedList<Integer> fifo = new LinkedList<Integer>();
+	private LinkedList<Integer> databuf = new LinkedList<Integer>();
 
 	private int X = 1;
 	private int Y = 1;
@@ -36,30 +35,82 @@ public class ConsoleDriver {
 
 	public ConsoleDriver(Machine machine) {
 		this.machine = machine;
-		Map<String, String> components = this.machine.components();
-		Iterator<Map.Entry<String, String>> entries = components.entrySet().iterator();
+		if (!machine.isRunning()) {
+			Map<String, String> components = this.machine.components();
+			Iterator<Map.Entry<String, String>> entries = components.entrySet().iterator();
 
-		while (entries.hasNext()) {
-			Map.Entry<String, String> entry = entries.next();
-			String address = entry.getKey();
-			String type = entry.getValue();
-			if (type.equals("gpu") && gpuADDR == null) {
-				gpuADDR = address;
+			while (entries.hasNext()) {
+				Map.Entry<String, String> entry = entries.next();
+				String address = entry.getKey();
+				String type = entry.getValue();
+				if (type.equals("gpu") && gpuADDR == null) {
+					gpuADDR = address;
+				}
+				if (type.equals("screen") && screenADDR == null) {
+					screenADDR = address;
+				}
 			}
-			if (type.equals("screen") && screenADDR == null) {
-				screenADDR = address;
+			if (gpuADDR != null && screenADDR != null) {
+				try {
+					canWrite = true;
+					// Attempt to setup the GPU
+					for (int i = -1; i >= -6; i--)
+						databuf.add(i);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
-		if (gpuADDR != null && screenADDR != null) {
-			try {
-				canWrite = true;
-				// Attempt to setup the GPU
-				for (short i = -1; i >= -6; i--)
-					databuf.add(i);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+	}
+
+	// TODO: Needs more things
+	public void load(NBTTagCompound nbt) {
+		// Restore Console
+		if (nbt.hasKey("console")) {
+			NBTTagCompound consoleTag = nbt.getCompoundTag("console");
+			this.canRead = consoleTag.getBoolean("canRead");
+			this.canWrite = consoleTag.getBoolean("canWrite");
+			this.gpuADDR = consoleTag.getString("gpuADDR");
+			this.screenADDR = consoleTag.getString("screenADDR");
+			this.X = consoleTag.getInteger("X");
+			this.Y = consoleTag.getInteger("Y");
+			this.W = consoleTag.getInteger("W");
+			this.H = consoleTag.getInteger("H");
+			int[] fifo = consoleTag.getIntArray("fifo");
+			this.fifo.clear();
+			int i = 0;
+			for (int v : fifo)
+				this.fifo.set(i++, v);
+			int[] databuf = consoleTag.getIntArray("data");
+			this.databuf.clear();
+			i = 0;
+			for (int v : databuf)
+				this.databuf.set(i++, v);
 		}
+	}
+
+	public void save(NBTTagCompound nbt) {
+		// Persist Console
+		NBTTagCompound consoleTag = new NBTTagCompound();
+		consoleTag.setBoolean("canRead", this.canRead);
+		consoleTag.setBoolean("canWrite", this.canWrite);
+		consoleTag.setString("gpuADDR", this.gpuADDR);
+		consoleTag.setString("screenADDR", this.screenADDR);
+		consoleTag.setInteger("X", this.X);
+		consoleTag.setInteger("Y", this.Y);
+		consoleTag.setInteger("W", this.W);
+		consoleTag.setInteger("H", this.H);
+		int[] fifo = new int[this.fifo.size()];
+		int i = 0;
+		for (int v : this.fifo)
+			fifo[i++] = v;
+		consoleTag.setIntArray("fifo", fifo);
+		int[] databuf = new int[this.fifo.size()];
+		i = 0;
+		for (int v : this.databuf)
+			databuf[i++] = v;
+		consoleTag.setIntArray("databuf", databuf);
+		nbt.setTag("console", consoleTag);
 	}
 
 	// TODO: Move this to the databuf
@@ -74,7 +125,7 @@ public class ConsoleDriver {
 		this.Y = this.H;
 	}
 
-	public void write(short character) {
+	public void write(int character) {
 		if (canWrite) {
 			databuf.add(character);
 		}
@@ -86,7 +137,7 @@ public class ConsoleDriver {
 		if (canWrite) {
 			try {
 				while (!databuf.isEmpty()) {
-					short character = databuf.getFirst();
+					int character = databuf.getFirst();
 					switch (character) {
 					// Special cases, characters are not negative
 					case -1:
@@ -150,7 +201,7 @@ public class ConsoleDriver {
 		}
 	}
 
-	public void pushChar(short character) {
+	public void pushChar(int character) {
 		fifo.add(character);
 	}
 
@@ -158,7 +209,7 @@ public class ConsoleDriver {
 		return !fifo.isEmpty();
 	}
 
-	public short read() {
+	public int read() {
 		return fifo.removeFirst();
 	}
 }

@@ -1,7 +1,5 @@
 package gamax92.ocsymon;
 
-import net.minecraftforge.common.config.Configuration;
-
 import org.apache.logging.log4j.Logger;
 
 import cpw.mods.fml.common.Mod;
@@ -29,7 +27,7 @@ public class OCSymon {
 	@Mod.EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
 		log = event.getModLog();
-		
+
 		cpu6502Processor = new Item6502Processor();
 		GameRegistry.registerItem(cpu6502Processor, "cpu6502");
 	}

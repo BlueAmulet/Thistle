@@ -24,14 +24,15 @@
 
 package com.loomcom.symon.devices;
 
-import com.loomcom.symon.exceptions.MemoryAccessException;
-import com.loomcom.symon.exceptions.MemoryRangeException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.loomcom.symon.exceptions.MemoryAccessException;
+import com.loomcom.symon.exceptions.MemoryRangeException;
 
 /**
  * Emulation for the SD-card controller of the MULTICOMP system.

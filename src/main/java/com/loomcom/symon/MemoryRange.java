@@ -23,7 +23,7 @@
 
 package com.loomcom.symon;
 
-import com.loomcom.symon.exceptions.*;
+import com.loomcom.symon.exceptions.MemoryRangeException;
 
 /**
  * MemoryRange is a simple container class representing a literal

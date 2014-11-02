@@ -23,11 +23,11 @@
 
 package com.loomcom.symon.util;
 
-import com.loomcom.symon.exceptions.*;
-
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
+
+import com.loomcom.symon.exceptions.FifoUnderrunException;
 
 /**
  * A FIFO buffer with a bounded maximum size.
