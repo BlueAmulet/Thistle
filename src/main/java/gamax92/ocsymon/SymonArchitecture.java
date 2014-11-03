@@ -138,9 +138,8 @@ public class SymonArchitecture implements Architecture {
 			int[] mem = bankTag.getIntArray("mem");
 			ArrayList<Integer> almem = mBANK.getDmaAccess();
 			almem.clear();
-			int i = 0;
 			for (int v : mem)
-				almem.set(i++, v);
+				almem.add(v);
 		}
 
 		this.console.load(nbt);
