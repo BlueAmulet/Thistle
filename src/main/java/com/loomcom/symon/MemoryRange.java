@@ -43,8 +43,8 @@ public class MemoryRange implements Comparable<MemoryRange> {
 		if (startAddress < 0 || endAddress < 0) {
 			throw new MemoryRangeException("Addresses cannot be less than 0.");
 		}
-		if (startAddress >= endAddress) {
-			throw new MemoryRangeException("End address must be greater " + "than start address.");
+		if (startAddress > endAddress) {
+			throw new MemoryRangeException("End address cannot be less than start address.");
 		}
 		this.startAddress = startAddress;
 		this.endAddress = endAddress;

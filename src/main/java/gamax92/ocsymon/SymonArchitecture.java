@@ -1,5 +1,8 @@
 package gamax92.ocsymon;
 
+import java.util.ArrayList;
+
+import gamax92.ocsymon.devices.Bank;
 import li.cil.oc.api.machine.Architecture;
 import li.cil.oc.api.machine.ExecutionResult;
 import li.cil.oc.api.machine.Machine;
@@ -9,6 +12,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import com.loomcom.symon.Cpu;
 import com.loomcom.symon.devices.Acia;
 import com.loomcom.symon.devices.Memory;
+import com.loomcom.symon.machines.SymonMachine;
 
 @Architecture.Name("6502 Symon")
 public class SymonArchitecture implements Architecture {
@@ -27,6 +31,7 @@ public class SymonArchitecture implements Architecture {
 	}
 
 	public void recomputeMemory() {
+		((SymonMachine) vm.simulator.machine).getBank().resize(machine.host().installedMemory());
 	}
 
 	public boolean initialize() {
@@ -34,6 +39,7 @@ public class SymonArchitecture implements Architecture {
 		console = new ConsoleDriver(machine);
 		vm = new SymonVM();
 		vm.simulator.console = console;
+		((SymonMachine) vm.simulator.machine).getBank().init(machine.host().installedMemory());
 		return true;
 	}
 
@@ -120,6 +126,21 @@ public class SymonArchitecture implements Architecture {
 			System.arraycopy(mem, 0, mROM.getDmaAccess(), 0, mem.length);
 		}
 
+		// Restore Banked Ram
+		if (nbt.hasKey("bank")) {
+			Bank mBANK = ((SymonMachine) vm.simulator.machine).getBank();
+			NBTTagCompound bankTag = nbt.getCompoundTag("bank");
+			mBANK.setBank(bankTag.getInteger("bank"));
+			mBANK.setBankSize(bankTag.getInteger("bankSize"));
+			mBANK.setMemsize(bankTag.getInteger("size"));
+			int[] mem = bankTag.getIntArray("mem");
+			ArrayList<Integer> almem = mBANK.getDmaAccess();
+			almem.clear();
+			int i = 0;
+			for (int v : mem)
+				almem.set(i++, v);
+		}
+		
 		this.console.load(nbt);
 	}
 
@@ -166,6 +187,22 @@ public class SymonArchitecture implements Architecture {
 			nbt.setTag("rom", romTag);
 		}
 
+		// Persist Banked Ram
+		Bank mBANK = ((SymonMachine) vm.simulator.machine).getBank();
+		if (mBANK != null) {
+			NBTTagCompound bankTag = new NBTTagCompound();
+			bankTag.setInteger("bank", mBANK.getBank());
+			bankTag.setInteger("bankSize", mBANK.getBankSize());
+			bankTag.setInteger("size", mBANK.getMemsize());
+			ArrayList<Integer> almem = mBANK.getDmaAccess();
+			int mem[] = new int[almem.size()];
+			int i = 0;
+			for (int v : almem)
+				mem[i++] = v;
+			bankTag.setIntArray("mem", mem);
+			nbt.setTag("bank", bankTag);
+		}
+		
 		this.console.save(nbt);
 	}
 }

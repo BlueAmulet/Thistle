@@ -73,13 +73,12 @@ public class Memory extends Device {
 	}
 
 	/**
-	 * Load the memory from a file.
+	 * Load the memory from a stream.
 	 *
-	 * @param file The file to read an array of bytes from.
-	 * @throws MemoryRangeException if the file and memory size do not match.
-	 * @throws IOException if the file read fails.
+	 * @param is The stream to read an array of bytes from.
+	 * @throws IOException if the stream read fails.
 	 */
-	public void loadFromStream(InputStream is) throws MemoryRangeException, IOException {
+	public void loadFromStream(InputStream is) throws IOException {
 		for (int i = 0; i <= mem.length; i++) {
 			int data = is.read();
 			if (data == -1)

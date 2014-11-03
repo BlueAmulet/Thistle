@@ -29,9 +29,11 @@ public class ConsoleDriver {
 
 	private int X = 1;
 	private int Y = 1;
-
 	private int W;
 	private int H;
+
+	private boolean parseANSI = false;
+	private boolean ansiDetect = false;
 
 	public ConsoleDriver(Machine machine) {
 		this.machine = machine;
@@ -138,59 +140,84 @@ public class ConsoleDriver {
 			try {
 				while (!databuf.isEmpty()) {
 					int character = databuf.getFirst();
-					switch (character) {
-					// Special cases, characters are not negative
-					case -1:
-						machine.invoke(gpuADDR, "bind", new Object[] { screenADDR });
-						break;
-					case -2:
-						Object[] response = machine.invoke(gpuADDR, "getResolution", new Object[] {});
-						this.W = (Integer) response[0];
-						this.H = (Integer) response[1];
-						break;
-					case -3:
-						machine.invoke(gpuADDR, "setResolution", new Object[] { (double) this.W, (double) this.H });
-						break;
-					case -4:
-						machine.invoke(gpuADDR, "setBackground", new Object[] { (double) 0x000000 });
-						break;
-					case -5:
-						machine.invoke(gpuADDR, "setForeground", new Object[] { (double) 0xFFFFFF });
-						break;
-					case -6:
-						machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) 1, (double) this.W, (double) this.H, " " });
-						break;
-					case 8:
-						int dX = this.X - 1;
-						int dY = this.Y;
-						if (dX <= 0) {
-							dX = this.W;
-							if (dY > 1)
-								dY = dY - 1;
-							else {
-								dX = 1;
-							}
+					if (parseANSI) {
+						if ((character >= 65 && character <= 90) || (character >= 97 && character <= 122)) {
+							// End of sequence
+							parseANSI = false;
 						}
-						machine.invoke(gpuADDR, "set", new Object[] { (double) dX, (double) dY, " " });
-						this.X = dX;
-						this.Y = dY;
-						break;
-					case 10:
-						this.X = 1;
-						this.Y = this.Y + 1;
-						if (this.Y > this.H)
-							scroll();
-						break;
-					case 13:
-						break;
-					default:
-						machine.invoke(gpuADDR, "set", new Object[] { (double) this.X, (double) this.Y, Character.toString((char) character) });
-						this.X = this.X + 1;
-						if (this.X > this.W) {
-							this.Y = this.Y + 1;
+					} else {
+						if (ansiDetect) {
+							if (character == 91) {
+								parseANSI = true;
+								character = -1000;
+							} else {
+								databuf.addFirst(character);
+								character = -27;
+							}
+							ansiDetect = false;
+						}
+						switch (character) {
+						// Special cases, characters are not negative
+						case -1000:
+							// Generic NOP
+							break;
+						case -1:
+							machine.invoke(gpuADDR, "bind", new Object[] { screenADDR });
+							break;
+						case -2:
+							Object[] response = machine.invoke(gpuADDR, "getResolution", new Object[] {});
+							this.W = (Integer) response[0];
+							this.H = (Integer) response[1];
+							break;
+						case -3:
+							machine.invoke(gpuADDR, "setResolution", new Object[] { (double) this.W, (double) this.H });
+							break;
+						case -4:
+							machine.invoke(gpuADDR, "setBackground", new Object[] { (double) 0x000000 });
+							break;
+						case -5:
+							machine.invoke(gpuADDR, "setForeground", new Object[] { (double) 0xFFFFFF });
+							break;
+						case -6:
+							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) 1, (double) this.W, (double) this.H, " " });
+							break;
+						case 8:
+							int dX = this.X - 1;
+							int dY = this.Y;
+							if (dX <= 0) {
+								dX = this.W;
+								if (dY > 1)
+									dY = dY - 1;
+								else {
+									dX = 1;
+								}
+							}
+							machine.invoke(gpuADDR, "set", new Object[] { (double) dX, (double) dY, " " });
+							this.X = dX;
+							this.Y = dY;
+							break;
+						case 10:
 							this.X = 1;
+							this.Y = this.Y + 1;
 							if (this.Y > this.H)
 								scroll();
+							break;
+						case 13:
+							break;
+						case 27:
+							ansiDetect = true;
+							break;
+						case -27:
+							character = 27;
+						default:
+							machine.invoke(gpuADDR, "set", new Object[] { (double) this.X, (double) this.Y, Character.toString((char) character) });
+							this.X = this.X + 1;
+							if (this.X > this.W) {
+								this.Y = this.Y + 1;
+								this.X = 1;
+								if (this.Y > this.H)
+									scroll();
+							}
 						}
 					}
 					databuf.removeFirst();

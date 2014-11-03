@@ -24,6 +24,9 @@
 
 package com.loomcom.symon.machines;
 
+import gamax92.ocsymon.devices.Bank;
+import gamax92.ocsymon.devices.BankSwitcher;
+
 import java.io.InputStream;
 import java.util.logging.Logger;
 
@@ -44,16 +47,22 @@ public class SymonMachine implements Machine {
 	private static final int BUS_BOTTOM = 0x0000;
 	private static final int BUS_TOP = 0xffff;
 
-	// 32K of RAM from $0000 - $7FFF
+	// 32K of RAM at $0000-$3FFF
 	private static final int MEMORY_BASE = 0x0000;
-	private static final int MEMORY_SIZE = 0x8000;
+	private static final int MEMORY_SIZE = 0x4000;
+	
+	// 16K of switchable RAM at $4000-$7FFF
+	private static final int BANK_BASE = 0x4000;
+	private static final int BANK_SIZE = 0x4000;
 
 	// PIA at $8000-$800F
-
 	private static final int PIA_BASE = 0x8000;
 
 	// ACIA at $8800-$8803
 	private static final int ACIA_BASE = 0x8800;
+	
+	// Bank Switcher at $8804
+	private static final int BNKSWCH_BASE = 0x8804;
 
 	// 16KB ROM at $C000-$FFFF
 	private static final int ROM_BASE = 0xC000;
@@ -62,22 +71,28 @@ public class SymonMachine implements Machine {
 	// The simulated peripherals
 	private final Bus bus;
 	private final Cpu cpu;
-	private final Acia acia;
-	private final Pia pia;
 	private final Memory ram;
+	private final Bank bank;
+	private final Pia pia;
+	private final Acia acia;
+	private final BankSwitcher bnkswch;
 	private Memory rom;
 
 	public SymonMachine() throws Exception {
 		this.bus = new Bus(BUS_BOTTOM, BUS_TOP);
 		this.cpu = new Cpu();
 		this.ram = new Memory(MEMORY_BASE, MEMORY_BASE + MEMORY_SIZE - 1, false);
+		this.bank = new Bank(BANK_BASE, BANK_BASE + BANK_SIZE - 1, BANK_SIZE);
 		this.pia = new Via6522(PIA_BASE);
 		this.acia = new Acia6551(ACIA_BASE);
+		this.bnkswch = new BankSwitcher(BNKSWCH_BASE, this.bank);
 
 		bus.addCpu(cpu);
 		bus.addDevice(ram);
+		bus.addDevice(bank);
 		bus.addDevice(pia);
 		bus.addDevice(acia);
+		bus.addDevice(bnkswch);
 
 		// TODO: Make this configurable, of course.
 		InputStream romImage = this.getClass().getResourceAsStream("/assets/ocsymon/roms/boot.rom");
@@ -107,7 +122,11 @@ public class SymonMachine implements Machine {
 	public Memory getRam() {
 		return ram;
 	}
-
+	
+	public Bank getBank() {
+		return bank;
+	}
+	
 	@Override
 	public Acia getAcia() {
 		return acia;
