@@ -1,8 +1,9 @@
 package gamax92.ocsymon;
 
+import gamax92.ocsymon.devices.Bank;
+
 import java.util.ArrayList;
 
-import gamax92.ocsymon.devices.Bank;
 import li.cil.oc.api.machine.Architecture;
 import li.cil.oc.api.machine.ExecutionResult;
 import li.cil.oc.api.machine.Machine;
@@ -61,6 +62,7 @@ public class SymonArchitecture implements Architecture {
 							if (character != 0) // Not a character
 								console.pushChar(character);
 						}
+						((SymonMachine) vm.simulator.machine).getSigDev().queue(signal.name(), signal.args());
 					} else
 						break;
 				}
@@ -140,7 +142,7 @@ public class SymonArchitecture implements Architecture {
 			for (int v : mem)
 				almem.set(i++, v);
 		}
-		
+
 		this.console.load(nbt);
 	}
 
@@ -202,7 +204,7 @@ public class SymonArchitecture implements Architecture {
 			bankTag.setIntArray("mem", mem);
 			nbt.setTag("bank", bankTag);
 		}
-		
+
 		this.console.save(nbt);
 	}
 }

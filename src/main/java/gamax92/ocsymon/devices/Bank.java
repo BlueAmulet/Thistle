@@ -1,10 +1,6 @@
 package gamax92.ocsymon.devices;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.loomcom.symon.devices.Device;
@@ -31,23 +27,23 @@ public class Bank extends Device {
 			this.mem.add(0);
 		this.setMemsize(size);
 	}
-	
+
 	public void resize(int newsize) {
 		if (newsize > this.getMemsize())
 			for (int i = this.getMemsize(); i < newsize; i++)
 				this.mem.add(0);
 		else if (newsize < this.getMemsize())
 			for (int i = this.getMemsize(); i > newsize; i--)
-				this.mem.remove(i-1);
+				this.mem.remove(i - 1);
 		this.setMemsize(newsize);
 	}
 
 	public void write(int address, int data) throws MemoryAccessException {
-		this.mem.set((this.getBank()*this.getBankSize())+address, data);
+		this.mem.set((this.getBank() * this.getBankSize()) + address, data);
 	}
 
 	public int read(int address) throws MemoryAccessException {
-		return this.mem.get((this.getBank()*this.getBankSize())+address);
+		return this.mem.get((this.getBank() * this.getBankSize()) + address);
 	}
 
 	public String toString() {
@@ -63,7 +59,7 @@ public class Bank extends Device {
 	}
 
 	public void setBank(int bank) {
-		this.bank = Math.min(this.memsize/this.bankSize, bank);
+		this.bank = Math.min(this.memsize / this.bankSize, bank);
 	}
 
 	public int getBankSize() {

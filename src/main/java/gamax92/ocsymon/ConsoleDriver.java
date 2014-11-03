@@ -80,14 +80,12 @@ public class ConsoleDriver {
 			this.H = consoleTag.getInteger("H");
 			int[] fifo = consoleTag.getIntArray("fifo");
 			this.fifo.clear();
-			int i = 0;
 			for (int v : fifo)
-				this.fifo.set(i++, v);
+				this.fifo.add(v);
 			int[] databuf = consoleTag.getIntArray("data");
 			this.databuf.clear();
-			i = 0;
 			for (int v : databuf)
-				this.databuf.set(i++, v);
+				this.databuf.add(v);
 		}
 	}
 
@@ -117,14 +115,9 @@ public class ConsoleDriver {
 
 	// TODO: Move this to the databuf
 	private void scroll() {
-		// Try to scroll the screen upwards.
-		try {
-			machine.invoke(gpuADDR, "copy", new Object[] { (double) 1, (double) 1, (double) this.W, (double) this.H, (double) 0, (double) -1 });
-			machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) this.H, (double) this.W, (double) 1, " " });
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		this.Y = this.H;
+		// Scroll the screen upwards.
+		databuf.add(1, -8);
+		databuf.add(1, -7);
 	}
 
 	public void write(int character) {
@@ -180,6 +173,13 @@ public class ConsoleDriver {
 							break;
 						case -6:
 							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) 1, (double) this.W, (double) this.H, " " });
+							break;
+						case -7:
+							machine.invoke(gpuADDR, "copy", new Object[] { (double) 1, (double) 1, (double) this.W, (double) this.H, (double) 0, (double) -1 });
+							break;
+						case -8:
+							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) this.H, (double) this.W, (double) 1, " " });
+							this.Y = this.H;
 							break;
 						case 8:
 							int dX = this.X - 1;

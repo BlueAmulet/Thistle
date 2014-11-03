@@ -26,6 +26,7 @@ package com.loomcom.symon.machines;
 
 import gamax92.ocsymon.devices.Bank;
 import gamax92.ocsymon.devices.BankSwitcher;
+import gamax92.ocsymon.devices.Signals;
 
 import java.io.InputStream;
 import java.util.logging.Logger;
@@ -50,7 +51,7 @@ public class SymonMachine implements Machine {
 	// 32K of RAM at $0000-$3FFF
 	private static final int MEMORY_BASE = 0x0000;
 	private static final int MEMORY_SIZE = 0x4000;
-	
+
 	// 16K of switchable RAM at $4000-$7FFF
 	private static final int BANK_BASE = 0x4000;
 	private static final int BANK_SIZE = 0x4000;
@@ -60,9 +61,12 @@ public class SymonMachine implements Machine {
 
 	// ACIA at $8800-$8803
 	private static final int ACIA_BASE = 0x8800;
-	
-	// Bank Switcher at $8804
+
+	// Bank Switcher at $8804-$8805
 	private static final int BNKSWCH_BASE = 0x8804;
+
+	// Signal Device at $8806-$8809
+	private static final int SIGDEV_BASE = 0x8806;
 
 	// 16KB ROM at $C000-$FFFF
 	private static final int ROM_BASE = 0xC000;
@@ -76,6 +80,7 @@ public class SymonMachine implements Machine {
 	private final Pia pia;
 	private final Acia acia;
 	private final BankSwitcher bnkswch;
+	private final Signals sigdev;
 	private Memory rom;
 
 	public SymonMachine() throws Exception {
@@ -86,6 +91,7 @@ public class SymonMachine implements Machine {
 		this.pia = new Via6522(PIA_BASE);
 		this.acia = new Acia6551(ACIA_BASE);
 		this.bnkswch = new BankSwitcher(BNKSWCH_BASE, this.bank);
+		this.sigdev = new Signals(SIGDEV_BASE);
 
 		bus.addCpu(cpu);
 		bus.addDevice(ram);
@@ -93,6 +99,7 @@ public class SymonMachine implements Machine {
 		bus.addDevice(pia);
 		bus.addDevice(acia);
 		bus.addDevice(bnkswch);
+		bus.addDevice(sigdev);
 
 		// TODO: Make this configurable, of course.
 		InputStream romImage = this.getClass().getResourceAsStream("/assets/ocsymon/roms/boot.rom");
@@ -122,14 +129,18 @@ public class SymonMachine implements Machine {
 	public Memory getRam() {
 		return ram;
 	}
-	
-	public Bank getBank() {
-		return bank;
-	}
-	
+
 	@Override
 	public Acia getAcia() {
 		return acia;
+	}
+
+	public Bank getBank() {
+		return bank;
+	}
+
+	public Signals getSigDev() {
+		return sigdev;
 	}
 
 	@Override
