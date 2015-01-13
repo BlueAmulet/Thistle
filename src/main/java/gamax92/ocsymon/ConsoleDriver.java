@@ -35,6 +35,7 @@ public class ConsoleDriver {
 
 	private boolean parseANSI = false;
 	private boolean ansiDetect = false;
+	private StringBuffer ansiCode = new StringBuffer();
 
 	public ConsoleDriver(Machine machine) {
 		this.machine = machine;
@@ -138,12 +139,51 @@ public class ConsoleDriver {
 						if ((character >= 65 && character <= 90) || (character >= 97 && character <= 122)) {
 							// End of sequence
 							parseANSI = false;
-						}
+							String ansiCode = this.ansiCode.toString();
+							String[] ansiParts = this.ansiCode.toString().split(";");
+							switch (character) {
+							case 'J':
+								if (ansiCode.equals("2")) {
+									databuf.addFirst(-6);
+									X = 1;
+									Y = 1;
+								}
+								break;
+							case 'H':
+							case 'f':
+								if (ansiCode.length() == 0) {
+									X = 1;
+									Y = 1;
+								} else if (ansiParts.length == 2) {
+									X = Math.max(Math.min(Integer.parseInt(ansiParts[0]), W), 1);
+									Y = Math.max(Math.min(Integer.parseInt(ansiParts[1]), H), 1);
+								}
+								break;
+							case 'A':
+								if (ansiCode.length() > 0)
+									Y = Math.max(Y - Integer.parseInt(ansiCode), 1);
+							case 'B':
+								if (ansiCode.length() > 0)
+									Y = Math.min(Y + Integer.parseInt(ansiCode), H);
+							case 'C':
+								if (ansiCode.length() > 0)
+									X = Math.min(X + Integer.parseInt(ansiCode), W);
+							case 'D':
+								if (ansiCode.length() > 0)
+									X = Math.max(X - Integer.parseInt(ansiCode), 1);
+								break;
+							case 'K':
+								databuf.addFirst(-9);
+								break;
+							}
+						} else
+							ansiCode.append((char) character);
 					} else {
 						if (ansiDetect) {
 							if (character == 91) {
 								parseANSI = true;
 								character = -1000;
+								ansiCode.setLength(0);
 							} else {
 								databuf.addFirst(character);
 								character = -27;
@@ -181,6 +221,9 @@ public class ConsoleDriver {
 						case -8:
 							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) this.H, (double) this.W, (double) 1, " " });
 							this.Y = this.H;
+							break;
+						case -9: // ANSI K
+							machine.invoke(gpuADDR, "fill", new Object[] { (double) this.X, (double) this.Y, (double) (this.W - this.X + 1), (double) 1, " " });
 							break;
 						case 7:
 							PacketSender.sendSound(machine.host().world(), machine.host().xPosition(), machine.host().yPosition(), machine.host().zPosition(), "-");
