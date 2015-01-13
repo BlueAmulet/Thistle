@@ -8,6 +8,7 @@ import li.cil.oc.api.machine.Architecture;
 import li.cil.oc.api.machine.ExecutionResult;
 import li.cil.oc.api.machine.Machine;
 import li.cil.oc.api.machine.Signal;
+import li.cil.oc.server.PacketSender;
 import net.minecraft.nbt.NBTTagCompound;
 
 import com.loomcom.symon.Cpu;
@@ -46,6 +47,7 @@ public class SymonArchitecture implements Architecture {
 		vm.simulator.console = console;
 		((SymonMachine) vm.simulator.machine).getBank().init(machine.host().installedMemory());
 		initialized = true;
+		PacketSender.sendSound(machine.host().world(), machine.host().xPosition(), machine.host().yPosition(), machine.host().zPosition(), ".");
 		return true;
 	}
 

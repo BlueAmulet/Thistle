@@ -6,6 +6,7 @@ import java.util.Map;
 
 import li.cil.oc.api.machine.LimitReachedException;
 import li.cil.oc.api.machine.Machine;
+import li.cil.oc.server.PacketSender;
 import net.minecraft.nbt.NBTTagCompound;
 
 /*
@@ -180,6 +181,9 @@ public class ConsoleDriver {
 						case -8:
 							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) this.H, (double) this.W, (double) 1, " " });
 							this.Y = this.H;
+							break;
+						case 7:
+							PacketSender.sendSound(machine.host().world(), machine.host().xPosition(), machine.host().yPosition(), machine.host().zPosition(), "-");
 							break;
 						case 8:
 							int dX = this.X - 1;
