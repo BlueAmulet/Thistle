@@ -222,7 +222,8 @@ public class ConsoleDriver {
 					}
 					databuf.removeFirst();
 				}
-			} catch (LimitReachedException e) {} catch (Exception e) {
+			} catch (LimitReachedException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}

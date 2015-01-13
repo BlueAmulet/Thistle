@@ -21,6 +21,8 @@ public class SymonArchitecture implements Architecture {
 
 	private SymonVM vm;
 	private ConsoleDriver console;
+	
+	private boolean initialized = false;
 
 	/** The constructor must have exactly this signature. */
 	public SymonArchitecture(Machine machine) {
@@ -28,11 +30,13 @@ public class SymonArchitecture implements Architecture {
 	}
 
 	public boolean isInitialized() {
-		return true;
+		return initialized;
 	}
 
 	public void recomputeMemory() {
-		((SymonMachine) vm.simulator.machine).getBank().resize(machine.host().installedMemory());
+		if (vm != null) { // OpenComputers, why are you calling this before initialize?
+			((SymonMachine) vm.simulator.machine).getBank().resize(machine.host().installedMemory());
+		}
 	}
 
 	public boolean initialize() {
@@ -41,6 +45,7 @@ public class SymonArchitecture implements Architecture {
 		vm = new SymonVM();
 		vm.simulator.console = console;
 		((SymonMachine) vm.simulator.machine).getBank().init(machine.host().installedMemory());
+		initialized = true;
 		return true;
 	}
 
@@ -72,6 +77,7 @@ public class SymonArchitecture implements Architecture {
 
 			return new ExecutionResult.Sleep(0);
 		} catch (Throwable t) {
+			t.printStackTrace();
 			return new ExecutionResult.Error(t.toString());
 		}
 	}

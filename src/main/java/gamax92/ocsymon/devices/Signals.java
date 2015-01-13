@@ -28,7 +28,8 @@ public class Signals extends Device {
 
 	private int curPart = 0;
 	private int partPos = 0;
-	private byte[] part;
+	private byte[] part = new byte[0];
+	private boolean haspart = false;
 
 	public Signals(int startAddress) throws MemoryRangeException {
 		super(startAddress, startAddress + SIGDEV_SIZE - 1, "OCSignals");
@@ -54,11 +55,12 @@ public class Signals extends Device {
 		case STATCTRL_REG:
 			signals.removeFirst();
 			curPart = 0;
+			haspart = false;
 			break;
 		case PARTSWCH_REG:
 			List<Object> signal = signals.getFirst();
 			int newPart = Math.min(signal.size() - 1, data);
-			if (newPart != curPart) {
+			if (!haspart || newPart != curPart) {
 				// Load the new part
 				Object part = signal.get(newPart);
 				if (part instanceof Integer)
@@ -71,6 +73,7 @@ public class Signals extends Device {
 					OCSymon.log.log(Level.WARN, "Cannot convert " + part.getClass().getSimpleName());
 					this.part = new byte[0];
 				}
+				haspart = true;
 			}
 			partPos = 0;
 			curPart = newPart;
@@ -95,7 +98,7 @@ public class Signals extends Device {
 			if (partPos >= this.part.length)
 				return 0;
 			else
-				return this.part[partPos++];
+				return this.part[partPos++] & 0xFF;
 		default:
 			throw new MemoryAccessException("No register.");
 		}
