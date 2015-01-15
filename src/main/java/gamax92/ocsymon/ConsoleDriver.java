@@ -37,11 +37,21 @@ public class ConsoleDriver {
 	private boolean ansiDetect = false;
 	private StringBuffer ansiCode = new StringBuffer();
 	
+	private boolean brightFG = false;
+	private boolean brightBG = false;
+	private int textFG = 7;
+	private int textBG = 0;
+	
 	private boolean cursor = false;
 	private long lastTime = System.currentTimeMillis();
-	private int cursorBG;
 	private int cursorFG;
+	private int cursorBG;
 	private char cursorChar;
+	
+	private double[] colors = {
+		0x000000,0xAA0000,0x00AA00,0xAA5500,0x0000AA,0xAA00AA,0x00AAAA,0xAAAAAA,
+		0x555555,0xFF5555,0x55FF55,0xFFFF55,0x5555FF,0xFF55FF,0x55FFFF,0xFFFFFF
+	};
 
 	public ConsoleDriver(Machine machine) {
 		this.machine = machine;
@@ -87,6 +97,10 @@ public class ConsoleDriver {
 			this.Y = consoleTag.getInteger("Y");
 			this.W = consoleTag.getInteger("W");
 			this.H = consoleTag.getInteger("H");
+			this.brightFG = consoleTag.getBoolean("brightFG");
+			this.brightBG = consoleTag.getBoolean("brightBG");
+			this.textFG = consoleTag.getInteger("textFG");
+			this.textBG = consoleTag.getInteger("textBG");
 			int[] fifo = consoleTag.getIntArray("fifo");
 			this.fifo.clear();
 			for (int v : fifo)
@@ -110,6 +124,10 @@ public class ConsoleDriver {
 		consoleTag.setInteger("Y", this.Y);
 		consoleTag.setInteger("W", this.W);
 		consoleTag.setInteger("H", this.H);
+		consoleTag.setBoolean("brightFG", this.brightFG);
+		consoleTag.setBoolean("brightBG", this.brightBG);
+		consoleTag.setInteger("textFG", this.textFG);
+		consoleTag.setInteger("textBG", this.textBG);
 		int[] fifo = new int[this.fifo.size()];
 		int i = 0;
 		for (int v : this.fifo)
@@ -265,7 +283,37 @@ public class ConsoleDriver {
 									; // TODO: Set cursor to space
 								break;
 							case 'm':
-								// TODO: All of these (0,1,5,30-37,40-47)
+								boolean newBrightFG = this.brightFG;
+								boolean newBrightBG = this.brightBG;
+								int newTextFG = this.textFG;
+								int newTextBG = this.textBG;
+								for (String part : ansiParts) {
+									int ipart = Integer.parseInt(part);
+									if (ipart == 0) {
+										newBrightFG = false;
+										newBrightBG = false;
+										newTextFG = 7;
+										newTextBG = 0;
+									} else if (ipart == 1) {
+										newBrightFG = true;
+									} else if (ipart == 5) {
+										newBrightBG = true;
+									} else if (ipart >= 30 && ipart <= 37) {
+										newTextFG = ipart - 30;
+									} else if (ipart >= 40 && ipart <= 47) {
+										newTextBG = ipart - 40;
+									}
+								}
+								if (newBrightBG != this.brightBG || newTextBG != this.textBG) {
+									this.brightBG = newBrightBG;
+									this.textBG = newTextBG;
+									databuf.add(1,-4);
+								}
+								if (newBrightFG != this.brightFG || newTextFG != this.textFG) {
+									this.brightFG = newBrightFG;
+									this.textFG = newTextFG;
+									databuf.add(1,-5);
+								}
 								break;
 							}
 						} else
@@ -306,10 +354,10 @@ public class ConsoleDriver {
 							machine.invoke(gpuADDR, "setResolution", new Object[] { (double) this.W, (double) this.H });
 							break;
 						case -4:
-							machine.invoke(gpuADDR, "setBackground", new Object[] { (double) 0x000000 });
+							machine.invoke(gpuADDR, "setBackground", new Object[] { colors[(this.brightBG ? 8 : 0) + this.textBG] });
 							break;
 						case -5:
-							machine.invoke(gpuADDR, "setForeground", new Object[] { (double) 0xFFFFFF });
+							machine.invoke(gpuADDR, "setForeground", new Object[] { colors[(this.brightFG ? 8 : 0) + this.textFG] });
 							break;
 						case -6:
 							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) 1, (double) this.W, (double) this.H, " " });
@@ -351,6 +399,12 @@ public class ConsoleDriver {
 						case -1004: // Cursor Set Character
 							machine.invoke(gpuADDR, "set", new Object[] { (double) this.X, (double) this.Y, Character.toString(this.cursorChar) });
 							this.cursor = !this.cursor;
+							if (!this.cursor) {
+								if (this.cursorBG != colors[(this.brightBG ? 8 : 0) + this.textBG])
+									databuf.add(1, -4);
+								if (this.cursorFG != colors[(this.brightFG ? 8 : 0) + this.textFG])
+									databuf.add(1, -5);
+							}
 							break;
 						case 7:
 							PacketSender.sendSound(machine.host().world(), machine.host().xPosition(), machine.host().yPosition(), machine.host().zPosition(), "-");
