@@ -47,7 +47,6 @@ public class SymonArchitecture implements Architecture {
 		vm.simulator.console = console;
 		((SymonMachine) vm.simulator.machine).getBank().init(machine.host().installedMemory());
 		initialized = true;
-		PacketSender.sendSound(machine.host().world(), machine.host().xPosition(), machine.host().yPosition(), machine.host().zPosition(), ".");
 		return true;
 	}
 
@@ -68,6 +67,11 @@ public class SymonArchitecture implements Architecture {
 							int character = (int) (double) (Double) signal.args()[1]; // castception
 							if (character != 0) // Not a character
 								console.pushChar(character);
+						} else if (signal.name().equals("clipboard")) {
+							char[] paste = ((String) signal.args()[1]).toCharArray();
+							for (char character: paste) {
+								console.pushChar(character);
+							}
 						}
 						((SymonMachine) vm.simulator.machine).getSigDev().queue(signal.name(), signal.args());
 					} else
@@ -95,6 +99,9 @@ public class SymonArchitecture implements Architecture {
 	}
 
 	public void onConnect() {
+		try {
+			PacketSender.sendSound(machine.host().world(), machine.host().xPosition(), machine.host().yPosition(), machine.host().zPosition(), ".");
+		} catch (Throwable e) {}
 	}
 
 	// TODO: Needs more things

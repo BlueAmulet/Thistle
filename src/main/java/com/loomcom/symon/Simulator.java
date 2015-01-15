@@ -28,6 +28,7 @@ import gamax92.ocsymon.ConsoleDriver;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.loomcom.symon.devices.Acia;
 import com.loomcom.symon.devices.Memory;
 import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.machines.Machine;
@@ -80,16 +81,17 @@ public class Simulator {
 	public void step() throws MemoryAccessException {
 		machine.getCpu().step();
 
+		Acia mACIA = machine.getAcia();
 		// Read from the ACIA and immediately update the console if there's
 		// output ready.
-		if (machine.getAcia() != null && machine.getAcia().hasTxChar()) {
+		if (mACIA != null && mACIA.hasTxChar()) {
 			// This is thread-safe
-			console.write(machine.getAcia().txRead());
+			console.write(mACIA.txRead());
 		}
 
 		// If a key has been pressed, fill the ACIA.
-		if (machine.getAcia() != null && console.hasInput()) {
-			machine.getAcia().rxWrite(console.read());
+		if (mACIA != null && console.hasInput() && !mACIA.hasRxChar()) {
+			mACIA.rxWrite(console.read());
 		}
 	}
 }

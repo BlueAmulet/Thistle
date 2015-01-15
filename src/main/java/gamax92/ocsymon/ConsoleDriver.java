@@ -36,6 +36,12 @@ public class ConsoleDriver {
 	private boolean parseANSI = false;
 	private boolean ansiDetect = false;
 	private StringBuffer ansiCode = new StringBuffer();
+	
+	private boolean cursor = false;
+	private long lastTime = System.currentTimeMillis();
+	private int cursorBG;
+	private int cursorFG;
+	private char cursorChar;
 
 	public ConsoleDriver(Machine machine) {
 		this.machine = machine;
@@ -76,6 +82,7 @@ public class ConsoleDriver {
 			this.canWrite = consoleTag.getBoolean("canWrite");
 			this.gpuADDR = consoleTag.getString("gpuADDR");
 			this.screenADDR = consoleTag.getString("screenADDR");
+			this.cursor = consoleTag.getBoolean("cursor");
 			this.X = consoleTag.getInteger("X");
 			this.Y = consoleTag.getInteger("Y");
 			this.W = consoleTag.getInteger("W");
@@ -98,6 +105,7 @@ public class ConsoleDriver {
 		consoleTag.setBoolean("canWrite", this.canWrite);
 		consoleTag.setString("gpuADDR", this.gpuADDR);
 		consoleTag.setString("screenADDR", this.screenADDR);
+		consoleTag.setBoolean("cursor", this.cursor);
 		consoleTag.setInteger("X", this.X);
 		consoleTag.setInteger("Y", this.Y);
 		consoleTag.setInteger("W", this.W);
@@ -115,7 +123,6 @@ public class ConsoleDriver {
 		nbt.setTag("console", consoleTag);
 	}
 
-	// TODO: Move this to the databuf
 	private void scroll() {
 		// Scroll the screen upwards.
 		databuf.add(1, -8);
@@ -128,11 +135,17 @@ public class ConsoleDriver {
 		}
 	}
 
-	// TODO: needs ANSI escape codes.
 	// TODO: Combine multiple characters in one "set"
 	public void flush() {
 		if (canWrite) {
 			try {
+				if (System.currentTimeMillis() - this.lastTime >= 500 && !parseANSI && !ansiDetect) {
+					lastTime = System.currentTimeMillis();
+					databuf.addFirst(-103);
+					databuf.addFirst(-102);
+					databuf.addFirst(-101);
+					databuf.addFirst(-100);
+				}
 				while (!databuf.isEmpty()) {
 					int character = databuf.getFirst();
 					if (parseANSI) {
@@ -144,7 +157,7 @@ public class ConsoleDriver {
 							switch (character) {
 							case 'J':
 								if (ansiCode.equals("2")) {
-									databuf.addFirst(-6);
+									databuf.add(1, -6);
 									X = 1;
 									Y = 1;
 								}
@@ -173,7 +186,7 @@ public class ConsoleDriver {
 									X = Math.max(X - Integer.parseInt(ansiCode), 1);
 								break;
 							case 'K':
-								databuf.addFirst(-9);
+								databuf.add(1,-9);
 								break;
 							}
 						} else
@@ -185,10 +198,17 @@ public class ConsoleDriver {
 								character = -1000;
 								ansiCode.setLength(0);
 							} else {
-								databuf.addFirst(character);
+								databuf.addFirst(-27);
 								character = -27;
 							}
 							ansiDetect = false;
+						}
+						if ((character < -103 || character > -100) && cursor) {
+							databuf.addFirst(-103);
+							databuf.addFirst(-102);
+							databuf.addFirst(-101);
+							databuf.addFirst(-100);
+							character = -100;
 						}
 						switch (character) {
 						// Special cases, characters are not negative
@@ -224,6 +244,22 @@ public class ConsoleDriver {
 							break;
 						case -9: // ANSI K
 							machine.invoke(gpuADDR, "fill", new Object[] { (double) this.X, (double) this.Y, (double) (this.W - this.X + 1), (double) 1, " " });
+							break;
+						case -100: // Cursor GET
+							Object[] response2 = machine.invoke(gpuADDR, "get", new Object[] {this.X, this.Y});
+							this.cursorChar = (Character) response2[0];
+							this.cursorFG = (Integer) response2[2];
+							this.cursorBG = (Integer) response2[1];
+							break;
+						case -101: // Cursor Set BG
+							machine.invoke(gpuADDR, "setBackground", new Object[] { (double) this.cursorBG });
+							break;
+						case -102: // Cursor Set FG
+							machine.invoke(gpuADDR, "setForeground", new Object[] { (double) this.cursorFG });
+							break;
+						case -103: // Cursor Set Character
+							machine.invoke(gpuADDR, "set", new Object[] { (double) this.X, (double) this.Y, Character.toString(this.cursorChar) });
+							this.cursor = !this.cursor;
 							break;
 						case 7:
 							PacketSender.sendSound(machine.host().world(), machine.host().xPosition(), machine.host().yPosition(), machine.host().zPosition(), "-");
