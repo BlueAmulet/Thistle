@@ -141,10 +141,10 @@ public class ConsoleDriver {
 			try {
 				if (System.currentTimeMillis() - this.lastTime >= 500 && !parseANSI && !ansiDetect) {
 					lastTime = System.currentTimeMillis();
-					databuf.addFirst(-103);
-					databuf.addFirst(-102);
-					databuf.addFirst(-101);
-					databuf.addFirst(-100);
+					databuf.addFirst(-1004);
+					databuf.addFirst(-1003);
+					databuf.addFirst(-1002);
+					databuf.addFirst(-1001);
 				}
 				while (!databuf.isEmpty()) {
 					int character = databuf.getFirst();
@@ -155,15 +155,51 @@ public class ConsoleDriver {
 							String ansiCode = this.ansiCode.toString();
 							String[] ansiParts = this.ansiCode.toString().split(";");
 							switch (character) {
-							case 'J':
-								if (ansiCode.equals("2")) {
-									databuf.add(1, -6);
+							case 'A':
+								if (ansiCode.length() > 0)
+									Y = Math.max(Y - Integer.parseInt(ansiCode), 1);
+								else
+									Y = Math.max(Y - 1, 1);
+								break;
+							case 'B':
+								if (ansiCode.length() > 0)
+									Y = Math.min(Y + Integer.parseInt(ansiCode), H);
+								else
+									Y = Math.min(Y + 1, 1);
+								break;
+							case 'C':
+								if (ansiCode.length() > 0)
+									X = Math.min(X + Integer.parseInt(ansiCode), W);
+								else
+									X = Math.min(X + 1, 1);
+								break;
+							case 'D':
+								if (ansiCode.length() > 0)
+									X = Math.max(X - Integer.parseInt(ansiCode), 1);
+								else
+									X = Math.max(X - 1, 1);
+								break;
+							case 'E':
+								if (ansiCode.length() > 0)
+									Y = Math.min(Y + Integer.parseInt(ansiCode), H);
+								else
+									Y = Math.min(Y + 1, 1);
+								X = 1;
+								break;
+							case 'F':
+								if (ansiCode.length() > 0)
+									Y = Math.max(Y - Integer.parseInt(ansiCode), 1);
+								else
+									Y = Math.max(Y - 1, 1);
+								X = 1;
+								break;
+							case 'G':
+								if (ansiCode.length() > 0)
+									X = Math.min(Integer.parseInt(ansiCode), W);
+								else
 									X = 1;
-									Y = 1;
-								}
 								break;
 							case 'H':
-							case 'f':
 								if (ansiCode.length() == 0) {
 									X = 1;
 									Y = 1;
@@ -172,21 +208,64 @@ public class ConsoleDriver {
 									Y = Math.max(Math.min(Integer.parseInt(ansiParts[1]), H), 1);
 								}
 								break;
-							case 'A':
-								if (ansiCode.length() > 0)
-									Y = Math.max(Y - Integer.parseInt(ansiCode), 1);
-							case 'B':
-								if (ansiCode.length() > 0)
-									Y = Math.min(Y + Integer.parseInt(ansiCode), H);
-							case 'C':
-								if (ansiCode.length() > 0)
-									X = Math.min(X + Integer.parseInt(ansiCode), W);
-							case 'D':
-								if (ansiCode.length() > 0)
-									X = Math.max(X - Integer.parseInt(ansiCode), 1);
+							case 'J':
+								if (ansiCode.length() == 0 || ansiCode.equals("0")) {
+									if (this.Y < this.H)
+										databuf.add(1,-500);
+									databuf.add(1,-502);
+								} else if (ansiCode.equals("1")) {
+									if (this.Y > 1)
+										databuf.add(1,-501);
+									databuf.add(1,-503);
+								} else if (ansiCode.equals("2"))
+									databuf.add(1, -6);
 								break;
 							case 'K':
-								databuf.add(1,-9);
+								if (ansiCode.length() == 0 || ansiCode.equals("0"))
+									databuf.add(1,-502);
+								else if (ansiCode.equals("1"))
+									databuf.add(1,-503);
+								else if (ansiCode.equals("2"))
+									databuf.add(1,-504);
+								break;
+							case 'L':
+								if (ansiCode.length() > 0)
+									; // TODO: Insert ????? lines
+								else
+									; // TODO: Insert one line
+								break;
+							case 'M':
+								if (ansiCode.length() > 0)
+									; // TODO: Delete ????? lines
+								else
+									; // TODO: Delete one line
+								break;
+							case 'P':
+								if (ansiCode.length() > 0)
+									; // TODO: Shift characters past cursor left ????? (Delete)
+								else
+									; // TODO: Shift characters past cursor left 1 (Delete)
+								break;
+							case 'S':
+								if (ansiCode.length() > 0)
+									; // TODO: Scroll display up ????? lines
+								else
+									; // TODO: Scroll display up 1 line
+								break;
+							case 'T':
+								if (ansiCode.length() > 0)
+									; // TODO: Scroll display down ????? lines
+								else
+									; // TODO: Scroll display down 1 line
+								break;
+							case 'X':
+								if (ansiCode.length() > 0)
+									; // TODO: Set ????? characters including cursor to space (Erase)
+								else
+									; // TODO: Set cursor to space
+								break;
+							case 'm':
+								// TODO: All of these (0,1,5,30-37,40-47)
 								break;
 							}
 						} else
@@ -203,12 +282,12 @@ public class ConsoleDriver {
 							}
 							ansiDetect = false;
 						}
-						if ((character < -103 || character > -100) && cursor) {
-							databuf.addFirst(-103);
-							databuf.addFirst(-102);
-							databuf.addFirst(-101);
-							databuf.addFirst(-100);
-							character = -100;
+						if ((character < -1004 || character > -1001) && cursor) {
+							databuf.addFirst(-1004);
+							databuf.addFirst(-1003);
+							databuf.addFirst(-1002);
+							databuf.addFirst(-1001);
+							character = -1001;
 						}
 						switch (character) {
 						// Special cases, characters are not negative
@@ -242,22 +321,34 @@ public class ConsoleDriver {
 							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) this.H, (double) this.W, (double) 1, " " });
 							this.Y = this.H;
 							break;
-						case -9: // ANSI K
+						case -500: // ANSI 0J
+							machine.invoke(gpuADDR, "fill", new Object[] { (double) this.X, (double) this.Y + 1, (double) this.W, (double) (this.H - this.Y), " " });
+							break;
+						case -501: // ANSI 1J
+							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) 1, (double) this.W, (double) this.Y - 1, " " });
+							break;
+						case -502: // ANSI 0K
 							machine.invoke(gpuADDR, "fill", new Object[] { (double) this.X, (double) this.Y, (double) (this.W - this.X + 1), (double) 1, " " });
 							break;
-						case -100: // Cursor GET
+						case -503: // ANSI 1K
+							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) this.Y, (double) this.X, (double) 1, " " });
+							break;
+						case -504: // ANSI 2K
+							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) this.Y, (double) this.W, (double) 1, " " });
+							break;
+						case -1001: // Cursor GET
 							Object[] response2 = machine.invoke(gpuADDR, "get", new Object[] {this.X, this.Y});
 							this.cursorChar = (Character) response2[0];
 							this.cursorFG = (Integer) response2[2];
 							this.cursorBG = (Integer) response2[1];
 							break;
-						case -101: // Cursor Set BG
+						case -1002: // Cursor Set BG
 							machine.invoke(gpuADDR, "setBackground", new Object[] { (double) this.cursorBG });
 							break;
-						case -102: // Cursor Set FG
+						case -1003: // Cursor Set FG
 							machine.invoke(gpuADDR, "setForeground", new Object[] { (double) this.cursorFG });
 							break;
-						case -103: // Cursor Set Character
+						case -1004: // Cursor Set Character
 							machine.invoke(gpuADDR, "set", new Object[] { (double) this.X, (double) this.Y, Character.toString(this.cursorChar) });
 							this.cursor = !this.cursor;
 							break;
@@ -289,6 +380,10 @@ public class ConsoleDriver {
 							break;
 						case 27:
 							ansiDetect = true;
+							break;
+						case 155:
+							parseANSI = true;
+							ansiCode.setLength(0);
 							break;
 						case -27:
 							character = 27;
