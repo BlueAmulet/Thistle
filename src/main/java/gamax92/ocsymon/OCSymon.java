@@ -11,11 +11,11 @@ import cpw.mods.fml.common.registry.GameRegistry;
  * This mod demonstrates how to add item components, i.e. items that can be
  * placed in a computer and provide methods to it.
  */
-@Mod(modid = OCSymon.MODID, name = OCSymon.NAME, version = OCSymon.VERSION, dependencies = "required-after:OpenComputers@[1.4.0,)")
+@Mod(modid = OCSymon.MODID, name = OCSymon.NAME, version = OCSymon.VERSION, dependencies = "required-after:OpenComputers@[1.5.0,)")
 public class OCSymon {
 	public static final String MODID = "ocsymon";
 	public static final String NAME = "OC 6502 Symon";
-	public static final String VERSION = "1.0";
+	public static final String VERSION = "1.0.2";
 
 	@Mod.Instance
 	public static OCSymon instance;

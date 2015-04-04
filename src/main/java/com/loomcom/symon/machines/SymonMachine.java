@@ -48,7 +48,7 @@ public class SymonMachine implements Machine {
 	private static final int BUS_BOTTOM = 0x0000;
 	private static final int BUS_TOP = 0xffff;
 
-	// 32K of RAM at $0000-$3FFF
+	// 16K of RAM at $0000-$3FFF
 	private static final int MEMORY_BASE = 0x0000;
 	private static final int MEMORY_SIZE = 0x4000;
 

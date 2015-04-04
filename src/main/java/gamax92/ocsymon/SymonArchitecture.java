@@ -4,11 +4,16 @@ import gamax92.ocsymon.devices.Bank;
 
 import java.util.ArrayList;
 
+import scala.Function2;
+import scala.collection.convert.WrapAsScala;
+import scala.runtime.BoxesRunTime;
+import li.cil.oc.api.Driver;
 import li.cil.oc.api.machine.Architecture;
 import li.cil.oc.api.machine.ExecutionResult;
 import li.cil.oc.api.machine.Machine;
 import li.cil.oc.api.machine.Signal;
 import li.cil.oc.server.PacketSender;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
 import com.loomcom.symon.Cpu;
@@ -34,10 +39,28 @@ public class SymonArchitecture implements Architecture {
 		return initialized;
 	}
 
-	public void recomputeMemory() {
-		if (vm != null) { // OpenComputers, why are you calling this before initialize?
-			((SymonMachine) vm.simulator.machine).getBank().resize(machine.host().installedMemory());
+	// Sangar I hate you
+	private static int[] ramSizes = {192, 256, 384, 512, 768, 1024};
+	private static int calculateMemory(Iterable<ItemStack> components)
+	{
+		int memory = 0;
+		for (ItemStack component : components)
+		{
+			if (Driver.driverFor(component) instanceof li.cil.oc.api.driver.item.Memory)
+			{
+				li.cil.oc.api.driver.item.Memory memdrv = (li.cil.oc.api.driver.item.Memory) Driver.driverFor(component);
+				memory += ramSizes[(int)(memdrv.amount(component)-1)]*1024;
+			}
 		}
+		return memory;
+	}
+	
+	public boolean recomputeMemory(Iterable<ItemStack> components) {
+		int memory = calculateMemory(components);
+		if (vm != null) { // OpenComputers, why are you calling this before initialize?
+			((SymonMachine) vm.simulator.machine).getBank().resize(memory);
+		}
+		return memory > 0;
 	}
 
 	public boolean initialize() {
@@ -45,7 +68,7 @@ public class SymonArchitecture implements Architecture {
 		console = new ConsoleDriver(machine);
 		vm = new SymonVM();
 		vm.simulator.console = console;
-		((SymonMachine) vm.simulator.machine).getBank().init(machine.host().installedMemory());
+		((SymonMachine) vm.simulator.machine).getBank().init(calculateMemory(machine.host().internalComponents()));
 		initialized = true;
 		return true;
 	}
