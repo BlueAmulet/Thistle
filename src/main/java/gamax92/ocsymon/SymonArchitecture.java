@@ -139,7 +139,7 @@ public class SymonArchitecture implements Architecture {
 		}
 
 		// Restore Cpu
-		if (nbt.hasKey("acia")) {
+		if (nbt.hasKey("cpu")) {
 			Cpu mCPU = vm.simulator.machine.getCpu();
 			NBTTagCompound cpuTag = nbt.getCompoundTag("cpu");
 			mCPU.setAccumulator(cpuTag.getInteger("rA"));
