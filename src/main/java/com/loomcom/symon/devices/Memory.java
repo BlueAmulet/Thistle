@@ -64,6 +64,7 @@ public class Memory extends Device {
 		return memory;
 	}
 
+	@Override
 	public void write(int address, int data) throws MemoryAccessException {
 		if (readOnly) {
 			throw new MemoryAccessException("Cannot write to read-only memory at address " + address);
@@ -81,14 +82,17 @@ public class Memory extends Device {
 	public void loadFromStream(InputStream is) throws IOException {
 		for (int i = 0; i <= mem.length; i++) {
 			int data = is.read();
-			if (data == -1)
+			if (data == -1) {
 				break;
+			}
 			mem[i] = data;
 		}
-		if (is.read() != -1)
+		if (is.read() != -1) {
 			logger.log(Level.WARNING, "Truncating boot.rom to " + mem.length);
+		}
 	}
 
+	@Override
 	public int read(int address) throws MemoryAccessException {
 		return this.mem[address];
 	}
@@ -97,6 +101,7 @@ public class Memory extends Device {
 		Arrays.fill(this.mem, val);
 	}
 
+	@Override
 	public String toString() {
 		return "Memory: " + getMemoryRange().toString();
 	}

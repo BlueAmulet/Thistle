@@ -12,6 +12,7 @@ public class Item6502Processor extends Item {
 		setCreativeTab(li.cil.oc.api.CreativeTab.instance);
 	}
 
+	@Override
 	@SideOnly(Side.CLIENT)
 	public void registerIcons(IIconRegister par1IconRegister) {
 		this.itemIcon = par1IconRegister.registerIcon(OCSymon.MODID + ":" + this.getUnlocalizedName().substring(5));

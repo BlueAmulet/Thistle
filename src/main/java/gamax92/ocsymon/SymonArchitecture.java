@@ -4,9 +4,6 @@ import gamax92.ocsymon.devices.Bank;
 
 import java.util.ArrayList;
 
-import scala.Function2;
-import scala.collection.convert.WrapAsScala;
-import scala.runtime.BoxesRunTime;
 import li.cil.oc.api.Driver;
 import li.cil.oc.api.machine.Architecture;
 import li.cil.oc.api.machine.ExecutionResult;
@@ -27,7 +24,7 @@ public class SymonArchitecture implements Architecture {
 
 	private SymonVM vm;
 	private ConsoleDriver console;
-	
+
 	private boolean initialized = false;
 
 	/** The constructor must have exactly this signature. */
@@ -35,34 +32,33 @@ public class SymonArchitecture implements Architecture {
 		this.machine = machine;
 	}
 
+	@Override
 	public boolean isInitialized() {
 		return initialized;
 	}
 
 	// Sangar I hate you
-	private static int[] ramSizes = {192, 256, 384, 512, 768, 1024};
-	private static int calculateMemory(Iterable<ItemStack> components)
-	{
+	private static int[] ramSizes = { 192, 256, 384, 512, 768, 1024 };
+
+	private static int calculateMemory(Iterable<ItemStack> components) {
 		int memory = 0;
 		for (ItemStack component : components)
-		{
-			if (Driver.driverFor(component) instanceof li.cil.oc.api.driver.item.Memory)
-			{
+			if (Driver.driverFor(component) instanceof li.cil.oc.api.driver.item.Memory) {
 				li.cil.oc.api.driver.item.Memory memdrv = (li.cil.oc.api.driver.item.Memory) Driver.driverFor(component);
-				memory += ramSizes[(int)(memdrv.amount(component)-1)]*1024;
+				memory += ramSizes[(int) (memdrv.amount(component) - 1)] * 1024;
 			}
-		}
 		return memory;
 	}
-	
+
+	@Override
 	public boolean recomputeMemory(Iterable<ItemStack> components) {
 		int memory = calculateMemory(components);
-		if (vm != null) { // OpenComputers, why are you calling this before initialize?
+		if (vm != null) // OpenComputers, why are you calling this before initialize?
 			((SymonMachine) vm.simulator.machine).getBank().resize(memory);
-		}
 		return memory > 0;
 	}
 
+	@Override
 	public boolean initialize() {
 		// Set up new VM here
 		console = new ConsoleDriver(machine);
@@ -73,10 +69,12 @@ public class SymonArchitecture implements Architecture {
 		return true;
 	}
 
+	@Override
 	public void close() {
 		vm = null;
 	}
 
+	@Override
 	public ExecutionResult runThreaded(boolean isSynchronizedReturn) {
 		try {
 			if (!isSynchronizedReturn) {
@@ -92,9 +90,8 @@ public class SymonArchitecture implements Architecture {
 								console.pushChar(character);
 						} else if (signal.name().equals("clipboard")) {
 							char[] paste = ((String) signal.args()[1]).toCharArray();
-							for (char character: paste) {
+							for (char character : paste)
 								console.pushChar(character);
-							}
 						}
 						((SymonMachine) vm.simulator.machine).getSigDev().queue(signal.name(), signal.args());
 					} else
@@ -111,6 +108,7 @@ public class SymonArchitecture implements Architecture {
 		}
 	}
 
+	@Override
 	public void runSynchronized() {
 		try {
 			vm.run();
@@ -121,13 +119,16 @@ public class SymonArchitecture implements Architecture {
 		}
 	}
 
+	@Override
 	public void onConnect() {
 		try {
 			PacketSender.sendSound(machine.host().world(), machine.host().xPosition(), machine.host().yPosition(), machine.host().zPosition(), ".");
-		} catch (Throwable e) {}
+		} catch (Throwable e) {
+		}
 	}
 
 	// TODO: Needs more things
+	@Override
 	public void load(NBTTagCompound nbt) {
 		// Restore Machine
 
@@ -184,6 +185,7 @@ public class SymonArchitecture implements Architecture {
 	}
 
 	// TODO: Needs more things
+	@Override
 	public void save(NBTTagCompound nbt) {
 		// Persist Machine
 

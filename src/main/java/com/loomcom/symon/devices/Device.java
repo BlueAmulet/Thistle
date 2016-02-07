@@ -78,6 +78,7 @@ public abstract class Device implements Comparable<Device> {
 
 	public abstract int read(int address) throws MemoryAccessException;
 
+	@Override
 	public abstract String toString();
 
 	public Bus getBus() {
@@ -126,6 +127,7 @@ public abstract class Device implements Comparable<Device> {
 	 * Compares two devices.  The sort order is defined by the sort
 	 * order of the device's memory ranges.
 	 */
+	@Override
 	public int compareTo(Device other) {
 		if (other == null) {
 			throw new NullPointerException("Cannot compare to null.");

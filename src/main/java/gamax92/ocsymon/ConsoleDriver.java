@@ -36,18 +36,18 @@ public class ConsoleDriver {
 	private boolean parseANSI = false;
 	private boolean ansiDetect = false;
 	private StringBuffer ansiCode = new StringBuffer();
-	
+
 	private boolean brightFG = false;
 	private boolean brightBG = false;
 	private int textFG = 7;
 	private int textBG = 0;
-	
+
 	private boolean cursor = false;
 	private long lastTime = System.currentTimeMillis();
 	private int cursorFG;
 	private int cursorBG;
 	private char cursorChar;
-	
+
 	private double[] colors = {
 		0x000000,0xAA0000,0x00AA00,0xAA5500,0x0000AA,0xAA00AA,0x00AAAA,0xAAAAAA,
 		0x555555,0xFF5555,0x55FF55,0xFFFF55,0x5555FF,0xFF55FF,0x55FFFF,0xFFFFFF
@@ -63,12 +63,10 @@ public class ConsoleDriver {
 				Map.Entry<String, String> entry = entries.next();
 				String address = entry.getKey();
 				String type = entry.getValue();
-				if (type.equals("gpu") && gpuADDR == null) {
+				if (type.equals("gpu") && gpuADDR == null)
 					gpuADDR = address;
-				}
-				if (type.equals("screen") && screenADDR == null) {
+				if (type.equals("screen") && screenADDR == null)
 					screenADDR = address;
-				}
 			}
 			if (gpuADDR != null && screenADDR != null) {
 				try {
@@ -148,9 +146,8 @@ public class ConsoleDriver {
 	}
 
 	public void write(int character) {
-		if (canWrite) {
+		if (canWrite)
 			databuf.add(character);
-		}
 	}
 
 	// TODO: Combine multiple characters in one "set"
@@ -229,22 +226,22 @@ public class ConsoleDriver {
 							case 'J':
 								if (ansiCode.length() == 0 || ansiCode.equals("0")) {
 									if (this.Y < this.H)
-										databuf.add(1,-500);
-									databuf.add(1,-502);
+										databuf.add(1, -500);
+									databuf.add(1, -502);
 								} else if (ansiCode.equals("1")) {
 									if (this.Y > 1)
-										databuf.add(1,-501);
-									databuf.add(1,-503);
+										databuf.add(1, -501);
+									databuf.add(1, -503);
 								} else if (ansiCode.equals("2"))
 									databuf.add(1, -6);
 								break;
 							case 'K':
 								if (ansiCode.length() == 0 || ansiCode.equals("0"))
-									databuf.add(1,-502);
+									databuf.add(1, -502);
 								else if (ansiCode.equals("1"))
-									databuf.add(1,-503);
+									databuf.add(1, -503);
 								else if (ansiCode.equals("2"))
-									databuf.add(1,-504);
+									databuf.add(1, -504);
 								break;
 							case 'L':
 								if (ansiCode.length() > 0)
@@ -294,25 +291,24 @@ public class ConsoleDriver {
 										newBrightBG = false;
 										newTextFG = 7;
 										newTextBG = 0;
-									} else if (ipart == 1) {
+									} else if (ipart == 1)
 										newBrightFG = true;
-									} else if (ipart == 5) {
+									else if (ipart == 5)
 										newBrightBG = true;
-									} else if (ipart >= 30 && ipart <= 37) {
+									else if (ipart >= 30 && ipart <= 37)
 										newTextFG = ipart - 30;
-									} else if (ipart >= 40 && ipart <= 47) {
+									else if (ipart >= 40 && ipart <= 47)
 										newTextBG = ipart - 40;
-									}
 								}
 								if (newBrightBG != this.brightBG || newTextBG != this.textBG) {
 									this.brightBG = newBrightBG;
 									this.textBG = newTextBG;
-									databuf.add(1,-4);
+									databuf.add(1, -4);
 								}
 								if (newBrightFG != this.brightFG || newTextFG != this.textFG) {
 									this.brightFG = newBrightFG;
 									this.textFG = newTextFG;
-									databuf.add(1,-5);
+									databuf.add(1, -5);
 								}
 								break;
 							}
@@ -385,7 +381,7 @@ public class ConsoleDriver {
 							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) this.Y, (double) this.W, (double) 1, " " });
 							break;
 						case -1001: // Cursor GET
-							Object[] response2 = machine.invoke(gpuADDR, "get", new Object[] {this.X, this.Y});
+							Object[] response2 = machine.invoke(gpuADDR, "get", new Object[] { this.X, this.Y });
 							this.cursorChar = (Character) response2[0];
 							this.cursorFG = (Integer) response2[2];
 							this.cursorBG = (Integer) response2[1];
@@ -416,9 +412,8 @@ public class ConsoleDriver {
 								dX = this.W;
 								if (dY > 1)
 									dY = dY - 1;
-								else {
+								else
 									dX = 1;
-								}
 							}
 							machine.invoke(gpuADDR, "set", new Object[] { (double) dX, (double) dY, " " });
 							this.X = dX;

@@ -38,14 +38,17 @@ public class Bank extends Device {
 		this.setMemsize(newsize);
 	}
 
+	@Override
 	public void write(int address, int data) throws MemoryAccessException {
 		this.mem.set((this.getBank() * this.getBankSize()) + address, data);
 	}
 
+	@Override
 	public int read(int address) throws MemoryAccessException {
 		return this.mem.get((this.getBank() * this.getBankSize()) + address);
 	}
 
+	@Override
 	public String toString() {
 		return "BankMemory: " + getMemoryRange().toString();
 	}

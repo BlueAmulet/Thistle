@@ -70,10 +70,12 @@ public class FifoRingBuffer<E> implements Iterable<E> {
 		return fifoBuffer.size();
 	}
 
+	@Override
 	public String toString() {
 		return "[FifoRingBuffer: size=" + fifoBuffer.size() + "]";
 	}
 
+	@Override
 	public Iterator<E> iterator() {
 		return fifoBuffer.iterator();
 	}

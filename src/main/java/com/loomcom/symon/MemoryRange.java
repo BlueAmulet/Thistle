@@ -84,6 +84,7 @@ public class MemoryRange implements Comparable<MemoryRange> {
 	}
 
 	// Implementation of Comparable interface
+	@Override
 	public int compareTo(MemoryRange other) {
 		if (other == null) {
 			throw new NullPointerException("Cannot compare to null.");
@@ -96,6 +97,7 @@ public class MemoryRange implements Comparable<MemoryRange> {
 		return thisStartAddr.compareTo(thatStartAddr);
 	}
 
+	@Override
 	public String toString() {
 		StringBuffer desc = new StringBuffer("@");
 		desc.append(String.format("0x%04x", startAddress));
