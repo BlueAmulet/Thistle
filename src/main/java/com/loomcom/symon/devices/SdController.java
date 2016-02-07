@@ -37,7 +37,6 @@ import com.loomcom.symon.exceptions.MemoryRangeException;
 /**
  * Emulation for the SD-card controller of the MULTICOMP system.
  * Neiter comlete nor correct.
- *
  */
 public class SdController extends Device {
 

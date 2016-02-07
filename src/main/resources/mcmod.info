@@ -1,14 +1,14 @@
 [
 {
-  "modid": "examplemod",
-  "name": "Example Mod",
-  "description": "Example placeholder mod.",
+  "modid": "ocsymon",
+  "name": "OCSymon6502",
+  "description": "6502 Processor Architecture for OpenComputers.",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",
   "updateUrl": "",
-  "authorList": ["ExampleDude"],
-  "credits": "The Forge and FML guys, for making this example",
+  "authorList": ["gamax92"],
+  "credits": "Seth J. Morabito for creating Symon",
   "logoFile": "",
   "screenshots": [],
   "dependencies": []

@@ -14,7 +14,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 @Mod(modid = OCSymon.MODID, name = OCSymon.NAME, version = OCSymon.VERSION, dependencies = "required-after:OpenComputers@[1.5.0,)")
 public class OCSymon {
 	public static final String MODID = "ocsymon";
-	public static final String NAME = "OC 6502 Symon";
+	public static final String NAME = "OCSymon6502";
 	public static final String VERSION = "1.0.2";
 
 	@Mod.Instance
