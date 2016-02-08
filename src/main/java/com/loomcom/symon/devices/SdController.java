@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Seth J. Morabito <web@loomcom.com>
+ * Copyright (c) 2016 Seth J. Morabito <web@loomcom.com>
  *                    Maik Merten <maikmerten@googlemail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -50,7 +50,6 @@ public class SdController extends Device {
 
 	private File sdImageFile;
 	private int lba0, lba1, lba2;
-	private int command;
 	private int position;
 	private Status status = Status.IDLE;
 
@@ -185,8 +184,7 @@ public class SdController extends Device {
 	}
 
 	private void writeCommand(int data) {
-		this.command = data;
-		switch (this.command) {
+		switch (data) {
 		case 0:
 			prepareRead();
 			return;

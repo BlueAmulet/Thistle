@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Seth J. Morabito <web@loomcom.com>
+ * Copyright (c) 2016 Seth J. Morabito <web@loomcom.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -69,10 +69,6 @@ public abstract class Device implements Comparable<Device> {
 		this.deviceChangeListeners = new HashSet<DeviceChangeListener>();
 	}
 
-	public Device(int startAddress, int endAddress) throws MemoryRangeException {
-		this(startAddress, endAddress, null);
-	}
-
 	/* Methods required to be implemented by inheriting classes. */
 	public abstract void write(int address, int data) throws MemoryAccessException;
 
@@ -118,8 +114,8 @@ public abstract class Device implements Comparable<Device> {
 	}
 
 	public void notifyListeners() {
-		for (DeviceChangeListener l : deviceChangeListeners) {
-			l.deviceStateChanged();
+		for (DeviceChangeListener listener : deviceChangeListeners) {
+			listener.deviceStateChanged();
 		}
 	}
 

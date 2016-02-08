@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Seth J. Morabito <web@loomcom.com>
+ * Copyright (c) 2016 Seth J. Morabito <web@loomcom.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -23,8 +23,11 @@
 
 package com.loomcom.symon;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.loomcom.symon.exceptions.MemoryAccessException;
-import com.loomcom.symon.util.HexUtil;
+import com.loomcom.symon.util.Utils;
 
 /**
  * This class provides a simulation of the MOS 6502 CPU's state machine.
@@ -32,6 +35,8 @@ import com.loomcom.symon.util.HexUtil;
  * and exposes some of the internal state for inspection and debugging.
  */
 public class Cpu implements InstructionTable {
+
+	private final static Logger logger = Logger.getLogger(Cpu.class.getName());
 
 	/* Process status register mnemonics */
 	public static final int P_CARRY = 0x01;
@@ -54,23 +59,13 @@ public class Cpu implements InstructionTable {
 	public static final int IRQ_VECTOR_H = 0xffff;
 
 	/* Simulated behavior */
-	private static CpuBehavior behavior;
+	private CpuBehavior behavior;
 
 	/* The Bus */
 	private Bus bus;
 
 	/* The CPU state */
 	private final CpuState state = new CpuState();
-
-	/* Scratch space for addressing mode and effective address
-	 * calculations */
-	private int irAddressMode; // Bits 3-5 of IR:  [ | | |X|X|X| | ]
-	private int irOpMode; // Bits 6-7 of IR:  [ | | | | | |X|X]
-	private int effectiveAddress;
-
-	/* Internal scratch space */
-	private int lo = 0, hi = 0; // Used in address calculation
-	private int tmp; // Temporary storage
 
 	/* start time of op execution, needed for speed simulation */
 	private long opBeginTime;
@@ -118,7 +113,7 @@ public class Cpu implements InstructionTable {
 		state.sp = 0xff;
 
 		// Set the PC to the address stored in the reset vector
-		state.pc = address(bus.read(RST_VECTOR_L), bus.read(RST_VECTOR_H));
+		state.pc = Utils.address(bus.read(RST_VECTOR_L), bus.read(RST_VECTOR_H));
 
 		// Clear instruction register.
 		state.ir = 0;
@@ -144,6 +139,8 @@ public class Cpu implements InstructionTable {
 		state.a = 0;
 		state.x = 0;
 		state.y = 0;
+
+		peekAhead();
 	}
 
 	public void step(int num) throws MemoryAccessException {
@@ -157,6 +154,7 @@ public class Cpu implements InstructionTable {
 	 */
 	public void step() throws MemoryAccessException {
 		opBeginTime = System.nanoTime();
+
 		// Store the address from which the IR was read, for debugging
 		state.lastPc = state.pc;
 
@@ -170,8 +168,8 @@ public class Cpu implements InstructionTable {
 
 		// Fetch memory location for this instruction.
 		state.ir = bus.read(state.pc);
-		irAddressMode = (state.ir >> 2) & 0x07;
-		irOpMode = state.ir & 0x03;
+		int irAddressMode = (state.ir >> 2) & 0x07; // Bits 3-5 of IR:  [ | | |X|X|X| | ]
+		int irOpMode = state.ir & 0x03; // Bits 6-7 of IR:  [ | | | | | |X|X]
 
 		incrementPC();
 
@@ -188,7 +186,8 @@ public class Cpu implements InstructionTable {
 		state.stepCounter++;
 
 		// Get the data from the effective address (if any)
-		effectiveAddress = 0;
+		int effectiveAddress = 0;
+		int tmp; // Temporary storage
 
 		switch (irOpMode) {
 		case 0:
@@ -202,7 +201,7 @@ public class Cpu implements InstructionTable {
 			case 2: // Accumulator - ignored
 				break;
 			case 3: // Absolute
-				effectiveAddress = address(state.args[0], state.args[1]);
+				effectiveAddress = Utils.address(state.args[0], state.args[1]);
 				break;
 			case 5: // Zero Page,X / Zero Page,Y
 				if (state.ir == 0x96 || state.ir == 0xb6) {
@@ -224,7 +223,7 @@ public class Cpu implements InstructionTable {
 			switch (irAddressMode) {
 			case 0: // (Zero Page,X)
 				tmp = (state.args[0] + state.x) & 0xff;
-				effectiveAddress = address(bus.read(tmp), bus.read(tmp + 1));
+				effectiveAddress = Utils.address(bus.read(tmp), bus.read(tmp + 1));
 				break;
 			case 1: // Zero Page
 				effectiveAddress = state.args[0];
@@ -233,10 +232,10 @@ public class Cpu implements InstructionTable {
 				effectiveAddress = -1;
 				break;
 			case 3: // Absolute
-				effectiveAddress = address(state.args[0], state.args[1]);
+				effectiveAddress = Utils.address(state.args[0], state.args[1]);
 				break;
 			case 4: // (Zero Page),Y
-				tmp = address(bus.read(state.args[0]), bus.read((state.args[0] + 1) & 0xff));
+				tmp = Utils.address(bus.read(state.args[0]), bus.read((state.args[0] + 1) & 0xff));
 				effectiveAddress = (tmp + state.y) & 0xffff;
 				break;
 			case 5: // Zero Page,X
@@ -276,7 +275,7 @@ public class Cpu implements InstructionTable {
 		case 0x20: // JSR - Jump to Subroutine - Implied
 			stackPush((state.pc - 1 >> 8) & 0xff); // PC high byte
 			stackPush(state.pc - 1 & 0xff); // PC low byte
-			state.pc = address(state.args[0], state.args[1]);
+			state.pc = Utils.address(state.args[0], state.args[1]);
 			break;
 		case 0x28: // PLP - Pull Processor Status - Implied
 			setProcessorStatus(stackPop());
@@ -291,9 +290,9 @@ public class Cpu implements InstructionTable {
 			break;
 		case 0x40: // RTI - Return from Interrupt - Implied
 			setProcessorStatus(stackPop());
-			lo = stackPop();
-			hi = stackPop();
-			setProgramCounter(address(lo, hi));
+			int lo = stackPop();
+			int hi = stackPop();
+			setProgramCounter(Utils.address(lo, hi));
 			break;
 		case 0x48: // PHA - Push Accumulator - Implied
 			stackPush(state.a);
@@ -309,7 +308,7 @@ public class Cpu implements InstructionTable {
 		case 0x60: // RTS - Return from Subroutine - Implied
 			lo = stackPop();
 			hi = stackPop();
-			setProgramCounter((address(lo, hi) + 1) & 0xffff);
+			setProgramCounter((Utils.address(lo, hi) + 1) & 0xffff);
 			break;
 		case 0x68: // PLA - Pull Accumulator - Implied
 			state.a = stackPop();
@@ -397,18 +396,18 @@ public class Cpu implements InstructionTable {
 
 		/** JMP *****************************************************************/
 		case 0x4c: // JMP - Absolute
-			state.pc = address(state.args[0], state.args[1]);
+			state.pc = Utils.address(state.args[0], state.args[1]);
 			break;
 		case 0x6c: // JMP - Indirect
-			lo = address(state.args[0], state.args[1]); // Address of low byte
+			lo = Utils.address(state.args[0], state.args[1]); // Address of low byte
 
 			if (state.args[0] == 0xff && (behavior == CpuBehavior.NMOS_WITH_INDIRECT_JMP_BUG || behavior == CpuBehavior.NMOS_WITH_ROR_BUG)) {
-				hi = address(0x00, state.args[1]);
+				hi = Utils.address(0x00, state.args[1]);
 			} else {
 				hi = lo + 1;
 			}
 
-			state.pc = address(bus.read(lo), bus.read(hi));
+			state.pc = Utils.address(bus.read(lo), bus.read(hi));
 			/* TODO: For accuracy, allow a flag to enable broken behavior of early 6502s:
 			 *
 			 * "An original 6502 has does not correctly fetch the target
@@ -706,6 +705,18 @@ public class Cpu implements InstructionTable {
 		}
 
 		delayLoop(state.ir);
+
+		// Peek ahead to the next insturction and arguments
+		peekAhead();
+	}
+
+	private void peekAhead() throws MemoryAccessException {
+		state.nextIr = bus.read(state.pc);
+		int nextInstSize = Cpu.instructionSizes[state.nextIr];
+		for (int i = 1; i < nextInstSize; i++) {
+			int nextRead = (state.pc + i) % bus.endAddress();
+			state.nextArgs[i - 1] = bus.read(nextRead);
+		}
 	}
 
 	private void handleIrq(int returnPc) throws MemoryAccessException {
@@ -734,7 +745,7 @@ public class Cpu implements InstructionTable {
 		setIrqDisableFlag();
 
 		// Load interrupt vector address into PC
-		state.pc = address(bus.read(vectorLow), bus.read(vectorHigh));
+		state.pc = Utils.address(bus.read(vectorLow), bus.read(vectorHigh));
 	}
 
 	/**
@@ -744,7 +755,7 @@ public class Cpu implements InstructionTable {
 	 *
 	 * @param acc     The current value of the accumulator
 	 * @param operand The operand
-	 * @return
+	 * @return The sum of the accumulator and the operand
 	 */
 	private int adc(int acc, int operand) {
 		int result = (operand & 0xff) + (acc & 0xff) + getCarryBit();
@@ -1094,6 +1105,14 @@ public class Cpu implements InstructionTable {
 
 	public void setProgramCounter(int addr) {
 		state.pc = addr;
+
+		// As a side-effect of setting the program counter,
+		// we want to peek ahead at the next state.
+		try {
+			peekAhead();
+		} catch (MemoryAccessException ex) {
+			logger.log(Level.SEVERE, "Could not peek ahead at next instruction state.");
+		}
 	}
 
 	public int getStackPointer() {
@@ -1149,23 +1168,23 @@ public class Cpu implements InstructionTable {
 	}
 
 	public String getAccumulatorStatus() {
-		return "$" + HexUtil.byteToHex(state.a);
+		return "$" + Utils.byteToHex(state.a);
 	}
 
 	public String getXRegisterStatus() {
-		return "$" + HexUtil.byteToHex(state.x);
+		return "$" + Utils.byteToHex(state.x);
 	}
 
 	public String getYRegisterStatus() {
-		return "$" + HexUtil.byteToHex(state.y);
+		return "$" + Utils.byteToHex(state.y);
 	}
 
 	public String getProgramCounterStatus() {
-		return "$" + HexUtil.wordToHex(state.pc);
+		return "$" + Utils.wordToHex(state.pc);
 	}
 
 	public String getStackPointerStatus() {
-		return "$" + HexUtil.byteToHex(state.sp);
+		return "$" + Utils.byteToHex(state.sp);
 	}
 
 	public int getProcessorStatus() {
@@ -1249,18 +1268,11 @@ public class Cpu implements InstructionTable {
 	}
 
 	/**
-	 * Given two bytes, return an address.
-	 */
-	int address(int lowByte, int hiByte) {
-		return ((hiByte << 8) | lowByte) & 0xffff;
-	}
-
-	/**
 	 * Given a hi byte and a low byte, return the Absolute,X
 	 * offset address.
 	 */
 	int xAddress(int lowByte, int hiByte) {
-		return (address(lowByte, hiByte) + state.x) & 0xffff;
+		return (Utils.address(lowByte, hiByte) + state.x) & 0xffff;
 	}
 
 	/**
@@ -1268,7 +1280,7 @@ public class Cpu implements InstructionTable {
 	 * offset address.
 	 */
 	int yAddress(int lowByte, int hiByte) {
-		return (address(lowByte, hiByte) + state.y) & 0xffff;
+		return (Utils.address(lowByte, hiByte) + state.y) & 0xffff;
 	}
 
 	/**
@@ -1310,222 +1322,80 @@ public class Cpu implements InstructionTable {
 	}
 
 	/**
-	 * A compact, struct-like representation of CPU state.
+	 * Return a formatted string representing the last instruction and
+	 * operands that were executed.
+	 *
+	 * @return A string representing the mnemonic and operands of the instruction
 	 */
-	public static class CpuState {
-		/**
-		 * Accumulator
-		 */
-		public int a;
-		/**
-		 * X index regsiter
-		 */
-		public int x;
-		/**
-		 * Y index register
-		 */
-		public int y;
-		/**
-		 * Stack Pointer
-		 */
-		public int sp;
-		/**
-		 * Program Counter
-		 */
-		public int pc;
-		/**
-		 * Instruction Register
-		 */
-		public int ir;
-		public int lastPc;
-		public int[] args = new int[2];
-		public int instSize;
-		public boolean opTrap;
-		public boolean irqAsserted;
-		public boolean nmiAsserted;
+	public static String disassembleOp(int opCode, int[] args) {
+		String mnemonic = opcodeNames[opCode];
 
-		/* Status Flag Register bits */
-		public boolean carryFlag;
-		public boolean negativeFlag;
-		public boolean zeroFlag;
-		public boolean irqDisableFlag;
-		public boolean decimalModeFlag;
-		public boolean breakFlag;
-		public boolean overflowFlag;
-		public long stepCounter = 0L;
-
-		/**
-		 * Create an empty CPU State.
-		 */
-		public CpuState() {
+		if (mnemonic == null) {
+			return "???";
 		}
 
-		/**
-		 * Snapshot a copy of the CpuState.
-		 *
-		 * (This is a copy constructor rather than an implementation of <code>Clonable</code>
-		 * based on Josh Bloch's recommendation)
-		 *
-		 * @param s The CpuState to copy.
-		 */
-		public CpuState(CpuState s) {
-			this.a = s.a;
-			this.x = s.x;
-			this.y = s.y;
-			this.sp = s.sp;
-			this.pc = s.pc;
-			this.ir = s.ir;
-			this.lastPc = s.lastPc;
-			this.args[0] = s.args[0];
-			this.args[1] = s.args[1];
-			this.instSize = s.instSize;
-			this.opTrap = s.opTrap;
-			this.irqAsserted = s.irqAsserted;
-			this.carryFlag = s.carryFlag;
-			this.negativeFlag = s.negativeFlag;
-			this.zeroFlag = s.zeroFlag;
-			this.irqDisableFlag = s.irqDisableFlag;
-			this.decimalModeFlag = s.decimalModeFlag;
-			this.breakFlag = s.breakFlag;
-			this.overflowFlag = s.overflowFlag;
-			this.stepCounter = s.stepCounter;
+		StringBuilder sb = new StringBuilder(mnemonic);
+
+		switch (instructionModes[opCode]) {
+		case ABS:
+			sb.append(" $").append(Utils.wordToHex(Utils.address(args[0], args[1])));
+			break;
+		case ABX:
+			sb.append(" $").append(Utils.wordToHex(Utils.address(args[0], args[1]))).append(",X");
+			break;
+		case ABY:
+			sb.append(" $").append(Utils.wordToHex(Utils.address(args[0], args[1]))).append(",Y");
+			break;
+		case IMM:
+			sb.append(" #$").append(Utils.byteToHex(args[0]));
+			break;
+		case IND:
+			sb.append(" ($").append(Utils.wordToHex(Utils.address(args[0], args[1]))).append(")");
+			break;
+		case XIN:
+			sb.append(" ($").append(Utils.byteToHex(args[0])).append(",X)");
+			break;
+		case INY:
+			sb.append(" ($").append(Utils.byteToHex(args[0])).append("),Y");
+			break;
+		case REL:
+		case ZPG:
+			sb.append(" $").append(Utils.byteToHex(args[0]));
+			break;
+		case ZPX:
+			sb.append(" $").append(Utils.byteToHex(args[0])).append(",X");
+			break;
+		case ZPY:
+			sb.append(" $").append(Utils.byteToHex(args[0])).append(",Y");
+			break;
 		}
 
-		/**
-		 * Returns a string formatted for the trace log.
-		 *
-		 * @return a string formatted for the trace log.
-		 */
-		public String toTraceEvent() {
-			String opcode = disassembleOp();
-			StringBuilder sb = new StringBuilder(getInstructionByteStatus());
-			sb.append("  ");
-			sb.append(String.format("%-14s", opcode));
-			sb.append("A:" + HexUtil.byteToHex(a) + " ");
-			sb.append("X:" + HexUtil.byteToHex(x) + " ");
-			sb.append("Y:" + HexUtil.byteToHex(y) + " ");
-			sb.append("F:" + HexUtil.byteToHex(getStatusFlag()) + " ");
-			sb.append("S:1" + HexUtil.byteToHex(sp) + " ");
-			sb.append(getProcessorStatusString() + "\n");
-			return sb.toString();
+		return sb.toString();
+	}
+
+	/**
+	 * Return a formatted string representing the next instruction and
+	 * operands to be executed.
+	 *
+	 * @return A string representing the mnemonic and operands of the instruction
+	 */
+	public String disassembleNextOp() {
+		return Cpu.disassembleOp(state.nextIr, state.nextArgs);
+	}
+
+	/**
+	 * @param address Address to disassemble
+	 * @return String containing the disassembled instruction and operands.
+	 */
+	public String disassembleOpAtAddress(int address) throws MemoryAccessException {
+		int opCode = bus.read(address);
+		int args[] = new int[2];
+		int size = Cpu.instructionSizes[opCode];
+		for (int i = 1; i < size; i++) {
+			int nextRead = (address + i) % bus.endAddress();
+			args[i - 1] = bus.read(nextRead);
 		}
 
-		/**
-		 * @returns The value of the Process Status Register, as a byte.
-		 */
-		public int getStatusFlag() {
-			int status = 0x20;
-			if (carryFlag) {
-				status |= P_CARRY;
-			}
-			if (zeroFlag) {
-				status |= P_ZERO;
-			}
-			if (irqDisableFlag) {
-				status |= P_IRQ_DISABLE;
-			}
-			if (decimalModeFlag) {
-				status |= P_DECIMAL;
-			}
-			if (breakFlag) {
-				status |= P_BREAK;
-			}
-			if (overflowFlag) {
-				status |= P_OVERFLOW;
-			}
-			if (negativeFlag) {
-				status |= P_NEGATIVE;
-			}
-			return status;
-		}
-
-		public String getInstructionByteStatus() {
-			switch (Cpu.instructionSizes[ir]) {
-			case 0:
-			case 1:
-				return HexUtil.wordToHex(lastPc) + "  " + HexUtil.byteToHex(ir) + "      ";
-			case 2:
-				return HexUtil.wordToHex(lastPc) + "  " + HexUtil.byteToHex(ir) + " " + HexUtil.byteToHex(args[0]) + "   ";
-			case 3:
-				return HexUtil.wordToHex(lastPc) + "  " + HexUtil.byteToHex(ir) + " " + HexUtil.byteToHex(args[0]) + " " + HexUtil.byteToHex(args[1]);
-			default:
-				return null;
-			}
-		}
-
-		/**
-		 * Given an opcode and its operands, return a formatted name.
-		 *
-		 * @return A string representing the mnemonic and operands of the instruction
-		 */
-		public String disassembleOp() {
-			String mnemonic = opcodeNames[ir];
-
-			if (mnemonic == null) {
-				return "???";
-			}
-
-			StringBuilder sb = new StringBuilder(mnemonic);
-
-			switch (instructionModes[ir]) {
-			case ABS:
-				sb.append(" $" + HexUtil.wordToHex(address(args[0], args[1])));
-				break;
-			case ABX:
-				sb.append(" $" + HexUtil.wordToHex(address(args[0], args[1])) + ",X");
-				break;
-			case ABY:
-				sb.append(" $" + HexUtil.wordToHex(address(args[0], args[1])) + ",Y");
-				break;
-			case IMM:
-				sb.append(" #$" + HexUtil.byteToHex(args[0]));
-				break;
-			case IND:
-				sb.append(" ($" + HexUtil.wordToHex(address(args[0], args[1])) + ")");
-				break;
-			case XIN:
-				sb.append(" ($" + HexUtil.byteToHex(args[0]) + ",X)");
-				break;
-			case INY:
-				sb.append(" ($" + HexUtil.byteToHex(args[0]) + "),Y");
-				break;
-			case REL:
-			case ZPG:
-				sb.append(" $" + HexUtil.byteToHex(args[0]));
-				break;
-			case ZPX:
-				sb.append(" $" + HexUtil.byteToHex(args[0]) + ",X");
-				break;
-			case ZPY:
-				sb.append(" $" + HexUtil.byteToHex(args[0]) + ",Y");
-				break;
-			}
-
-			return sb.toString();
-		}
-
-		/**
-		 * Given two bytes, return an address.
-		 */
-		private int address(int lowByte, int hiByte) {
-			return ((hiByte << 8) | lowByte) & 0xffff;
-		}
-
-		/**
-		 * @return A string representing the current status register state.
-		 */
-		public String getProcessorStatusString() {
-			StringBuilder sb = new StringBuilder("[");
-			sb.append(negativeFlag ? 'N' : '.'); // Bit 7
-			sb.append(overflowFlag ? 'V' : '.'); // Bit 6
-			sb.append("-"); // Bit 5 (always 1)
-			sb.append(breakFlag ? 'B' : '.'); // Bit 4
-			sb.append(decimalModeFlag ? 'D' : '.'); // Bit 3
-			sb.append(irqDisableFlag ? 'I' : '.'); // Bit 2
-			sb.append(zeroFlag ? 'Z' : '.'); // Bit 1
-			sb.append(carryFlag ? 'C' : '.'); // Bit 0
-			sb.append("]");
-			return sb.toString();
-		}
+		return disassembleOp(opCode, args);
 	}
 }

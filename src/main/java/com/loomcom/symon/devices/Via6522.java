@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Seth J. Morabito <web@loomcom.com>
+ * Copyright (c) 2016 Seth J. Morabito <web@loomcom.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -37,10 +37,6 @@ public class Via6522 extends Pia {
 	enum Register {
 		ORB, ORA, DDRB, DDRA, T1C_L, T1C_H, T1L_L, T1L_H, T2C_L, T2C_H, SR, ACR, PCR, IFR, IER, ORA_H
 	}
-
-	// Ports A and B
-	private char[] portData = { 0, 0 };
-	private char[] portDirections = { 0, 0 };
 
 	public Via6522(int address) throws MemoryRangeException {
 		super(address, address + VIA_SIZE - 1, "MOS 6522 VIA");

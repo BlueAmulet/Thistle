@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Seth J. Morabito <web@loomcom.com>
+ * Copyright (c) 2016 Seth J. Morabito <web@loomcom.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -102,7 +102,7 @@ public class Acia6551 extends Acia {
 	/**
 	 * Set the control register and associated state.
 	 *
-	 * @param data
+	 * @param data Data to write into the control register
 	 */
 	private void setControlRegister(int data) {
 		controlRegister = data;

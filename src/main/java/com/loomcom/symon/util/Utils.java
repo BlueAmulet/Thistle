@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Seth J. Morabito <web@loomcom.com>
+ * Copyright (c) 2016 Seth J. Morabito <web@loomcom.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -24,24 +24,9 @@
 package com.loomcom.symon.util;
 
 /**
- * Hex String Utilities.
- *
- * <p/>
- *
- * But why? Java, after all, has a number of ways to convert an integer into a hex string,
- * so it may look absurd to go to the trouble of writing yet another conversion! The answer is
- * performance.
- *
- * <p/>
- *
- * The most convenient way to get a formatted hex value from an integer is with the <code>String.format</code>
- * method, but this turns out to be extremely inefficient. Formatting a million integers
- * with <code>String.format</code> takes something like 1600ms. Formatting the same number of integers
- * with <code>HexUtil</code> takes only 160ms. This is on par with <code>Integer.toHexString</code>,
- * but also gives the desired padding.
- *
+ * Various Utilities
  */
-public class HexUtil {
+public class Utils {
 
 	static final String NON_PRINTABLE = ".";
 
@@ -51,6 +36,7 @@ public class HexUtil {
 
 	/**
 	 * Very fast 8-bit int to ASCII conversion.
+	 *
 	 * @param val The value of an ASCII character.
 	 * @return A string representing the ASCII character.
 	 */
@@ -79,9 +65,13 @@ public class HexUtil {
 	 * @return Four digit, zero padded hexadecimal string.
 	 */
 	public static String wordToHex(int val) {
-		StringBuilder sb = new StringBuilder(4);
-		sb.append(HEX_CONSTANTS[(val >> 8) & 0xff]);
-		sb.append(HEX_CONSTANTS[val & 0xff]);
-		return sb.toString();
+		return HEX_CONSTANTS[(val >> 8) & 0xff] + HEX_CONSTANTS[val & 0xff];
+	}
+
+	/**
+	 * Given two bytes, return an address.
+	 */
+	public static int address(int lowByte, int hiByte) {
+		return ((hiByte << 8) | lowByte) & 0xffff;
 	}
 }

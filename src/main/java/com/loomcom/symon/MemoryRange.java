@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Seth J. Morabito <web@loomcom.com>
+ * Copyright (c) 2016 Seth J. Morabito <web@loomcom.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -34,9 +34,13 @@ import com.loomcom.symon.exceptions.MemoryRangeException;
  */
 public class MemoryRange implements Comparable<MemoryRange> {
 
-	/** The starting address of the memory range. */
+	/**
+	 * The starting address of the memory range.
+	 */
 	public int startAddress;
-	/** The ending address of the memory range. */
+	/**
+	 * The ending address of the memory range.
+	 */
 	public int endAddress;
 
 	public MemoryRange(int startAddress, int endAddress) throws MemoryRangeException {
@@ -51,14 +55,14 @@ public class MemoryRange implements Comparable<MemoryRange> {
 	}
 
 	/**
-	 * @returns the starting address.
+	 * @return the starting address.
 	 */
 	public int startAddress() {
 		return startAddress;
 	}
 
 	/**
-	 * @returns the ending address.
+	 * @return the ending address.
 	 */
 	public int endAddress() {
 		return endAddress;
@@ -67,8 +71,8 @@ public class MemoryRange implements Comparable<MemoryRange> {
 	/**
 	 * Checks for address inclusion in the range.
 	 *
-	 * @returns true if the address is included within this range,
-	 *          false otherwise.
+	 * @return true if the address is included within this range,
+	 * false otherwise.
 	 */
 	public boolean includes(int address) {
 		return (address <= endAddress && address >= startAddress);
@@ -77,7 +81,7 @@ public class MemoryRange implements Comparable<MemoryRange> {
 	/**
 	 * Checks for overlapping memory ranges.
 	 *
-	 * @returns true if this range overlaps in any way with the other.
+	 * @return true if this range overlaps in any way with the other.
 	 */
 	public boolean overlaps(MemoryRange other) {
 		return (this.includes(other.startAddress()) || other.includes(this.startAddress()));
@@ -92,17 +96,13 @@ public class MemoryRange implements Comparable<MemoryRange> {
 		if (this == other) {
 			return 0;
 		}
-		Integer thisStartAddr = new Integer(this.startAddress());
-		Integer thatStartAddr = new Integer(other.startAddress());
+		Integer thisStartAddr = this.startAddress();
+		Integer thatStartAddr = other.startAddress();
 		return thisStartAddr.compareTo(thatStartAddr);
 	}
 
 	@Override
 	public String toString() {
-		StringBuffer desc = new StringBuffer("@");
-		desc.append(String.format("0x%04x", startAddress));
-		desc.append("-");
-		desc.append(String.format("0x%04x", endAddress));
-		return desc.toString();
+		return "@" + String.format("0x%04x", startAddress) + "-" + String.format("0x%04x", endAddress);
 	}
 }

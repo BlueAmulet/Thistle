@@ -60,8 +60,7 @@ public class Memory extends Device {
 	}
 
 	public static Memory makeRAM(int startAddress, int endAddress) throws MemoryRangeException {
-		Memory memory = new Memory(startAddress, endAddress, false);
-		return memory;
+		return new Memory(startAddress, endAddress, false);
 	}
 
 	@Override

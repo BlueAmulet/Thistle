@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Seth J. Morabito <web@loomcom.com>
+ * Copyright (c) 2016 Seth J. Morabito <web@loomcom.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -91,21 +91,24 @@ public class Bus {
 	/**
 	 * Add a device to the bus.
 	 *
-	 * @param device
-	 * @param priority
+	 * @param device Device to add
+	 * @param priority Bus prioirity.
 	 * @throws MemoryRangeException
 	 */
 	public void addDevice(Device device, int priority) throws MemoryRangeException {
 
 		MemoryRange range = device.getMemoryRange();
+
 		if (range.startAddress() < this.startAddress || range.startAddress() > this.endAddress) {
 			throw new MemoryRangeException("start address of device " + device.getName() + " does not fall within the address range of the bus");
 		}
+
 		if (range.endAddress() < this.startAddress || range.endAddress() > this.endAddress) {
 			throw new MemoryRangeException("end address of device " + device.getName() + " does not fall within the address range of the bus");
 		}
 
 		SortedSet<Device> deviceSet = deviceMap.get(priority);
+
 		if (deviceSet == null) {
 			deviceSet = new TreeSet<Device>();
 			deviceMap.put(priority, deviceSet);
@@ -119,7 +122,7 @@ public class Bus {
 	/**
 	 * Add a device to the bus. Throws a MemoryRangeException if the device overlaps with any others.
 	 *
-	 * @param device
+	 * @param device Device to add
 	 * @throws MemoryRangeException
 	 */
 	public void addDevice(Device device) throws MemoryRangeException {
@@ -129,7 +132,7 @@ public class Bus {
 	/**
 	 * Remove a device from the bus.
 	 *
-	 * @param device
+	 * @param device Device to remove
 	 */
 	public void removeDevice(Device device) {
 		for (SortedSet<Device> deviceSet : deviceMap.values()) {
