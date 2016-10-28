@@ -120,6 +120,10 @@ public class SymonArchitecture implements Architecture {
 	}
 
 	@Override
+	public void onSignal() {
+	}
+
+	@Override
 	public void onConnect() {
 		try {
 			PacketSender.sendSound(machine.host().world(), machine.host().xPosition(), machine.host().yPosition(), machine.host().zPosition(), ".");

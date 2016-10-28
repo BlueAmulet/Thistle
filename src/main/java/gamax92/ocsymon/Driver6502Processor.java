@@ -1,9 +1,9 @@
 package gamax92.ocsymon;
 
-import li.cil.oc.api.driver.EnvironmentHost;
 import li.cil.oc.api.driver.item.Processor;
 import li.cil.oc.api.driver.item.Slot;
 import li.cil.oc.api.machine.Architecture;
+import li.cil.oc.api.network.EnvironmentHost;
 import li.cil.oc.api.network.ManagedEnvironment;
 import li.cil.oc.api.prefab.DriverItem;
 import net.minecraft.item.ItemStack;
