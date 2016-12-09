@@ -4,6 +4,7 @@ import gamax92.ocsymon.devices.Bank;
 
 import java.util.ArrayList;
 
+import li.cil.oc.Settings;
 import li.cil.oc.api.Driver;
 import li.cil.oc.api.machine.Architecture;
 import li.cil.oc.api.machine.ExecutionResult;
@@ -37,17 +38,15 @@ public class SymonArchitecture implements Architecture {
 		return initialized;
 	}
 
-	// Sangar I hate you
-	private static int[] ramSizes = { 192, 256, 384, 512, 768, 1024 };
-
 	private static int calculateMemory(Iterable<ItemStack> components) {
 		int memory = 0;
-		for (ItemStack component : components)
+		for (ItemStack component : components) {
 			if (Driver.driverFor(component) instanceof li.cil.oc.api.driver.item.Memory) {
 				li.cil.oc.api.driver.item.Memory memdrv = (li.cil.oc.api.driver.item.Memory) Driver.driverFor(component);
-				memory += ramSizes[(int) (memdrv.amount(component) - 1)] * 1024;
+				memory += memdrv.amount(component) * 1024;
 			}
-		return memory;
+		}
+		return Math.min(Math.max(memory, 0), Settings.get().maxTotalRam());
 	}
 
 	@Override
@@ -55,7 +54,7 @@ public class SymonArchitecture implements Architecture {
 		int memory = calculateMemory(components);
 		if (vm != null) // OpenComputers, why are you calling this before initialize?
 			((SymonMachine) vm.simulator.machine).getBank().resize(memory);
-		return memory > 0;
+		return true;
 	}
 
 	@Override
