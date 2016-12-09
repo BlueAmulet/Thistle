@@ -704,7 +704,8 @@ public class Cpu implements InstructionTable {
 			break;
 		}
 
-		delayLoop(state.ir);
+		// This is a busy loop.
+		//delayLoop(state.ir);
 
 		// Peek ahead to the next insturction and arguments
 		peekAhead();
