@@ -35,6 +35,8 @@ import com.loomcom.symon.devices.Device;
 import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.exceptions.MemoryRangeException;
 
+import gamax92.ocsymon.SymonConfig;
+
 /**
  * The Bus ties the whole thing together, man.
  */
@@ -166,26 +168,36 @@ public class Bus {
 	}
 
 	public int read(int address) throws MemoryAccessException {
-		Device d = deviceAddressArray[address - this.startAddress];
-		if (d != null) {
-			MemoryRange range = d.getMemoryRange();
-			int devAddr = address - range.startAddress();
-			return d.read(devAddr) & 0xff;
+		try {
+			Device d = deviceAddressArray[address - this.startAddress];
+			if (d != null) {
+				MemoryRange range = d.getMemoryRange();
+				int devAddr = address - range.startAddress();
+				return d.read(devAddr) & 0xff;
+			}
+			throw new MemoryAccessException(String.format("Bus read failed. No device at address $%04X", address));
+		} catch (MemoryAccessException mae) {
+			if (SymonConfig.busError)
+				throw mae;
+			else
+				return 0;
 		}
-
-		throw new MemoryAccessException("Bus read failed. No device at address " + String.format("$%04X", address));
 	}
 
 	public void write(int address, int value) throws MemoryAccessException {
-		Device d = deviceAddressArray[address - this.startAddress];
-		if (d != null) {
-			MemoryRange range = d.getMemoryRange();
-			int devAddr = address - range.startAddress();
-			d.write(devAddr, value);
-			return;
+		try {
+			Device d = deviceAddressArray[address - this.startAddress];
+			if (d != null) {
+				MemoryRange range = d.getMemoryRange();
+				int devAddr = address - range.startAddress();
+				d.write(devAddr, value);
+				return;
+			}
+			throw new MemoryAccessException(String.format("Bus write failed. No device at address $%04X", address));
+		} catch (MemoryAccessException mae) {
+			if (SymonConfig.busError)
+				throw mae;
 		}
-
-		throw new MemoryAccessException("Bus write failed. No device at address " + String.format("$%04X", address));
 	}
 
 	public void assertIrq() {

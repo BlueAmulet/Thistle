@@ -8,6 +8,7 @@ import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.registry.GameRegistry;
 import li.cil.oc.Settings;
 import li.cil.oc.api.Machine;
+import net.minecraftforge.common.config.Configuration;
 
 @Mod(modid = OCSymon.MODID, name = OCSymon.NAME, version = OCSymon.VERSION, dependencies = "required-after:OpenComputers@[1.5.0,)")
 public class OCSymon {
@@ -19,11 +20,14 @@ public class OCSymon {
 	public static OCSymon instance;
 
 	public static Logger log;
+	private Configuration config;
 
 	@Mod.EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
 		log = event.getModLog();
+		config = new Configuration(event.getSuggestedConfigurationFile());
 
+		SymonConfig.loadConfig(config);
 		Machine.add(SymonArchitecture.class);
 	}
 
