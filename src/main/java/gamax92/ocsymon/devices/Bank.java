@@ -12,40 +12,50 @@ public class Bank extends Device {
 	private final static Logger logger = Logger.getLogger(Bank.class.getName());
 
 	private ArrayList<Integer> mem = new ArrayList<Integer>();
-	private int bank = 1;
+	private int bank = 0;
 	private int bankSize;
 	private int memsize = 0;
 
 	public Bank(int startAddress, int endAddress, int bankSize) throws MemoryRangeException {
 		super(startAddress, endAddress, "Switchable Memory");
-		this.setBankSize(bankSize);
+		setBankSize(bankSize);
 	}
 
 	public void init(int size) {
-		this.mem.clear();
+		mem.clear();
 		for (int i = 0; i < size; i++)
-			this.mem.add(0);
-		this.setMemsize(size);
+			mem.add(0);
+		assert size == mem.size();
+		memsize = size;
 	}
 
 	public void resize(int newsize) {
-		if (newsize > this.getMemsize())
-			for (int i = this.getMemsize(); i < newsize; i++)
-				this.mem.add(0);
-		else if (newsize < this.getMemsize())
-			for (int i = this.getMemsize(); i > newsize; i--)
-				this.mem.remove(i - 1);
-		this.setMemsize(newsize);
+		if (newsize > memsize)
+			for (int i = memsize; i < newsize; i++)
+				mem.add(0);
+		else if (newsize < memsize)
+			for (int i = memsize; i > newsize; i--)
+				mem.remove(i - 1);
+		assert newsize == mem.size();
+		memsize = newsize;
 	}
 
 	@Override
 	public void write(int address, int data) throws MemoryAccessException {
-		this.mem.set((this.getBank() * this.getBankSize()) + address, data);
+		int realAddress = (bank * bankSize) + address;
+		if (realAddress < memsize)
+			mem.set(realAddress, data);
+		else
+			throw new MemoryAccessException(String.format("Bus write failed. No banked memory at address $%04X, bank %d", address, bank));
 	}
 
 	@Override
 	public int read(int address) throws MemoryAccessException {
-		return this.mem.get((this.getBank() * this.getBankSize()) + address);
+		int realAddress = (bank * bankSize) + address;
+		if (realAddress < memsize)
+			return mem.get(realAddress);
+		else
+			throw new MemoryAccessException(String.format("Bus read failed. No banked memory at address $%04X, bank %d", address, bank));
 	}
 
 	@Override
@@ -61,23 +71,23 @@ public class Bank extends Device {
 		return bank;
 	}
 
-	public void setBank(int bank) {
-		this.bank = Math.min(this.memsize / this.bankSize, bank);
+	public void setBank(int newbank) {
+		bank = Math.max(Math.min((memsize / bankSize) - 1, newbank), 0);
 	}
 
 	public int getBankSize() {
 		return bankSize;
 	}
 
-	public void setBankSize(int bankSize) {
-		this.bankSize = bankSize;
+	public void setBankSize(int newSize) {
+		bankSize = newSize;
 	}
 
 	public int getMemsize() {
 		return memsize;
 	}
 
-	public void setMemsize(int memsize) {
-		this.memsize = memsize;
+	public void setMemsize(int size) {
+		memsize = size;
 	}
 }
