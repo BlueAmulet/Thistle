@@ -22,7 +22,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.loomcom.symon.machines;
+package gamax92.ocsymon;
 
 import gamax92.ocsymon.devices.Bank;
 import gamax92.ocsymon.devices.BankSwitcher;
@@ -39,6 +39,7 @@ import com.loomcom.symon.devices.Memory;
 import com.loomcom.symon.devices.Pia;
 import com.loomcom.symon.devices.Via6522;
 import com.loomcom.symon.exceptions.MemoryRangeException;
+import com.loomcom.symon.machines.Machine;
 
 public class SymonMachine implements Machine {
 

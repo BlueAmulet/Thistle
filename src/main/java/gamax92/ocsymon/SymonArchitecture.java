@@ -17,7 +17,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import com.loomcom.symon.Cpu;
 import com.loomcom.symon.devices.Acia;
 import com.loomcom.symon.devices.Memory;
-import com.loomcom.symon.machines.SymonMachine;
 
 @Architecture.Name("6502 Symon")
 public class SymonArchitecture implements Architecture {

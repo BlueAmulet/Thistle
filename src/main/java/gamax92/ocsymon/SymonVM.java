@@ -1,7 +1,6 @@
 package gamax92.ocsymon;
 
 import com.loomcom.symon.Simulator;
-import com.loomcom.symon.machines.SymonMachine;
 
 public class SymonVM {
 	Simulator simulator;
