@@ -6,11 +6,8 @@ import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.registry.GameRegistry;
+import li.cil.oc.api.Machine;
 
-/**
- * This mod demonstrates how to add item components, i.e. items that can be
- * placed in a computer and provide methods to it.
- */
 @Mod(modid = OCSymon.MODID, name = OCSymon.NAME, version = OCSymon.VERSION, dependencies = "required-after:OpenComputers@[1.5.0,)")
 public class OCSymon {
 	public static final String MODID = "ocsymon";
@@ -21,19 +18,11 @@ public class OCSymon {
 	public static OCSymon instance;
 
 	public static Logger log;
-	public static Item6502Processor cpu6502Processor;
-	private int masssoundCardID;
 
 	@Mod.EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
 		log = event.getModLog();
 
-		cpu6502Processor = new Item6502Processor();
-		GameRegistry.registerItem(cpu6502Processor, "cpu6502");
-	}
-
-	@Mod.EventHandler
-	public void init(FMLInitializationEvent e) {
-		li.cil.oc.api.Driver.add(new Driver6502Processor());
+		Machine.add(SymonArchitecture.class);
 	}
 }
