@@ -36,6 +36,7 @@ import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.exceptions.MemoryRangeException;
 
 import gamax92.ocsymon.SymonConfig;
+import gamax92.ocsymon.SymonMachine;
 
 /**
  * The Bus ties the whole thing together, man.
@@ -57,6 +58,8 @@ public class Bus {
 
 	// an array for quick lookup of adresses, brute-force style
 	private Device[] deviceAddressArray;
+
+	private SymonMachine machine;
 
 	public Bus(int size) {
 		this(0, size - 1);
@@ -251,5 +254,13 @@ public class Bus {
 		for (int d : program) {
 			write(address + i++, d);
 		}
+	}
+
+	public SymonMachine getMachine() {
+		return machine;
+	}
+
+	public void setMachine(SymonMachine machine) {
+		this.machine = machine;
 	}
 }

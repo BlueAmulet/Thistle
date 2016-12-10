@@ -60,7 +60,7 @@ public class SymonArchitecture implements Architecture {
 	public boolean initialize() {
 		// Set up new VM here
 		console = new ConsoleDriver(machine);
-		vm = new SymonVM();
+		vm = new SymonVM(this.machine);
 		vm.console = console;
 		vm.machine.getBank().init(calculateMemory(machine.host().internalComponents()));
 		initialized = true;

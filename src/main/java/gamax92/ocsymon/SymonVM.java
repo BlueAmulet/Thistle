@@ -5,15 +5,16 @@ import java.util.logging.Level;
 import com.loomcom.symon.devices.Acia;
 import com.loomcom.symon.devices.Memory;
 import com.loomcom.symon.exceptions.MemoryAccessException;
+import li.cil.oc.api.machine.Context;
 
 public class SymonVM {
 	// The simulated machine
 	public SymonMachine machine;
 
-	public SymonVM() {
+	public SymonVM(Context context) {
 		super();
 		try {
-			machine = new SymonMachine();
+			machine = new SymonMachine(context);
 			machine.getCpu().reset();
 		} catch (Exception e) {
 			OCSymon.log.warn("Failed to setup Symon", e);

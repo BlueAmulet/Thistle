@@ -27,6 +27,7 @@ package gamax92.ocsymon;
 import gamax92.ocsymon.devices.Bank;
 import gamax92.ocsymon.devices.BankSwitcher;
 import gamax92.ocsymon.devices.Signals;
+import li.cil.oc.api.machine.Context;
 
 import java.io.InputStream;
 import java.util.logging.Logger;
@@ -82,8 +83,10 @@ public class SymonMachine {
 	private final BankSwitcher bnkswch;
 	private final Signals sigdev;
 	private Memory rom;
+	private Context context;
 
-	public SymonMachine() throws Exception {
+	public SymonMachine(Context context) throws Exception {
+		this.context = context;
 		this.bus = new Bus(BUS_BOTTOM, BUS_TOP);
 		this.cpu = new Cpu();
 		this.ram = new Memory(MEMORY_BASE, MEMORY_SIZE, false);
@@ -93,6 +96,7 @@ public class SymonMachine {
 		this.bnkswch = new BankSwitcher(BNKSWCH_BASE, this.bank);
 		this.sigdev = new Signals(SIGDEV_BASE);
 
+		bus.setMachine(this);
 		bus.setCpu(cpu);
 		bus.addDevice(ram);
 		bus.addDevice(bank);
@@ -171,4 +175,7 @@ public class SymonMachine {
 		return "Symon";
 	}
 
+	public Context getContext() {
+		return context;
+	}
 }
