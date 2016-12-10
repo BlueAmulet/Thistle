@@ -143,7 +143,7 @@ public class Bus {
 		buildDeviceAddressArray();
 	}
 
-	public void addCpu(Cpu cpu) {
+	public void setCpu(Cpu cpu) {
 		this.cpu = cpu;
 		cpu.setBus(this);
 	}

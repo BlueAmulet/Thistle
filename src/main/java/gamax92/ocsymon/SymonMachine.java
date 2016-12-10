@@ -93,7 +93,7 @@ public class SymonMachine {
 		this.bnkswch = new BankSwitcher(BNKSWCH_BASE, this.bank);
 		this.sigdev = new Signals(SIGDEV_BASE);
 
-		bus.addCpu(cpu);
+		bus.setCpu(cpu);
 		bus.addDevice(ram);
 		bus.addDevice(bank);
 		bus.addDevice(pia);
