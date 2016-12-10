@@ -156,7 +156,40 @@ public interface InstructionTable {
 	/**
 	 * Instruction opcode names.
 	 */
-	String[] opcodeNames = { "BRK", "ORA", null, null, null, "ORA", "ASL", null, "PHP", "ORA", "ASL", null, null, "ORA", "ASL", null, "BPL", "ORA", null, null, null, "ORA", "ASL", null, "CLC", "ORA", null, null, null, "ORA", "ASL", null, "JSR", "AND", null, null, "BIT", "AND", "ROL", null, "PLP", "AND", "ROL", null, "BIT", "AND", "ROL", null, "BMI", "AND", null, null, null, "AND", "ROL", null, "SEC", "AND", null, null, null, "AND", "ROL", null, "RTI", "EOR", null, null, null, "EOR", "LSR", null, "PHA", "EOR", "LSR", null, "JMP", "EOR", "LSR", null, "BVC", "EOR", null, null, null, "EOR", "LSR", null, "CLI", "EOR", null, null, null, "EOR", "LSR", null, "RTS", "ADC", null, null, null, "ADC", "ROR", null, "PLA", "ADC", "ROR", null, "JMP", "ADC", "ROR", null, "BVS", "ADC", null, null, null, "ADC", "ROR", null, "SEI", "ADC", null, null, null, "ADC", "ROR", null, "BCS", "STA", null, null, "STY", "STA", "STX", null, "DEY", null, "TXA", null, "STY", "STA", "STX", null, "BCC", "STA", null, null, "STY", "STA", "STX", null, "TYA", "STA", "TXS", null, null, "STA", null, null, "LDY", "LDA", "LDX", null, "LDY", "LDA", "LDX", null, "TAY", "LDA", "TAX", null, "LDY", "LDA", "LDX", null, "BCS", "LDA", null, null, "LDY", "LDA", "LDX", null, "CLV", "LDA", "TSX", null, "LDY", "LDA", "LDX", null, "CPY", "CMP", null, null, "CPY", "CMP", "DEC", null, "INY", "CMP", "DEX", null, "CPY", "CMP", "DEC", null, "BNE", "CMP", null, null, null, "CMP", "DEC", null, "CLD", "CMP", null, null, null, "CMP", "DEC", null, "CPX", "SBC", null, null, "CPX", "SBC", "INC", null, "INX", "SBC", "NOP", null, "CPX", "SBC", "INC", null, "BEQ", "SBC", null, null, null, "SBC", "INC", null, "SED", "SBC", null, null, null, "SBC", "INC", null };
+	String[] opcodeNames = {
+		"BRK", "ORA",  null, null,  null, "ORA", "ASL", null,
+		"PHP", "ORA", "ASL", null,  null, "ORA", "ASL", null,
+		"BPL", "ORA",  null, null,  null, "ORA", "ASL", null,
+		"CLC", "ORA",  null, null,  null, "ORA", "ASL", null,
+		"JSR", "AND",  null, null, "BIT", "AND", "ROL", null,
+		"PLP", "AND", "ROL", null, "BIT", "AND", "ROL", null,
+		"BMI", "AND",  null, null,  null, "AND", "ROL", null,
+		"SEC", "AND",  null, null,  null, "AND", "ROL", null,
+		"RTI", "EOR",  null, null,  null, "EOR", "LSR", null,
+		"PHA", "EOR", "LSR", null, "JMP", "EOR", "LSR", null,
+		"BVC", "EOR",  null, null,  null, "EOR", "LSR", null,
+		"CLI", "EOR",  null, null,  null, "EOR", "LSR", null,
+		"RTS", "ADC",  null, null,  null, "ADC", "ROR", null,
+		"PLA", "ADC", "ROR", null, "JMP", "ADC", "ROR", null,
+		"BVS", "ADC",  null, null,  null, "ADC", "ROR", null,
+		"SEI", "ADC",  null, null,  null, "ADC", "ROR", null,
+		"BCS", "STA",  null, null, "STY", "STA", "STX", null,
+		"DEY",  null, "TXA", null, "STY", "STA", "STX", null,
+		"BCC", "STA",  null, null, "STY", "STA", "STX", null,
+		"TYA", "STA", "TXS", null,  null, "STA",  null, null,
+		"LDY", "LDA", "LDX", null, "LDY", "LDA", "LDX", null,
+		"TAY", "LDA", "TAX", null, "LDY", "LDA", "LDX", null,
+		"BCS", "LDA",  null, null, "LDY", "LDA", "LDX", null,
+		"CLV", "LDA", "TSX", null, "LDY", "LDA", "LDX", null,
+		"CPY", "CMP",  null, null, "CPY", "CMP", "DEC", null,
+		"INY", "CMP", "DEX", null, "CPY", "CMP", "DEC", null,
+		"BNE", "CMP",  null, null,  null, "CMP", "DEC", null,
+		"CLD", "CMP",  null, null,  null, "CMP", "DEC", null,
+		"CPX", "SBC",  null, null, "CPX", "SBC", "INC", null,
+		"INX", "SBC", "NOP", null, "CPX", "SBC", "INC", null,
+		"BEQ", "SBC",  null, null,  null, "SBC", "INC", null,
+		"SED", "SBC",  null, null,  null, "SBC", "INC", null
+	};
 
 	/**
 	 * Instruction addressing modes.
@@ -231,11 +264,45 @@ public interface InstructionTable {
 	/**
 	 * Size, in bytes, required for each instruction.
 	 */
-	int[] instructionSizes = { 1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 0, 3, 3, 0, 2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0, 3, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0, 1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0, 1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 0, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 0, 3, 0, 0, 2, 2, 2, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0 };
+	int[] instructionSizes = {
+		1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 0, 3, 3, 0,
+		2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
+		3, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
+		2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
+		1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
+		2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
+		1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
+		2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
+		2, 2, 0, 0, 2, 2, 2, 0, 1, 0, 1, 0, 3, 3, 3, 0,
+		2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 0, 3, 0, 0,
+		2, 2, 2, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
+		2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
+		2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
+		2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
+		2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
+		2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0
+	};
 
 	/**
 	 * Number of clock cycles required for each instruction
 	 */
-	int[] instructionClocks = { 7, 6, 0, 0, 0, 3, 5, 0, 3, 2, 2, 0, 0, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 6, 6, 0, 0, 3, 3, 5, 0, 4, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 6, 6, 0, 0, 0, 3, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 6, 6, 0, 0, 0, 3, 5, 0, 4, 2, 2, 0, 5, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 2, 6, 0, 0, 3, 3, 3, 0, 2, 0, 2, 0, 4, 4, 4, 0, 2, 6, 0, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0, 2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0, 2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0, 2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, 2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0 };
+	int[] instructionClocks = {
+		7, 6, 0, 0, 0, 3, 5, 0, 3, 2, 2, 0, 0, 4, 6, 0,
+		2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
+		6, 6, 0, 0, 3, 3, 5, 0, 4, 2, 2, 0, 4, 4, 6, 0,
+		2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
+		6, 6, 0, 0, 0, 3, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0,
+		2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
+		6, 6, 0, 0, 0, 3, 5, 0, 4, 2, 2, 0, 5, 4, 6, 0,
+		2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
+		2, 6, 0, 0, 3, 3, 3, 0, 2, 0, 2, 0, 4, 4, 4, 0,
+		2, 6, 0, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0,
+		2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0,
+		2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0,
+		2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0,
+		2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
+		2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0,
+		2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0
+	};
 
 }
