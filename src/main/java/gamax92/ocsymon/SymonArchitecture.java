@@ -60,7 +60,7 @@ public class SymonArchitecture implements Architecture {
 	public boolean initialize() {
 		// Set up new VM here
 		console = new ConsoleDriver(machine);
-		vm = new SymonVM(this.machine);
+		vm = new SymonVM(machine);
 		vm.console = console;
 		vm.machine.getBank().init(calculateMemory(machine.host().internalComponents()));
 		initialized = true;
@@ -183,7 +183,7 @@ public class SymonArchitecture implements Architecture {
 				almem.add(v);
 		}
 
-		this.console.load(nbt);
+		console.load(nbt);
 	}
 
 	// TODO: Needs more things
@@ -246,6 +246,6 @@ public class SymonArchitecture implements Architecture {
 			nbt.setTag("bank", bankTag);
 		}
 
-		this.console.save(nbt);
+		console.save(nbt);
 	}
 }

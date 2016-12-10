@@ -152,9 +152,8 @@ public class SymonMachine {
 	}
 
 	public void setRom(Memory rom) throws MemoryRangeException {
-		if (this.rom != null) {
+		if (this.rom != null)
 			bus.removeDevice(this.rom);
-		}
 		this.rom = rom;
 		bus.addDevice(this.rom);
 	}

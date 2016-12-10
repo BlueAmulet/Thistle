@@ -37,7 +37,7 @@ public class Signals extends Device {
 	}
 
 	public boolean queue(String name, Object[] args) {
-		if (this.signals.size() < 255) {
+		if (signals.size() < 255) {
 			List<Object> signal = new ArrayList<Object>();
 			signal.add(name);
 			int i = 1;
@@ -93,12 +93,12 @@ public class Signals extends Device {
 		case PARTSWCH_REG:
 			return signals.getFirst().size();
 		case PARTADDR_REG:
-			return this.part.length;
+			return part.length;
 		case PART_REG:
-			if (partPos >= this.part.length)
+			if (partPos >= part.length)
 				return 0;
 			else
-				return this.part[partPos++] & 0xFF;
+				return part[partPos++] & 0xFF;
 		default:
 			throw new MemoryAccessException("No register.");
 		}

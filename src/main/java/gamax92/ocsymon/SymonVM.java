@@ -1,7 +1,5 @@
 package gamax92.ocsymon;
 
-import java.util.logging.Level;
-
 import com.loomcom.symon.devices.Acia;
 import com.loomcom.symon.devices.Memory;
 import com.loomcom.symon.exceptions.MemoryAccessException;
@@ -35,9 +33,8 @@ public class SymonVM {
 			// If we're doing a cold reset, clear the memory.
 			if (isColdReset) {
 				Memory mem = machine.getRam();
-				if (mem != null) {
+				if (mem != null)
 					mem.fill(0);
-				}
 			}
 		} catch (MemoryAccessException ex) {
 			OCSymon.log.error("Exception during simulator reset: " + ex.getMessage());
@@ -53,15 +50,12 @@ public class SymonVM {
 		Acia mACIA = machine.getAcia();
 		// Read from the ACIA and immediately update the console if there's
 		// output ready.
-		if (mACIA != null && mACIA.hasTxChar()) {
-			// This is thread-safe
-			console.write(mACIA.txRead());
-		}
+		if (mACIA != null && mACIA.hasTxChar())
+			console.write(mACIA.txRead()); // This is thread-safe
 
 		// If a key has been pressed, fill the ACIA.
-		if (mACIA != null && console.hasInput() && !mACIA.hasRxChar()) {
+		if (mACIA != null && console.hasInput() && !mACIA.hasRxChar())
 			mACIA.rxWrite(console.read());
-		}
 	}
 
 	void run() throws Exception {
