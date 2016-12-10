@@ -16,8 +16,8 @@ public class Bank extends Device {
 	private int bankSize;
 	private int memsize = 0;
 
-	public Bank(int startAddress, int endAddress, int bankSize) throws MemoryRangeException {
-		super(startAddress, endAddress, "Switchable Memory");
+	public Bank(int startAddress, int bankSize) throws MemoryRangeException {
+		super(startAddress, bankSize, "Switchable Memory");
 		setBankSize(bankSize);
 	}
 

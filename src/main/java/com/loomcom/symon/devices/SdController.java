@@ -59,7 +59,7 @@ public class SdController extends Device {
 	private int writePosition = 0;
 
 	public SdController(int address) throws MemoryRangeException {
-		super(address, address + CONTROLLER_SIZE - 1, "SDCONTROLLER");
+		super(address, CONTROLLER_SIZE, "SDCONTROLLER");
 
 		sdImageFile = new File("sd.img");
 		if (!sdImageFile.exists()) {

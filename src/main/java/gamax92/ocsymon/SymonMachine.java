@@ -86,8 +86,8 @@ public class SymonMachine {
 	public SymonMachine() throws Exception {
 		this.bus = new Bus(BUS_BOTTOM, BUS_TOP);
 		this.cpu = new Cpu();
-		this.ram = new Memory(MEMORY_BASE, MEMORY_BASE + MEMORY_SIZE - 1, false);
-		this.bank = new Bank(BANK_BASE, BANK_BASE + BANK_SIZE - 1, BANK_SIZE);
+		this.ram = new Memory(MEMORY_BASE, MEMORY_SIZE, false);
+		this.bank = new Bank(BANK_BASE, BANK_SIZE);
 		this.pia = new Via6522(PIA_BASE);
 		this.acia = new Acia6551(ACIA_BASE);
 		this.bnkswch = new BankSwitcher(BNKSWCH_BASE, this.bank);
@@ -105,7 +105,7 @@ public class SymonMachine {
 		InputStream romImage = this.getClass().getResourceAsStream("/assets/ocsymon/roms/boot.rom");
 		if (romImage != null) {
 			logger.info("Loading ROM image from file: boot.rom");
-			this.rom = Memory.makeROM(ROM_BASE, ROM_BASE + ROM_SIZE - 1, romImage);
+			this.rom = Memory.makeROM(ROM_BASE, ROM_SIZE, romImage);
 		} else {
 			logger.info("Default ROM file \"boot.rom\" not found.");
 			throw new Exception("boot.rom not found");

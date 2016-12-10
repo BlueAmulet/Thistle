@@ -62,9 +62,9 @@ public abstract class Device implements Comparable<Device> {
 	 */
 	private Set<DeviceChangeListener> deviceChangeListeners;
 
-	public Device(int startAddress, int endAddress, String name) throws MemoryRangeException {
-		this.memoryRange = new MemoryRange(startAddress, endAddress);
-		this.size = endAddress - startAddress + 1;
+	public Device(int startAddress, int deviceLength, String name) throws MemoryRangeException {
+		this.memoryRange = new MemoryRange(startAddress, startAddress + deviceLength - 1);
+		this.size = deviceLength;
 		this.name = name;
 		this.deviceChangeListeners = new HashSet<DeviceChangeListener>();
 	}

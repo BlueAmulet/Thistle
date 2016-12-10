@@ -39,7 +39,7 @@ public class Via6522 extends Pia {
 	}
 
 	public Via6522(int address) throws MemoryRangeException {
-		super(address, address + VIA_SIZE - 1, "MOS 6522 VIA");
+		super(address, VIA_SIZE, "MOS 6522 VIA");
 	}
 
 	@Override

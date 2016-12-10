@@ -32,7 +32,7 @@ public class Signals extends Device {
 	private boolean haspart = false;
 
 	public Signals(int startAddress) throws MemoryRangeException {
-		super(startAddress, startAddress + SIGDEV_SIZE - 1, "OCSignals");
+		super(startAddress, SIGDEV_SIZE, "OCSignals");
 		this.baseAddress = startAddress;
 	}
 

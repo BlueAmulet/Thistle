@@ -15,7 +15,7 @@ public class BankSwitcher extends Device {
 	static final int STAT_REG = 1;
 
 	public BankSwitcher(int startAddress, Bank bankMemory) throws MemoryRangeException {
-		super(startAddress, startAddress + BNKSWCH_SIZE - 1, "Bank Switcher");
+		super(startAddress, BNKSWCH_SIZE, "Bank Switcher");
 		this.baseAddress = startAddress;
 		this.bankMemory = bankMemory;
 	}

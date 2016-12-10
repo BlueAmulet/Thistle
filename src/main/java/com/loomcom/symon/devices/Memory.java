@@ -42,10 +42,10 @@ public class Memory extends Device {
 	/* Initialize all locations to 0x00 (BRK) */
 	private static final int DEFAULT_FILL = 0x00;
 
-	public Memory(int startAddress, int endAddress, boolean readOnly) throws MemoryRangeException {
-		super(startAddress, endAddress, (readOnly ? "RO Memory" : "RW Memory"));
+	public Memory(int startAddress, int memoryLength, boolean readOnly) throws MemoryRangeException {
+		super(startAddress, memoryLength, (readOnly ? "RO Memory" : "RW Memory"));
 		this.readOnly = readOnly;
-		this.mem = new int[this.size];
+		this.mem = new int[memoryLength];
 		this.fill(DEFAULT_FILL);
 	}
 
@@ -53,14 +53,14 @@ public class Memory extends Device {
 		this(startAddress, endAddress, false);
 	}
 
-	public static Memory makeROM(int startAddress, int endAddress, InputStream is) throws MemoryRangeException, IOException {
-		Memory memory = new Memory(startAddress, endAddress, true);
+	public static Memory makeROM(int startAddress, int memoryLength, InputStream is) throws MemoryRangeException, IOException {
+		Memory memory = new Memory(startAddress, memoryLength, true);
 		memory.loadFromStream(is);
 		return memory;
 	}
 
-	public static Memory makeRAM(int startAddress, int endAddress) throws MemoryRangeException {
-		return new Memory(startAddress, endAddress, false);
+	public static Memory makeRAM(int startAddress, int memoryLength) throws MemoryRangeException {
+		return new Memory(startAddress, memoryLength, false);
 	}
 
 	@Override
