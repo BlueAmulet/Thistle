@@ -52,7 +52,7 @@ public class SymonArchitecture implements Architecture {
 	public boolean recomputeMemory(Iterable<ItemStack> components) {
 		int memory = calculateMemory(components);
 		if (vm != null) // OpenComputers, why are you calling this before initialize?
-			vm.simulator.machine.getBank().resize(memory);
+			vm.machine.getBank().resize(memory);
 		return true;
 	}
 
@@ -61,8 +61,8 @@ public class SymonArchitecture implements Architecture {
 		// Set up new VM here
 		console = new ConsoleDriver(machine);
 		vm = new SymonVM();
-		vm.simulator.console = console;
-		vm.simulator.machine.getBank().init(calculateMemory(machine.host().internalComponents()));
+		vm.console = console;
+		vm.machine.getBank().init(calculateMemory(machine.host().internalComponents()));
 		initialized = true;
 		return true;
 	}
@@ -91,7 +91,7 @@ public class SymonArchitecture implements Architecture {
 							for (char character : paste)
 								console.pushChar(character);
 						}
-						vm.simulator.machine.getSigDev().queue(signal.name(), signal.args());
+						vm.machine.getSigDev().queue(signal.name(), signal.args());
 					} else
 						break;
 				}
@@ -136,14 +136,14 @@ public class SymonArchitecture implements Architecture {
 
 		// Restore Acia
 		if (nbt.hasKey("acia")) {
-			Acia mACIA = vm.simulator.machine.getAcia();
+			Acia mACIA = vm.machine.getAcia();
 			NBTTagCompound aciaTag = nbt.getCompoundTag("acia");
 			mACIA.setBaudRate(aciaTag.getInteger("baudRate"));
 		}
 
 		// Restore Cpu
 		if (nbt.hasKey("cpu")) {
-			Cpu mCPU = vm.simulator.machine.getCpu();
+			Cpu mCPU = vm.machine.getCpu();
 			NBTTagCompound cpuTag = nbt.getCompoundTag("cpu");
 			mCPU.setAccumulator(cpuTag.getInteger("rA"));
 			mCPU.setProcessorStatus(cpuTag.getInteger("rP"));
@@ -155,7 +155,7 @@ public class SymonArchitecture implements Architecture {
 
 		// Restore Ram
 		if (nbt.hasKey("ram")) {
-			Memory mRAM = vm.simulator.machine.getRam();
+			Memory mRAM = vm.machine.getRam();
 			NBTTagCompound ramTag = nbt.getCompoundTag("ram");
 			int[] mem = ramTag.getIntArray("mem");
 			System.arraycopy(mem, 0, mRAM.getDmaAccess(), 0, mem.length);
@@ -163,7 +163,7 @@ public class SymonArchitecture implements Architecture {
 
 		// Restore Rom
 		if (nbt.hasKey("rom")) {
-			Memory mROM = vm.simulator.machine.getRom();
+			Memory mROM = vm.machine.getRom();
 			NBTTagCompound romTag = nbt.getCompoundTag("rom");
 			int[] mem = romTag.getIntArray("mem");
 			System.arraycopy(mem, 0, mROM.getDmaAccess(), 0, mem.length);
@@ -171,7 +171,7 @@ public class SymonArchitecture implements Architecture {
 
 		// Restore Banked Ram
 		if (nbt.hasKey("bank")) {
-			Bank mBANK = vm.simulator.machine.getBank();
+			Bank mBANK = vm.machine.getBank();
 			NBTTagCompound bankTag = nbt.getCompoundTag("bank");
 			mBANK.setBank(bankTag.getInteger("bank"));
 			mBANK.setBankSize(bankTag.getInteger("bankSize"));
@@ -192,7 +192,7 @@ public class SymonArchitecture implements Architecture {
 		// Persist Machine
 
 		// Persist Acia
-		Acia mACIA = vm.simulator.machine.getAcia();
+		Acia mACIA = vm.machine.getAcia();
 		if (mACIA != null) {
 			NBTTagCompound aciaTag = new NBTTagCompound();
 			aciaTag.setInteger("baudRate", mACIA.getBaudRate());
@@ -200,7 +200,7 @@ public class SymonArchitecture implements Architecture {
 		}
 
 		// Persist Cpu
-		Cpu mCPU = vm.simulator.machine.getCpu();
+		Cpu mCPU = vm.machine.getCpu();
 		if (mCPU != null) {
 			NBTTagCompound cpuTag = new NBTTagCompound();
 			cpuTag.setInteger("rA", mCPU.getAccumulator());
@@ -213,7 +213,7 @@ public class SymonArchitecture implements Architecture {
 		}
 
 		// Persist Ram
-		Memory mRAM = vm.simulator.machine.getRam();
+		Memory mRAM = vm.machine.getRam();
 		if (mRAM != null) {
 			NBTTagCompound ramTag = new NBTTagCompound();
 			int[] mem = mRAM.getDmaAccess();
@@ -222,7 +222,7 @@ public class SymonArchitecture implements Architecture {
 		}
 
 		// Persist Rom
-		Memory mROM = vm.simulator.machine.getRom();
+		Memory mROM = vm.machine.getRom();
 		if (mROM != null) {
 			NBTTagCompound romTag = new NBTTagCompound();
 			int[] mem = mROM.getDmaAccess();
@@ -231,7 +231,7 @@ public class SymonArchitecture implements Architecture {
 		}
 
 		// Persist Banked Ram
-		Bank mBANK = vm.simulator.machine.getBank();
+		Bank mBANK = vm.machine.getBank();
 		if (mBANK != null) {
 			NBTTagCompound bankTag = new NBTTagCompound();
 			bankTag.setInteger("bank", mBANK.getBank());
