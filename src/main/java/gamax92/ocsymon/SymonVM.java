@@ -8,7 +8,7 @@ public class SymonVM {
 	public SymonVM() {
 		super();
 		try {
-			simulator = new Simulator(SymonMachine.class);
+			simulator = new Simulator();
 			simulator.machine.getCpu().reset();
 		} catch (Exception e) {
 			OCSymon.log.warn("Failed to setup Symon", e);

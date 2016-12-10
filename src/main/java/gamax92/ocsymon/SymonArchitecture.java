@@ -52,7 +52,7 @@ public class SymonArchitecture implements Architecture {
 	public boolean recomputeMemory(Iterable<ItemStack> components) {
 		int memory = calculateMemory(components);
 		if (vm != null) // OpenComputers, why are you calling this before initialize?
-			((SymonMachine) vm.simulator.machine).getBank().resize(memory);
+			vm.simulator.machine.getBank().resize(memory);
 		return true;
 	}
 
@@ -62,7 +62,7 @@ public class SymonArchitecture implements Architecture {
 		console = new ConsoleDriver(machine);
 		vm = new SymonVM();
 		vm.simulator.console = console;
-		((SymonMachine) vm.simulator.machine).getBank().init(calculateMemory(machine.host().internalComponents()));
+		vm.simulator.machine.getBank().init(calculateMemory(machine.host().internalComponents()));
 		initialized = true;
 		return true;
 	}
@@ -91,7 +91,7 @@ public class SymonArchitecture implements Architecture {
 							for (char character : paste)
 								console.pushChar(character);
 						}
-						((SymonMachine) vm.simulator.machine).getSigDev().queue(signal.name(), signal.args());
+						vm.simulator.machine.getSigDev().queue(signal.name(), signal.args());
 					} else
 						break;
 				}
@@ -171,7 +171,7 @@ public class SymonArchitecture implements Architecture {
 
 		// Restore Banked Ram
 		if (nbt.hasKey("bank")) {
-			Bank mBANK = ((SymonMachine) vm.simulator.machine).getBank();
+			Bank mBANK = vm.simulator.machine.getBank();
 			NBTTagCompound bankTag = nbt.getCompoundTag("bank");
 			mBANK.setBank(bankTag.getInteger("bank"));
 			mBANK.setBankSize(bankTag.getInteger("bankSize"));
@@ -231,7 +231,7 @@ public class SymonArchitecture implements Architecture {
 		}
 
 		// Persist Banked Ram
-		Bank mBANK = ((SymonMachine) vm.simulator.machine).getBank();
+		Bank mBANK = vm.simulator.machine.getBank();
 		if (mBANK != null) {
 			NBTTagCompound bankTag = new NBTTagCompound();
 			bankTag.setInteger("bank", mBANK.getBank());

@@ -39,9 +39,8 @@ import com.loomcom.symon.devices.Memory;
 import com.loomcom.symon.devices.Pia;
 import com.loomcom.symon.devices.Via6522;
 import com.loomcom.symon.exceptions.MemoryRangeException;
-import com.loomcom.symon.machines.Machine;
 
-public class SymonMachine implements Machine {
+public class SymonMachine {
 
 	private final static Logger logger = Logger.getLogger(SymonMachine.class.getName());
 
@@ -116,22 +115,18 @@ public class SymonMachine implements Machine {
 
 	}
 
-	@Override
 	public Bus getBus() {
 		return bus;
 	}
 
-	@Override
 	public Cpu getCpu() {
 		return cpu;
 	}
 
-	@Override
 	public Memory getRam() {
 		return ram;
 	}
 
-	@Override
 	public Acia getAcia() {
 		return acia;
 	}
@@ -144,17 +139,14 @@ public class SymonMachine implements Machine {
 		return sigdev;
 	}
 
-	@Override
 	public Pia getPia() {
 		return pia;
 	}
 
-	@Override
 	public Memory getRom() {
 		return rom;
 	}
 
-	@Override
 	public void setRom(Memory rom) throws MemoryRangeException {
 		if (this.rom != null) {
 			bus.removeDevice(this.rom);
@@ -163,22 +155,18 @@ public class SymonMachine implements Machine {
 		bus.addDevice(this.rom);
 	}
 
-	@Override
 	public int getRomBase() {
 		return ROM_BASE;
 	}
 
-	@Override
 	public int getRomSize() {
 		return ROM_SIZE;
 	}
 
-	@Override
 	public int getMemorySize() {
 		return MEMORY_SIZE;
 	}
 
-	@Override
 	public String getName() {
 		return "Symon";
 	}

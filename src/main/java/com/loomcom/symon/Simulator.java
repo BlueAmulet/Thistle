@@ -24,6 +24,7 @@
 package com.loomcom.symon;
 
 import gamax92.ocsymon.ConsoleDriver;
+import gamax92.ocsymon.SymonMachine;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,7 +32,6 @@ import java.util.logging.Logger;
 import com.loomcom.symon.devices.Acia;
 import com.loomcom.symon.devices.Memory;
 import com.loomcom.symon.exceptions.MemoryAccessException;
-import com.loomcom.symon.machines.Machine;
 
 /**
  * Symon Simulator Interface and Control.
@@ -46,13 +46,13 @@ public class Simulator {
 	private final static Logger logger = Logger.getLogger(Simulator.class.getName());
 
 	// The simulated machine
-	public Machine machine;
+	public SymonMachine machine;
 
 	// The console
 	public ConsoleDriver console;
 
-	public Simulator(Class machineClass) throws Exception {
-		this.machine = (Machine) machineClass.getConstructors()[0].newInstance();
+	public Simulator() throws Exception {
+		this.machine = new SymonMachine();
 	}
 
 	/*
