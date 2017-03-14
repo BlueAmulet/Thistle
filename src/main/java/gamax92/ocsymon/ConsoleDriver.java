@@ -150,6 +150,18 @@ public class ConsoleDriver {
 			databuf.add(character);
 	}
 
+	private int parseCode(String ansiCode) {
+		return ansiCode.length() > 0 ? Integer.parseInt(ansiCode) : 1;
+	}
+
+	private int clampW(int X) {
+		return Math.max(Math.min(X, W), 1);
+	}
+
+	private int clampH(int Y) {
+		return Math.max(Math.min(Y, H), 1);
+	}
+
 	// TODO: Combine multiple characters in one "set"
 	public void flush() {
 		if (canWrite) {
@@ -171,48 +183,27 @@ public class ConsoleDriver {
 							String[] ansiParts = this.ansiCode.toString().split(";");
 							switch (character) {
 							case 'A':
-								if (ansiCode.length() > 0)
-									Y = Math.max(Y - Integer.parseInt(ansiCode), 1);
-								else
-									Y = Math.max(Y - 1, 1);
+								Y = Math.max(Y - parseCode(ansiCode), 1);
 								break;
 							case 'B':
-								if (ansiCode.length() > 0)
-									Y = Math.min(Y + Integer.parseInt(ansiCode), H);
-								else
-									Y = Math.min(Y + 1, H);
+								Y = Math.min(Y + parseCode(ansiCode), H);
 								break;
 							case 'C':
-								if (ansiCode.length() > 0)
-									X = Math.min(X + Integer.parseInt(ansiCode), W);
-								else
-									X = Math.min(X + 1, W);
+								X = Math.min(X + parseCode(ansiCode), W);
 								break;
 							case 'D':
-								if (ansiCode.length() > 0)
-									X = Math.max(X - Integer.parseInt(ansiCode), 1);
-								else
-									X = Math.max(X - 1, 1);
+								X = Math.max(X - parseCode(ansiCode), 1);
 								break;
 							case 'E':
-								if (ansiCode.length() > 0)
-									Y = Math.min(Y + Integer.parseInt(ansiCode), H);
-								else
-									Y = Math.min(Y + 1, H);
+								Y = Math.min(Y + parseCode(ansiCode), H);
 								X = 1;
 								break;
 							case 'F':
-								if (ansiCode.length() > 0)
-									Y = Math.max(Y - Integer.parseInt(ansiCode), 1);
-								else
-									Y = Math.max(Y - 1, 1);
+								Y = Math.max(Y - parseCode(ansiCode), 1);
 								X = 1;
 								break;
 							case 'G':
-								if (ansiCode.length() > 0)
-									X = Math.min(Integer.parseInt(ansiCode), W);
-								else
-									X = 1;
+								X = clampW(parseCode(ansiCode));
 								break;
 							case 'H':
 								if (ansiParts.length > 2) {
@@ -221,9 +212,9 @@ public class ConsoleDriver {
 								X = 1;
 								Y = 1;
 								if (ansiParts.length >= 1)
-									Y = Math.max(Math.min(Integer.parseInt(ansiParts[0]), H), 1);
+									Y = clampH(Integer.parseInt(ansiParts[0]));
 								if (ansiParts.length == 2)
-									X = Math.max(Math.min(Integer.parseInt(ansiParts[1]), W), 1);
+									X = clampW(Integer.parseInt(ansiParts[1]));
 								break;
 							case 'J':
 								if (ansiCode.length() == 0 || ansiCode.equals("0")) {
@@ -246,40 +237,22 @@ public class ConsoleDriver {
 									databuf.add(1, -504);
 								break;
 							case 'L':
-								if (ansiCode.length() > 0)
-									; // TODO: Insert ????? lines
-								else
-									; // TODO: Insert one line
+								// TODO: Insert n lines
 								break;
 							case 'M':
-								if (ansiCode.length() > 0)
-									; // TODO: Delete ????? lines
-								else
-									; // TODO: Delete one line
+								// TODO: Delete n lines
 								break;
 							case 'P':
-								if (ansiCode.length() > 0)
-									; // TODO: Shift characters past cursor left ????? (Delete)
-								else
-									; // TODO: Shift characters past cursor left 1 (Delete)
+								// TODO: Shift characters past cursor left n (Delete)
 								break;
 							case 'S':
-								if (ansiCode.length() > 0)
-									; // TODO: Scroll display up ????? lines
-								else
-									; // TODO: Scroll display up 1 line
+								// TODO: Scroll display up n lines
 								break;
 							case 'T':
-								if (ansiCode.length() > 0)
-									; // TODO: Scroll display down ????? lines
-								else
-									; // TODO: Scroll display down 1 line
+								// TODO: Scroll display down n lines
 								break;
 							case 'X':
-								if (ansiCode.length() > 0)
-									; // TODO: Set ????? characters including cursor to space (Erase)
-								else
-									; // TODO: Set cursor to space
+								// TODO: Set n characters including cursor to space (Erase)
 								break;
 							case 'm':
 								boolean newBrightFG = this.brightFG;
