@@ -131,11 +131,11 @@ public class ConsoleDriver {
 		for (int v : this.fifo)
 			fifo[i++] = v;
 		consoleTag.setIntArray("fifo", fifo);
-		int[] databuf = new int[this.fifo.size()];
+		int[] databuf = new int[this.databuf.size()];
 		i = 0;
 		for (int v : this.databuf)
 			databuf[i++] = v;
-		consoleTag.setIntArray("databuf", databuf);
+		consoleTag.setIntArray("data", databuf);
 		nbt.setTag("console", consoleTag);
 	}
 
@@ -180,13 +180,13 @@ public class ConsoleDriver {
 								if (ansiCode.length() > 0)
 									Y = Math.min(Y + Integer.parseInt(ansiCode), H);
 								else
-									Y = Math.min(Y + 1, 1);
+									Y = Math.min(Y + 1, H);
 								break;
 							case 'C':
 								if (ansiCode.length() > 0)
 									X = Math.min(X + Integer.parseInt(ansiCode), W);
 								else
-									X = Math.min(X + 1, 1);
+									X = Math.min(X + 1, W);
 								break;
 							case 'D':
 								if (ansiCode.length() > 0)
@@ -198,7 +198,7 @@ public class ConsoleDriver {
 								if (ansiCode.length() > 0)
 									Y = Math.min(Y + Integer.parseInt(ansiCode), H);
 								else
-									Y = Math.min(Y + 1, 1);
+									Y = Math.min(Y + 1, H);
 								X = 1;
 								break;
 							case 'F':
@@ -215,13 +215,15 @@ public class ConsoleDriver {
 									X = 1;
 								break;
 							case 'H':
-								if (ansiCode.length() == 0) {
-									X = 1;
-									Y = 1;
-								} else if (ansiParts.length == 2) {
-									X = Math.max(Math.min(Integer.parseInt(ansiParts[0]), W), 1);
-									Y = Math.max(Math.min(Integer.parseInt(ansiParts[1]), H), 1);
+								if (ansiParts.length > 2) {
+									break;
 								}
+								X = 1;
+								Y = 1;
+								if (ansiParts.length >= 1)
+									Y = Math.max(Math.min(Integer.parseInt(ansiParts[0]), H), 1);
+								if (ansiParts.length == 2)
+									X = Math.max(Math.min(Integer.parseInt(ansiParts[1]), W), 1);
 								break;
 							case 'J':
 								if (ansiCode.length() == 0 || ansiCode.equals("0")) {
