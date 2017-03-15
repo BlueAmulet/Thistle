@@ -9,7 +9,7 @@ import li.cil.oc.Settings;
 import li.cil.oc.api.Machine;
 import net.minecraftforge.common.config.Configuration;
 
-@Mod(modid = OCSymon.MODID, name = OCSymon.NAME, version = OCSymon.VERSION, dependencies = "required-after:OpenComputers@[1.5.0,)")
+@Mod(modid = OCSymon.MODID, name = OCSymon.NAME, version = OCSymon.VERSION, dependencies = "required-after:OpenComputers@[1.6.0,)")
 public class OCSymon {
 	public static final String MODID = "ocsymon";
 	public static final String NAME = "OCSymon6502";
