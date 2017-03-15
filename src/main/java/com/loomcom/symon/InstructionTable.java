@@ -66,88 +66,29 @@ public interface InstructionTable {
 	 * Enumeration of Addressing Modes.
 	 */
 	enum Mode {
-		ACC {
-			public String toString() {
-				return "Accumulator";
-			}
-		},
+		ACC("Accumulator"),
+		ABS("Absolute"),
+		ABX("Absolute, X-indexed"),
+		ABY("Absolute, Y-indexed"),
+		IMM("Immediate"),
+		IMP("Implied"),
+		IND("Indirect"),
+		XIN("X-indexed Indirect"),
+		INY("Indirect, Y-indexed"),
+		REL("Relative"),
+		ZPG("Zeropage"),
+		ZPX("Zeropage, X-indexed"),
+		ZPY("Zeropage, Y-indexed");
 
-		ABS {
-			public String toString() {
-				return "Absolute";
-			}
-		},
+		private final String text;
 
-		ABX {
-			public String toString() {
-				return "Absolute, X-indexed";
-			}
-		},
+		private Mode(final String text) {
+			this.text = text;
+		}
 
-		ABY {
-			public String toString() {
-				return "Absolute, Y-indexed";
-			}
-		},
-
-		IMM {
-			public String toString() {
-				return "Immediate";
-			}
-		},
-
-		IMP {
-			public String toString() {
-				return "Implied";
-			}
-		},
-
-		IND {
-			public String toString() {
-				return "Indirect";
-			}
-		},
-
-		XIN {
-			public String toString() {
-				return "X-indexed Indirect";
-			}
-		},
-
-		INY {
-			public String toString() {
-				return "Indirect, Y-indexed";
-			}
-		},
-
-		REL {
-			public String toString() {
-				return "Relative";
-			}
-		},
-
-		ZPG {
-			public String toString() {
-				return "Zeropage";
-			}
-		},
-
-		ZPX {
-			public String toString() {
-				return "Zeropage, X-indexed";
-			}
-		},
-
-		ZPY {
-			public String toString() {
-				return "Zeropage, Y-indexed";
-			}
-		},
-
-		NUL {
-			public String toString() {
-				return "NULL";
-			}
+		@Override
+		public String toString() {
+			return text;
 		}
 	}
 
@@ -157,152 +98,120 @@ public interface InstructionTable {
 	 * Instruction opcode names.
 	 */
 	String[] opcodeNames = {
-		"BRK", "ORA",  null, null,  null, "ORA", "ASL", null,
-		"PHP", "ORA", "ASL", null,  null, "ORA", "ASL", null,
-		"BPL", "ORA",  null, null,  null, "ORA", "ASL", null,
-		"CLC", "ORA",  null, null,  null, "ORA", "ASL", null,
-		"JSR", "AND",  null, null, "BIT", "AND", "ROL", null,
-		"PLP", "AND", "ROL", null, "BIT", "AND", "ROL", null,
-		"BMI", "AND",  null, null,  null, "AND", "ROL", null,
-		"SEC", "AND",  null, null,  null, "AND", "ROL", null,
-		"RTI", "EOR",  null, null,  null, "EOR", "LSR", null,
-		"PHA", "EOR", "LSR", null, "JMP", "EOR", "LSR", null,
-		"BVC", "EOR",  null, null,  null, "EOR", "LSR", null,
-		"CLI", "EOR",  null, null,  null, "EOR", "LSR", null,
-		"RTS", "ADC",  null, null,  null, "ADC", "ROR", null,
-		"PLA", "ADC", "ROR", null, "JMP", "ADC", "ROR", null,
-		"BVS", "ADC",  null, null,  null, "ADC", "ROR", null,
-		"SEI", "ADC",  null, null,  null, "ADC", "ROR", null,
-		"BCS", "STA",  null, null, "STY", "STA", "STX", null,
-		"DEY",  null, "TXA", null, "STY", "STA", "STX", null,
-		"BCC", "STA",  null, null, "STY", "STA", "STX", null,
-		"TYA", "STA", "TXS", null,  null, "STA",  null, null,
-		"LDY", "LDA", "LDX", null, "LDY", "LDA", "LDX", null,
-		"TAY", "LDA", "TAX", null, "LDY", "LDA", "LDX", null,
-		"BCS", "LDA",  null, null, "LDY", "LDA", "LDX", null,
-		"CLV", "LDA", "TSX", null, "LDY", "LDA", "LDX", null,
-		"CPY", "CMP",  null, null, "CPY", "CMP", "DEC", null,
-		"INY", "CMP", "DEX", null, "CPY", "CMP", "DEC", null,
-		"BNE", "CMP",  null, null,  null, "CMP", "DEC", null,
-		"CLD", "CMP",  null, null,  null, "CMP", "DEC", null,
-		"CPX", "SBC",  null, null, "CPX", "SBC", "INC", null,
-		"INX", "SBC", "NOP", null, "CPX", "SBC", "INC", null,
-		"BEQ", "SBC",  null, null,  null, "SBC", "INC", null,
-		"SED", "SBC",  null, null,  null, "SBC", "INC", null
+		"BRK", "ORA", "KIL", "SLO", "DOP", "ORA", "ASL", "SLO",
+		"PHP", "ORA", "ASL", "ANC", "TOP", "ORA", "ASL", "SLO",
+		"BPL", "ORA", "KIL", "SLO", "DOP", "ORA", "ASL", "SLO",
+		"CLC", "ORA", "NOP", "SLO", "TOP", "ORA", "ASL", "SLO",
+		"JSR", "AND", "KIL", "RLA", "BIT", "AND", "ROL", "RLA",
+		"PLP", "AND", "ROL", "ANC", "BIT", "AND", "ROL", "RLA",
+		"BMI", "AND", "KIL", "RLA", "DOP", "AND", "ROL", "RLA",
+		"SEC", "AND", "NOP", "RLA", "TOP", "AND", "ROL", "RLA",
+		"RTI", "EOR", "KIL", "SRE", "DOP", "EOR", "LSR", "SRE",
+		"PHA", "EOR", "LSR", "ALR", "JMP", "EOR", "LSR", "SRE",
+		"BVC", "EOR", "KIL", "SRE", "DOP", "EOR", "LSR", "SRE",
+		"CLI", "EOR", "NOP", "SRE", "TOP", "EOR", "LSR", "SRE",
+		"RTS", "ADC", "KIL", "RRA", "DOP", "ADC", "ROR", "RRA",
+		"PLA", "ADC", "ROR", "ARR", "JMP", "ADC", "ROR", "RRA",
+		"BVS", "ADC", "KIL", "RRA", "DOP", "ADC", "ROR", "RRA",
+		"SEI", "ADC", "NOP", "RRA", "TOP", "ADC", "ROR", "RRA",
+		"DOP", "STA", "DOP", "SAX", "STY", "STA", "STX", "SAX",
+		"DEY", "DOP", "TXA", "XAA", "STY", "STA", "STX", "SAX",
+		"BCC", "STA", "KIL", "AXA", "STY", "STA", "STX", "SAX",
+		"TYA", "STA", "TXS", "TAS", "SAY", "STA", "XAS", "AXA",
+		"LDY", "LDA", "LDX", "LAX", "LDY", "LDA", "LDX", "LAX",
+		"TAY", "LDA", "TAX", "OAL", "LDY", "LDA", "LDX", "LAX",
+		"BCS", "LDA", "KIL", "LAX", "LDY", "LDA", "LDX", "LAX",
+		"CLV", "LDA", "TSX", "LAS", "LDY", "LDA", "LDX", "LAX",
+		"CPY", "CMP", "DOP", "DCP", "CPY", "CMP", "DEC", "DCP",
+		"INY", "CMP", "DEX", "AXS", "CPY", "CMP", "DEC", "DCP",
+		"BNE", "CMP", "KIL", "DCP", "DOP", "CMP", "DEC", "DCP",
+		"CLD", "CMP", "NOP", "DCP", "TOP", "CMP", "DEC", "DCP",
+		"CPX", "SBC", "DOP", "ISB", "CPX", "SBC", "INC", "ISB",
+		"INX", "SBC", "NOP", "SBC", "CPX", "SBC", "INC", "ISB",
+		"BEQ", "SBC", "KIL", "ISB", "DOP", "SBC", "INC", "ISB",
+		"SED", "SBC", "NOP", "ISB", "TOP", "SBC", "INC", "ISB"
 	};
 
 	/**
 	 * Instruction addressing modes.
 	 */
 	Mode[] instructionModes = {
-		Mode.IMP, Mode.XIN, Mode.NUL, Mode.NUL, // 0x00-0x03
-		Mode.NUL, Mode.ZPG, Mode.ZPG, Mode.NUL, // 0x04-0x07
-		Mode.IMP, Mode.IMM, Mode.ACC, Mode.NUL, // 0x08-0x0b
-		Mode.NUL, Mode.ABS, Mode.ABS, Mode.NUL, // 0x0c-0x0f
-		Mode.REL, Mode.INY, Mode.NUL, Mode.NUL, // 0x10-0x13
-		Mode.NUL, Mode.ZPX, Mode.ZPX, Mode.NUL, // 0x14-0x17
-		Mode.IMP, Mode.ABY, Mode.NUL, Mode.NUL, // 0x18-0x1b
-		Mode.NUL, Mode.ABX, Mode.ABX, Mode.NUL, // 0x1c-0x1f
-		Mode.ABS, Mode.XIN, Mode.NUL, Mode.NUL, // 0x20-0x23
-		Mode.ZPG, Mode.ZPG, Mode.ZPG, Mode.NUL, // 0x24-0x27
-		Mode.IMP, Mode.IMM, Mode.ACC, Mode.NUL, // 0x28-0x2b
-		Mode.ABS, Mode.ABS, Mode.ABS, Mode.NUL, // 0x2c-0x2f
-		Mode.REL, Mode.INY, Mode.NUL, Mode.NUL, // 0x30-0x33
-		Mode.NUL, Mode.ZPX, Mode.ZPX, Mode.NUL, // 0x34-0x37
-		Mode.IMP, Mode.ABY, Mode.NUL, Mode.NUL, // 0x38-0x3b
-		Mode.NUL, Mode.ABX, Mode.ABX, Mode.NUL, // 0x3c-0x3f
-		Mode.IMP, Mode.XIN, Mode.NUL, Mode.NUL, // 0x40-0x43
-		Mode.NUL, Mode.ZPG, Mode.ZPG, Mode.NUL, // 0x44-0x47
-		Mode.IMP, Mode.IMM, Mode.ACC, Mode.NUL, // 0x48-0x4b
-		Mode.ABS, Mode.ABS, Mode.ABS, Mode.NUL, // 0x4c-0x4f
-		Mode.REL, Mode.INY, Mode.NUL, Mode.NUL, // 0x50-0x53
-		Mode.NUL, Mode.ZPX, Mode.ZPX, Mode.NUL, // 0x54-0x57
-		Mode.IMP, Mode.ABY, Mode.NUL, Mode.NUL, // 0x58-0x5b
-		Mode.NUL, Mode.ABX, Mode.ABX, Mode.NUL, // 0x5c-0x5f
-		Mode.IMP, Mode.XIN, Mode.NUL, Mode.NUL, // 0x60-0x63
-		Mode.NUL, Mode.ZPG, Mode.ZPG, Mode.NUL, // 0x64-0x67
-		Mode.IMP, Mode.IMM, Mode.ACC, Mode.NUL, // 0x68-0x6b
-		Mode.IND, Mode.ABS, Mode.ABS, Mode.NUL, // 0x6c-0x6f
-		Mode.REL, Mode.INY, Mode.NUL, Mode.NUL, // 0x70-0x73
-		Mode.NUL, Mode.ZPX, Mode.ZPX, Mode.NUL, // 0x74-0x77
-		Mode.IMP, Mode.ABY, Mode.NUL, Mode.NUL, // 0x78-0x7b
-		Mode.NUL, Mode.ABX, Mode.ABX, Mode.NUL, // 0x7c-0x7f
-		Mode.REL, Mode.XIN, Mode.NUL, Mode.NUL, // 0x80-0x83
-		Mode.ZPG, Mode.ZPG, Mode.ZPG, Mode.NUL, // 0x84-0x87
-		Mode.IMP, Mode.NUL, Mode.IMP, Mode.NUL, // 0x88-0x8b
-		Mode.ABS, Mode.ABS, Mode.ABS, Mode.NUL, // 0x8c-0x8f
-		Mode.REL, Mode.INY, Mode.NUL, Mode.NUL, // 0x90-0x93
-		Mode.ZPX, Mode.ZPX, Mode.ZPY, Mode.NUL, // 0x94-0x97
-		Mode.IMP, Mode.ABY, Mode.IMP, Mode.NUL, // 0x98-0x9b
-		Mode.NUL, Mode.ABX, Mode.NUL, Mode.NUL, // 0x9c-0x9f
-		Mode.IMM, Mode.XIN, Mode.IMM, Mode.NUL, // 0xa0-0xa3
-		Mode.ZPG, Mode.ZPG, Mode.ZPG, Mode.NUL, // 0xa4-0xa7
-		Mode.IMP, Mode.IMM, Mode.IMP, Mode.NUL, // 0xa8-0xab
-		Mode.ABS, Mode.ABS, Mode.ABS, Mode.NUL, // 0xac-0xaf
-		Mode.REL, Mode.INY, Mode.NUL, Mode.NUL, // 0xb0-0xb3
-		Mode.ZPX, Mode.ZPX, Mode.ZPY, Mode.NUL, // 0xb4-0xb7
-		Mode.IMP, Mode.ABY, Mode.IMP, Mode.NUL, // 0xb8-0xbb
-		Mode.ABX, Mode.ABX, Mode.ABY, Mode.NUL, // 0xbc-0xbf
-		Mode.IMM, Mode.XIN, Mode.NUL, Mode.NUL, // 0xc0-0xc3
-		Mode.ZPG, Mode.ZPG, Mode.ZPG, Mode.NUL, // 0xc4-0xc7
-		Mode.IMP, Mode.IMM, Mode.IMP, Mode.NUL, // 0xc8-0xcb
-		Mode.ABS, Mode.ABS, Mode.ABS, Mode.NUL, // 0xcc-0xcf
-		Mode.REL, Mode.INY, Mode.NUL, Mode.NUL, // 0xd0-0xd3
-		Mode.NUL, Mode.ZPX, Mode.ZPX, Mode.NUL, // 0xd4-0xd7
-		Mode.IMP, Mode.ABY, Mode.NUL, Mode.NUL, // 0xd8-0xdb
-		Mode.NUL, Mode.ABX, Mode.ABX, Mode.NUL, // 0xdc-0xdf
-		Mode.IMM, Mode.XIN, Mode.NUL, Mode.NUL, // 0xe0-0xe3
-		Mode.ZPG, Mode.ZPG, Mode.ZPG, Mode.NUL, // 0xe4-0xe7
-		Mode.IMP, Mode.IMM, Mode.IMP, Mode.NUL, // 0xe8-0xeb
-		Mode.ABS, Mode.ABS, Mode.ABS, Mode.NUL, // 0xec-0xef
-		Mode.REL, Mode.INY, Mode.NUL, Mode.NUL, // 0xf0-0xf3
-		Mode.NUL, Mode.ZPX, Mode.ZPX, Mode.NUL, // 0xf4-0xf7
-		Mode.IMP, Mode.ABY, Mode.NUL, Mode.NUL, // 0xf8-0xfb
-		Mode.NUL, Mode.ABX, Mode.ABX, Mode.NUL  // 0xfc-0xff
+		Mode.IMP,Mode.XIN,Mode.IMP,Mode.XIN,Mode.ZPG,Mode.ZPG,Mode.ZPG,Mode.ZPG, // 0x00-0x07
+		Mode.IMP,Mode.IMM,Mode.ACC,Mode.IMM,Mode.ABS,Mode.ABS,Mode.ABS,Mode.ABS, // 0x08-0x0f
+		Mode.REL,Mode.INY,Mode.IMP,Mode.INY,Mode.ZPX,Mode.ZPX,Mode.ZPX,Mode.ZPX, // 0x10-0x17
+		Mode.IMP,Mode.ABY,Mode.IMP,Mode.ABY,Mode.ABX,Mode.ABX,Mode.ABX,Mode.ABX, // 0x18-0x1f
+		Mode.ABS,Mode.XIN,Mode.IMP,Mode.XIN,Mode.ZPG,Mode.ZPG,Mode.ZPG,Mode.ZPG, // 0x20-0x27
+		Mode.IMP,Mode.IMM,Mode.ACC,Mode.IMM,Mode.ABS,Mode.ABS,Mode.ABS,Mode.ABS, // 0x28-0x2f
+		Mode.REL,Mode.INY,Mode.IMP,Mode.INY,Mode.ZPX,Mode.ZPX,Mode.ZPX,Mode.ZPX, // 0x30-0x37
+		Mode.IMP,Mode.ABY,Mode.IMP,Mode.ABY,Mode.ABX,Mode.ABX,Mode.ABX,Mode.ABX, // 0x38-0x3f
+		Mode.IMP,Mode.XIN,Mode.IMP,Mode.XIN,Mode.ZPG,Mode.ZPG,Mode.ZPG,Mode.ZPG, // 0x40-0x47
+		Mode.IMP,Mode.IMM,Mode.ACC,Mode.IMM,Mode.ABS,Mode.ABS,Mode.ABS,Mode.ABS, // 0x48-0x4f
+		Mode.REL,Mode.INY,Mode.IMP,Mode.INY,Mode.ZPX,Mode.ZPX,Mode.ZPX,Mode.ZPX, // 0x50-0x57
+		Mode.IMP,Mode.ABY,Mode.IMP,Mode.ABY,Mode.ABX,Mode.ABX,Mode.ABX,Mode.ABX, // 0x58-0x5f
+		Mode.IMP,Mode.XIN,Mode.IMP,Mode.XIN,Mode.ZPG,Mode.ZPG,Mode.ZPG,Mode.ZPG, // 0x60-0x67
+		Mode.IMP,Mode.IMM,Mode.ACC,Mode.IMM,Mode.IND,Mode.ABS,Mode.ABS,Mode.ABS, // 0x68-0x6f
+		Mode.REL,Mode.INY,Mode.IMP,Mode.INY,Mode.ZPX,Mode.ZPX,Mode.ZPX,Mode.ZPX, // 0x70-0x77
+		Mode.IMP,Mode.ABY,Mode.IMP,Mode.ABY,Mode.ABX,Mode.ABX,Mode.ABX,Mode.ABX, // 0x78-0x7f
+		Mode.IMM,Mode.XIN,Mode.IMM,Mode.XIN,Mode.ZPG,Mode.ZPG,Mode.ZPG,Mode.ZPG, // 0x80-0x87
+		Mode.IMP,Mode.IMM,Mode.IMP,Mode.IMM,Mode.ABS,Mode.ABS,Mode.ABS,Mode.ABS, // 0x88-0x8f
+		Mode.REL,Mode.INY,Mode.IMP,Mode.INY,Mode.ZPX,Mode.ZPX,Mode.ZPY,Mode.ZPY, // 0x90-0x97
+		Mode.IMP,Mode.ABY,Mode.IMP,Mode.ABY,Mode.ABX,Mode.ABX,Mode.ABY,Mode.ABY, // 0x98-0x9f
+		Mode.IMM,Mode.XIN,Mode.IMM,Mode.XIN,Mode.ZPG,Mode.ZPG,Mode.ZPG,Mode.ZPG, // 0xa0-0xa7
+		Mode.IMP,Mode.IMM,Mode.IMP,Mode.IMM,Mode.ABS,Mode.ABS,Mode.ABS,Mode.ABS, // 0xa8-0xaf
+		Mode.REL,Mode.INY,Mode.IMP,Mode.INY,Mode.ZPX,Mode.ZPX,Mode.ZPY,Mode.ZPY, // 0xb0-0xb7
+		Mode.IMP,Mode.ABY,Mode.IMP,Mode.ABY,Mode.ABX,Mode.ABX,Mode.ABY,Mode.ABY, // 0xb8-0xbf
+		Mode.IMM,Mode.XIN,Mode.IMM,Mode.XIN,Mode.ZPG,Mode.ZPG,Mode.ZPG,Mode.ZPG, // 0xc0-0xc7
+		Mode.IMP,Mode.IMM,Mode.IMP,Mode.IMM,Mode.ABS,Mode.ABS,Mode.ABS,Mode.ABS, // 0xc8-0xcf
+		Mode.REL,Mode.INY,Mode.IMP,Mode.INY,Mode.ZPX,Mode.ZPX,Mode.ZPX,Mode.ZPX, // 0xd0-0xd7
+		Mode.IMP,Mode.ABY,Mode.IMP,Mode.ABY,Mode.ABX,Mode.ABX,Mode.ABX,Mode.ABX, // 0xd8-0xdf
+		Mode.IMM,Mode.XIN,Mode.IMM,Mode.XIN,Mode.ZPG,Mode.ZPG,Mode.ZPG,Mode.ZPG, // 0xe0-0xe7
+		Mode.IMP,Mode.IMM,Mode.IMP,Mode.IMM,Mode.ABS,Mode.ABS,Mode.ABS,Mode.ABS, // 0xe8-0xef
+		Mode.REL,Mode.INY,Mode.IMP,Mode.INY,Mode.ZPX,Mode.ZPX,Mode.ZPX,Mode.ZPX, // 0xf0-0xf7
+		Mode.IMP,Mode.ABY,Mode.IMP,Mode.ABY,Mode.ABX,Mode.ABX,Mode.ABX,Mode.ABX, // 0xf8-0xff
 	};
 
 	/**
 	 * Size, in bytes, required for each instruction.
 	 */
 	int[] instructionSizes = {
-		1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 0, 3, 3, 0,
-		2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
-		3, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-		2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
-		1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-		2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
-		1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-		2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
-		2, 2, 0, 0, 2, 2, 2, 0, 1, 0, 1, 0, 3, 3, 3, 0,
-		2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 0, 3, 0, 0,
-		2, 2, 2, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-		2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-		2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-		2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
-		2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-		2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0
+		1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+		2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+		3, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+		2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+		1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+		2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+		1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+		2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+		2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+		2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+		2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+		2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+		2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+		2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+		2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+		2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3
 	};
 
 	/**
 	 * Number of clock cycles required for each instruction
 	 */
 	int[] instructionClocks = {
-		7, 6, 0, 0, 0, 3, 5, 0, 3, 2, 2, 0, 0, 4, 6, 0,
-		2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
-		6, 6, 0, 0, 3, 3, 5, 0, 4, 2, 2, 0, 4, 4, 6, 0,
-		2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
-		6, 6, 0, 0, 0, 3, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0,
-		2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
-		6, 6, 0, 0, 0, 3, 5, 0, 4, 2, 2, 0, 5, 4, 6, 0,
-		2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
-		2, 6, 0, 0, 3, 3, 3, 0, 2, 0, 2, 0, 4, 4, 4, 0,
-		2, 6, 0, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0,
-		2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0,
-		2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0,
-		2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0,
-		2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
-		2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0,
-		2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0
+		7, 6, 0, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6,
+		2, 5, 0, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+		6, 6, 0, 8, 3, 3, 5, 5, 4, 2, 2, 2, 4, 4, 6, 6,
+		2, 5, 0, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+		6, 6, 0, 8, 3, 3, 5, 5, 3, 2, 2, 2, 3, 4, 6, 6,
+		2, 5, 0, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+		6, 6, 0, 8, 3, 3, 5, 5, 4, 2, 2, 2, 5, 4, 6, 6,
+		2, 5, 0, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+		2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4,
+		2, 6, 0, 6, 4, 4, 4, 4, 2, 5, 2, 5, 5, 5, 5, 5,
+		2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4,
+		2, 5, 0, 5, 4, 4, 4, 4, 2, 4, 2, 4, 4, 4, 4, 4,
+		2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6,
+		2, 5, 0, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+		2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6,
+		2, 5, 0, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7
 	};
 
 }
