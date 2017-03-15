@@ -55,9 +55,6 @@ public class Cpu implements InstructionTable {
 	public static final int IRQ_VECTOR_L = 0xfffe;
 	public static final int IRQ_VECTOR_H = 0xffff;
 
-	/* Simulated behavior */
-	private CpuBehavior behavior;
-
 	/* The Bus */
 	private Bus bus;
 
@@ -66,17 +63,6 @@ public class Cpu implements InstructionTable {
 
 	/* CPU Cycles available */
 	private int cycles = 0;
-
-	/**
-	 * Construct a new CPU.
-	 */
-	public Cpu() {
-		this(CpuBehavior.NMOS_WITH_INDIRECT_JMP_BUG);
-	}
-
-	public Cpu(CpuBehavior behavior) {
-		this.behavior = behavior;
-	}
 
 	/**
 	 * Set the bus reference for this CPU.
@@ -90,14 +76,6 @@ public class Cpu implements InstructionTable {
 	 */
 	public Bus getBus() {
 		return bus;
-	}
-
-	public void setBehavior(CpuBehavior behavior) {
-		this.behavior = behavior;
-	}
-
-	public CpuBehavior getBehavior() {
-		return behavior;
 	}
 
 	/**
@@ -406,24 +384,13 @@ public class Cpu implements InstructionTable {
 		case 0x6c: // JMP - Indirect
 			lo = Utils.address(state.args[0], state.args[1]); // Address of low byte
 
-			if (state.args[0] == 0xff && (behavior == CpuBehavior.NMOS_WITH_INDIRECT_JMP_BUG || behavior == CpuBehavior.NMOS_WITH_ROR_BUG)) {
+			if (state.args[0] == 0xff) {
 				hi = Utils.address(0x00, state.args[1]);
 			} else {
 				hi = lo + 1;
 			}
 
 			state.pc = Utils.address(bus.read(lo), bus.read(hi));
-			/* TODO: For accuracy, allow a flag to enable broken behavior of early 6502s:
-			 *
-			 * "An original 6502 has does not correctly fetch the target
-			 * address if the indirect vector falls on a page boundary
-			 * (e.g. $xxFF where xx is and value from $00 to $FF). In this
-			 * case fetches the LSB from $xxFF as expected but takes the MSB
-			 * from $xx00. This is fixed in some later chips like the 65SC02
-			 * so for compatibility always ensure the indirect vector is not
-			 * at the end of the page."
-			 * (http://www.obelisk.demon.co.uk/6502/reference.html#JMP)
-			 */
 			break;
 
 		/** ORA - Logical Inclusive Or ******************************************/
