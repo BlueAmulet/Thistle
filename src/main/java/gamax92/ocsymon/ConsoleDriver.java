@@ -99,6 +99,10 @@ public class ConsoleDriver {
 			this.brightBG = consoleTag.getBoolean("brightBG");
 			this.textFG = consoleTag.getInteger("textFG");
 			this.textBG = consoleTag.getInteger("textBG");
+			this.ansiDetect = consoleTag.getBoolean("ansiDetect");
+			this.parseANSI = consoleTag.getBoolean("parseANSI");
+			this.ansiCode.setLength(0);
+			this.ansiCode.append(consoleTag.getString("ansiCode"));
 			int[] fifo = consoleTag.getIntArray("fifo");
 			this.fifo.clear();
 			for (int v : fifo)
@@ -126,6 +130,9 @@ public class ConsoleDriver {
 		consoleTag.setBoolean("brightBG", this.brightBG);
 		consoleTag.setInteger("textFG", this.textFG);
 		consoleTag.setInteger("textBG", this.textBG);
+		consoleTag.setBoolean("ansiDetect", this.ansiDetect);
+		consoleTag.setBoolean("parseANSI", this.parseANSI);
+		consoleTag.setString("ansiCode", this.ansiCode.toString());
 		int[] fifo = new int[this.fifo.size()];
 		int i = 0;
 		for (int v : this.fifo)
