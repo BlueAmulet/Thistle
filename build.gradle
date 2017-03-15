@@ -17,9 +17,9 @@ buildscript {
 
 apply plugin: 'forge'
 
-version = "1.7.10-1.0.2"
-group = "gamax92.ocsymon"
-archivesBaseName = "OCSymon"
+version = "1.7.10-1.0.3"
+group = "gamax92.thistle"
+archivesBaseName = "Thistle"
 
 repositories {
     maven {

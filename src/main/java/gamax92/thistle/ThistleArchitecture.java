@@ -1,6 +1,4 @@
-package gamax92.ocsymon;
-
-import gamax92.ocsymon.devices.Bank;
+package gamax92.thistle;
 
 import java.util.ArrayList;
 
@@ -19,17 +17,19 @@ import com.loomcom.symon.Cpu;
 import com.loomcom.symon.devices.Acia;
 import com.loomcom.symon.devices.Memory;
 
-@Architecture.Name("6502 Symon")
-public class SymonArchitecture implements Architecture {
+import gamax92.thistle.devices.Bank;
+
+@Architecture.Name("6502 Thistle")
+public class ThistleArchitecture implements Architecture {
 	private final Machine machine;
 
-	private SymonVM vm;
+	private ThistleVM vm;
 	private ConsoleDriver console;
 
 	private boolean initialized = false;
 
 	/** The constructor must have exactly this signature. */
-	public SymonArchitecture(Machine machine) {
+	public ThistleArchitecture(Machine machine) {
 		this.machine = machine;
 	}
 
@@ -61,7 +61,7 @@ public class SymonArchitecture implements Architecture {
 	public boolean initialize() {
 		// Set up new VM here
 		console = new ConsoleDriver(machine);
-		vm = new SymonVM(machine);
+		vm = new ThistleVM(machine);
 		vm.console = console;
 		vm.machine.getBank().init(calculateMemory(machine.host().internalComponents()));
 		for (ItemStack component : machine.host().internalComponents()) {

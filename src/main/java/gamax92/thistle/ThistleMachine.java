@@ -22,11 +22,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package gamax92.ocsymon;
+package gamax92.thistle;
 
-import gamax92.ocsymon.devices.Bank;
-import gamax92.ocsymon.devices.BankSwitcher;
-import gamax92.ocsymon.devices.Signals;
 import li.cil.oc.api.machine.Context;
 
 import java.io.InputStream;
@@ -41,9 +38,13 @@ import com.loomcom.symon.devices.Pia;
 import com.loomcom.symon.devices.Via6522;
 import com.loomcom.symon.exceptions.MemoryRangeException;
 
-public class SymonMachine {
+import gamax92.thistle.devices.Bank;
+import gamax92.thistle.devices.BankSwitcher;
+import gamax92.thistle.devices.Signals;
 
-	private final static Logger logger = Logger.getLogger(SymonMachine.class.getName());
+public class ThistleMachine {
+
+	private final static Logger logger = Logger.getLogger(ThistleMachine.class.getName());
 
 	// Constants used by the simulated system. These define the memory map.
 	private static final int BUS_BOTTOM = 0x0000;
@@ -85,7 +86,7 @@ public class SymonMachine {
 	private Memory rom;
 	private Context context;
 
-	public SymonMachine(Context context) throws Exception {
+	public ThistleMachine(Context context) throws Exception {
 		this.context = context;
 		this.bus = new Bus(BUS_BOTTOM, BUS_TOP);
 		this.cpu = new Cpu();

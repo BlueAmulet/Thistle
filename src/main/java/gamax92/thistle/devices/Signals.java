@@ -1,6 +1,4 @@
-package gamax92.ocsymon.devices;
-
-import gamax92.ocsymon.OCSymon;
+package gamax92.thistle.devices;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -12,6 +10,8 @@ import org.apache.logging.log4j.Level;
 import com.loomcom.symon.devices.Device;
 import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.exceptions.MemoryRangeException;
+
+import gamax92.thistle.Thistle;
 
 public class Signals extends Device {
 
@@ -70,7 +70,7 @@ public class Signals extends Device {
 				else if (part instanceof String)
 					this.part = ByteBuffer.allocate(1 + ((String) part).length()).put((byte) 2).put(((String) part).getBytes()).array();
 				else {
-					OCSymon.log.log(Level.WARN, "Cannot convert " + part.getClass().getSimpleName());
+					Thistle.log.log(Level.WARN, "Cannot convert " + part.getClass().getSimpleName());
 					this.part = new byte[0];
 				}
 				haspart = true;

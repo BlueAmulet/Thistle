@@ -31,6 +31,8 @@ import com.loomcom.symon.MemoryRange;
 import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.exceptions.MemoryRangeException;
 
+import li.cil.oc.api.machine.Signal;
+
 /**
  * A memory-mapped IO Device.
  */
@@ -117,6 +119,9 @@ public abstract class Device implements Comparable<Device> {
 		for (DeviceChangeListener listener : deviceChangeListeners) {
 			listener.deviceStateChanged();
 		}
+	}
+
+	public void onSignal(Signal signal) {
 	}
 
 	/**

@@ -1,8 +1,8 @@
 [
 {
-  "modid": "ocsymon",
-  "name": "OCSymon6502",
-  "description": "6502 Processor Architecture for OpenComputers.",
+  "modid": "thistle",
+  "name": "Thistle Computer",
+  "description": "6502 Architecture for OpenComputers.",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",

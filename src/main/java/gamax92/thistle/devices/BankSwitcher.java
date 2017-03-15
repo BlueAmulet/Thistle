@@ -1,4 +1,4 @@
-package gamax92.ocsymon.devices;
+package gamax92.thistle.devices;
 
 import com.loomcom.symon.devices.Device;
 import com.loomcom.symon.exceptions.MemoryAccessException;

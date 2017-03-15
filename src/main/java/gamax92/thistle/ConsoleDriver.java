@@ -1,4 +1,4 @@
-package gamax92.ocsymon;
+package gamax92.thistle;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -187,7 +187,7 @@ public class ConsoleDriver {
 							// End of sequence
 							parseANSI = false;
 							String ansiCode = this.ansiCode.toString();
-							String[] ansiParts = this.ansiCode.toString().split(";");
+							String[] ansiParts = this.ansiCode.toString().split(";", -1);
 							switch (character) {
 							case 'A':
 								Y = Math.max(Y - parseCode(ansiCode), 1);

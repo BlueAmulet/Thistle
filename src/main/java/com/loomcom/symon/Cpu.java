@@ -26,7 +26,7 @@ package com.loomcom.symon;
 import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.util.Utils;
 
-import gamax92.ocsymon.OCSymon;
+import gamax92.thistle.Thistle;
 
 /**
  * This class provides a simulation of the MOS 6502 CPU's state machine.
@@ -1117,7 +1117,7 @@ public class Cpu implements InstructionTable {
 		try {
 			peekAhead();
 		} catch (MemoryAccessException ex) {
-			OCSymon.log.error("Could not peek ahead at next instruction state.");
+			Thistle.log.error("Could not peek ahead at next instruction state.");
 		}
 	}
 

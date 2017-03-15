@@ -35,8 +35,8 @@ import com.loomcom.symon.devices.Device;
 import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.exceptions.MemoryRangeException;
 
-import gamax92.ocsymon.SymonConfig;
-import gamax92.ocsymon.SymonMachine;
+import gamax92.thistle.ThistleConfig;
+import gamax92.thistle.ThistleMachine;
 
 /**
  * The Bus ties the whole thing together, man.
@@ -59,7 +59,7 @@ public class Bus {
 	// an array for quick lookup of adresses, brute-force style
 	private Device[] deviceAddressArray;
 
-	private SymonMachine machine;
+	private ThistleMachine machine;
 
 	public Bus(int size) {
 		this(0, size - 1);
@@ -180,7 +180,7 @@ public class Bus {
 			}
 			throw new MemoryAccessException(String.format("Bus read failed. No device at address $%04X", address));
 		} catch (MemoryAccessException mae) {
-			if (SymonConfig.busError)
+			if (ThistleConfig.busError)
 				throw mae;
 			else
 				return 0;
@@ -198,7 +198,7 @@ public class Bus {
 			}
 			throw new MemoryAccessException(String.format("Bus write failed. No device at address $%04X", address));
 		} catch (MemoryAccessException mae) {
-			if (SymonConfig.busError)
+			if (ThistleConfig.busError)
 				throw mae;
 		}
 	}
@@ -256,11 +256,11 @@ public class Bus {
 		}
 	}
 
-	public SymonMachine getMachine() {
+	public ThistleMachine getMachine() {
 		return machine;
 	}
 
-	public void setMachine(SymonMachine machine) {
+	public void setMachine(ThistleMachine machine) {
 		this.machine = machine;
 	}
 }

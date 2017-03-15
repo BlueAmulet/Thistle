@@ -1,4 +1,4 @@
-package gamax92.ocsymon.devices;
+package gamax92.thistle.devices;
 
 import java.util.ArrayList;
 import java.util.logging.Logger;

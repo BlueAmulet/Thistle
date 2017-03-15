@@ -1,8 +1,8 @@
-package gamax92.ocsymon;
+package gamax92.thistle;
 
 import net.minecraftforge.common.config.Configuration;
 
-public class SymonConfig {
+public class ThistleConfig {
 	public static boolean busError = false;
 
 	public static void loadConfig(Configuration config) {

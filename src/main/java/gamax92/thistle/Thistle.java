@@ -1,4 +1,4 @@
-package gamax92.ocsymon;
+package gamax92.thistle;
 
 import org.apache.logging.log4j.Logger;
 
@@ -9,14 +9,14 @@ import li.cil.oc.Settings;
 import li.cil.oc.api.Machine;
 import net.minecraftforge.common.config.Configuration;
 
-@Mod(modid = OCSymon.MODID, name = OCSymon.NAME, version = OCSymon.VERSION, dependencies = "required-after:OpenComputers@[1.6.0,)")
-public class OCSymon {
-	public static final String MODID = "ocsymon";
-	public static final String NAME = "OCSymon6502";
+@Mod(modid = Thistle.MODID, name = Thistle.NAME, version = Thistle.VERSION, dependencies = "required-after:OpenComputers@[1.6.0,)")
+public class Thistle {
+	public static final String MODID = "thistle";
+	public static final String NAME = "Thistle Computer";
 	public static final String VERSION = "1.0.2";
 
 	@Mod.Instance
-	public static OCSymon instance;
+	public static Thistle instance;
 
 	public static Logger log;
 	private Configuration config;
@@ -26,8 +26,8 @@ public class OCSymon {
 		log = event.getModLog();
 		config = new Configuration(event.getSuggestedConfigurationFile());
 
-		SymonConfig.loadConfig(config);
-		Machine.add(SymonArchitecture.class);
+		ThistleConfig.loadConfig(config);
+		Machine.add(ThistleArchitecture.class);
 	}
 
 	@Mod.EventHandler
@@ -35,11 +35,11 @@ public class OCSymon {
 		boolean configurationIssue = false;
 		if (Settings.get().eepromSize() != 4096) {
 			configurationIssue = true;
-			log.error("EEPROM size is no longer 4096 bytes, OCSymon will not work properly.");
+			log.error("EEPROM size is no longer 4096 bytes, Thistle will not work properly.");
 		}
 		if (Settings.get().eepromDataSize() != 256) {
 			configurationIssue = true;
-			log.error("EEPROM data size is no longer 256 bytes, OCSymon will not work properly.");
+			log.error("EEPROM data size is no longer 256 bytes, Thistle will not work properly.");
 		}
 		if (configurationIssue)
 			log.error("Please reconfigure OpenComputers or you will run into issues.");

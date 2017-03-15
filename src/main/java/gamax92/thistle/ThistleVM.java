@@ -1,4 +1,4 @@
-package gamax92.ocsymon;
+package gamax92.thistle;
 
 import com.loomcom.symon.Cpu;
 import com.loomcom.symon.devices.Acia;
@@ -6,9 +6,9 @@ import com.loomcom.symon.devices.Memory;
 import com.loomcom.symon.exceptions.MemoryAccessException;
 import li.cil.oc.api.machine.Context;
 
-public class SymonVM {
+public class ThistleVM {
 	// The simulated machine
-	public SymonMachine machine;
+	public ThistleMachine machine;
 
 	// The console
 	public ConsoleDriver console;
@@ -16,13 +16,13 @@ public class SymonVM {
 	// Allocated cycles per tick
 	public int cyclesPerTick;
 
-	public SymonVM(Context context) {
+	public ThistleVM(Context context) {
 		super();
 		try {
-			machine = new SymonMachine(context);
+			machine = new ThistleMachine(context);
 			machine.getCpu().reset();
 		} catch (Exception e) {
-			OCSymon.log.warn("Failed to setup Symon", e);
+			Thistle.log.warn("Failed to setup Symon", e);
 		}
 	}
 
@@ -31,7 +31,7 @@ public class SymonVM {
 	 */
 	private void handleReset(boolean isColdReset) {
 		try {
-			OCSymon.log.info("Reset requested. Resetting CPU.");
+			Thistle.log.info("Reset requested. Resetting CPU.");
 			// Reset CPU
 			machine.getCpu().reset();
 			// If we're doing a cold reset, clear the memory.
@@ -41,7 +41,7 @@ public class SymonVM {
 					mem.fill(0);
 			}
 		} catch (MemoryAccessException ex) {
-			OCSymon.log.error("Exception during simulator reset: " + ex.getMessage());
+			Thistle.log.error("Exception during simulator reset: " + ex.getMessage());
 		}
 	}
 
