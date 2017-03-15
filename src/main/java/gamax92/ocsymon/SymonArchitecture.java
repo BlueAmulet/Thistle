@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 import li.cil.oc.Settings;
 import li.cil.oc.api.Driver;
+import li.cil.oc.api.driver.item.Processor;
 import li.cil.oc.api.machine.Architecture;
 import li.cil.oc.api.machine.ExecutionResult;
 import li.cil.oc.api.machine.Machine;
@@ -63,6 +64,12 @@ public class SymonArchitecture implements Architecture {
 		vm = new SymonVM(machine);
 		vm.console = console;
 		vm.machine.getBank().init(calculateMemory(machine.host().internalComponents()));
+		for (ItemStack component : machine.host().internalComponents()) {
+			if (Driver.driverFor(component) instanceof Processor) {
+				vm.cyclesPerTick = (Driver.driverFor(component).tier(component) + 1) * 15000;
+				break;
+			}
+		}
 		initialized = true;
 		return true;
 	}

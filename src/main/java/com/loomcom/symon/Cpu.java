@@ -23,11 +23,10 @@
 
 package com.loomcom.symon;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.util.Utils;
+
+import gamax92.ocsymon.OCSymon;
 
 /**
  * This class provides a simulation of the MOS 6502 CPU's state machine.
@@ -35,8 +34,6 @@ import com.loomcom.symon.util.Utils;
  * and exposes some of the internal state for inspection and debugging.
  */
 public class Cpu implements InstructionTable {
-
-	private final static Logger logger = Logger.getLogger(Cpu.class.getName());
 
 	/* Process status register mnemonics */
 	public static final int P_CARRY = 0x01;
@@ -67,8 +64,8 @@ public class Cpu implements InstructionTable {
 	/* The CPU state */
 	private final CpuState state = new CpuState();
 
-	/* start time of op execution, needed for speed simulation */
-	private long opBeginTime;
+	/* CPU Cycles available */
+	private int cycles = 0;
 
 	/**
 	 * Construct a new CPU.
@@ -149,12 +146,18 @@ public class Cpu implements InstructionTable {
 		}
 	}
 
+	public int getCycles() {
+		return cycles;
+	}
+
+	public void addCycles(int count) {
+		cycles += count;
+	}
+
 	/**
 	 * Performs an individual instruction cycle.
 	 */
 	public void step() throws MemoryAccessException {
-		opBeginTime = System.nanoTime();
-
 		// Store the address from which the IR was read, for debugging
 		state.lastPc = state.pc;
 
@@ -170,6 +173,8 @@ public class Cpu implements InstructionTable {
 		state.ir = bus.read(state.pc);
 		int irAddressMode = (state.ir >> 2) & 0x07; // Bits 3-5 of IR:  [ | | |X|X|X| | ]
 		int irOpMode = state.ir & 0x03; // Bits 6-7 of IR:  [ | | | | | |X|X]
+
+		cycles -= Cpu.instructionClocks[state.ir];
 
 		incrementPC();
 
@@ -1112,7 +1117,7 @@ public class Cpu implements InstructionTable {
 		try {
 			peekAhead();
 		} catch (MemoryAccessException ex) {
-			logger.log(Level.SEVERE, "Could not peek ahead at next instruction state.");
+			OCSymon.log.error("Could not peek ahead at next instruction state.");
 		}
 	}
 
@@ -1304,22 +1309,6 @@ public class Cpu implements InstructionTable {
 	 */
 	int zpyAddress(int zp) {
 		return (zp + state.y) & 0xff;
-	}
-
-	/*
-	 * Perform a busy-loop for CLOCK_IN_NS nanoseconds
-	 */
-	private void delayLoop(int opcode) {
-		int clockSteps = Cpu.instructionClocks[0xff & opcode];
-		// Just a precaution. This could be better.
-		if (clockSteps == 0) {
-			clockSteps = 1;
-		}
-		long opScheduledEnd = opBeginTime + clockSteps;
-		long now = System.nanoTime();
-		while (now < opScheduledEnd) {
-			now = System.nanoTime();
-		}
 	}
 
 	/**

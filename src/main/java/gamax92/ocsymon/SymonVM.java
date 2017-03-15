@@ -1,5 +1,6 @@
 package gamax92.ocsymon;
 
+import com.loomcom.symon.Cpu;
 import com.loomcom.symon.devices.Acia;
 import com.loomcom.symon.devices.Memory;
 import com.loomcom.symon.exceptions.MemoryAccessException;
@@ -8,6 +9,12 @@ import li.cil.oc.api.machine.Context;
 public class SymonVM {
 	// The simulated machine
 	public SymonMachine machine;
+
+	// The console
+	public ConsoleDriver console;
+
+	// Allocated cycles per tick
+	public int cyclesPerTick;
 
 	public SymonVM(Context context) {
 		super();
@@ -18,9 +25,6 @@ public class SymonVM {
 			OCSymon.log.warn("Failed to setup Symon", e);
 		}
 	}
-
-	// The console
-	public ConsoleDriver console;
 
 	/*
 	 * Perform a reset.
@@ -59,8 +63,9 @@ public class SymonVM {
 	}
 
 	void run() throws Exception {
-		// Run 1k instructions
-		for (int i = 0; i < 1000; i++)
+		Cpu mCPU = machine.getCpu();
+		mCPU.addCycles(cyclesPerTick);
+		while (mCPU.getCycles() > 0)
 			step();
 	}
 }
