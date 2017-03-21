@@ -23,10 +23,7 @@
 
 package com.loomcom.symon;
 
-import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.util.Utils;
-
-import gamax92.thistle.Thistle;
 
 /**
  * This class provides a simulation of the MOS 6502 CPU's state machine.
@@ -81,7 +78,7 @@ public class Cpu implements InstructionTable {
 	/**
 	 * Reset the CPU to known initial values.
 	 */
-	public void reset() throws MemoryAccessException {
+	public void reset() {
 		/* TODO: In reality, the stack pointer could be anywhere
 		   on the stack after reset. This non-deterministic behavior might be
 		   worth while to simulate. */
@@ -107,18 +104,16 @@ public class Cpu implements InstructionTable {
 		// Clear illegal opcode trap.
 		state.opTrap = false;
 
-		// Reset step counter
-		state.stepCounter = 0L;
+		// Reset KIL lockup
+		state.dead = false;
 
 		// Reset registers.
 		state.a = 0;
 		state.x = 0;
 		state.y = 0;
-
-		peekAhead();
 	}
 
-	public void step(int num) throws MemoryAccessException {
+	public void step(int num) {
 		for (int i = 0; i < num; i++) {
 			step();
 		}
@@ -135,9 +130,14 @@ public class Cpu implements InstructionTable {
 	/**
 	 * Performs an individual instruction cycle.
 	 */
-	public void step() throws MemoryAccessException {
+	public void step() {
 		// Store the address from which the IR was read, for debugging
 		state.lastPc = state.pc;
+
+		if (state.dead) {
+			cycles = 0;
+			return;
+		}
 
 		// Check for Interrupts before doing anything else.
 		// This will set the PC and jump to the interrupt vector.
@@ -165,8 +165,6 @@ public class Cpu implements InstructionTable {
 			// Increment PC after reading
 			incrementPC();
 		}
-
-		state.stepCounter++;
 
 		// Get the data from the effective address (if any)
 		int effectiveAddress = 0;
@@ -669,35 +667,37 @@ public class Cpu implements InstructionTable {
 			setArithmeticFlags(tmp);
 			break;
 
+		/** KIL - Processor Lockup **********************************************/
+		case 0x02:
+		case 0x12:
+		case 0x22:
+		case 0x32:
+		case 0x42:
+		case 0x52:
+		case 0x62:
+		case 0x72:
+		case 0x92:
+		case 0xb2:
+		case 0xd2:
+		case 0xf2:
+		case 0xff:
+			state.dead = true;
+			break;
+
 		/** Unimplemented Instructions ****************************************/
 		// TODO: Create a flag to enable highly-accurate emulation of unimplemented instructions.
 		default:
 			setOpTrap();
 			break;
 		}
-
-		// This is a busy loop.
-		//delayLoop(state.ir);
-
-		// Peek ahead to the next insturction and arguments
-		peekAhead();
 	}
 
-	private void peekAhead() throws MemoryAccessException {
-		state.nextIr = bus.read(state.pc);
-		int nextInstSize = Cpu.instructionSizes[state.nextIr];
-		for (int i = 1; i < nextInstSize; i++) {
-			int nextRead = (state.pc + i) % bus.endAddress();
-			state.nextArgs[i - 1] = bus.read(nextRead);
-		}
-	}
-
-	private void handleIrq(int returnPc) throws MemoryAccessException {
+	private void handleIrq(int returnPc) {
 		handleInterrupt(returnPc, IRQ_VECTOR_L, IRQ_VECTOR_H);
 		clearIrq();
 	}
 
-	private void handleNmi() throws MemoryAccessException {
+	private void handleNmi() {
 		handleInterrupt(state.pc, NMI_VECTOR_L, NMI_VECTOR_H);
 		clearNmi();
 	}
@@ -707,7 +707,7 @@ public class Cpu implements InstructionTable {
 	 *
 	 * @throws MemoryAccessException
 	 */
-	private void handleInterrupt(int returnPc, int vectorLow, int vectorHigh) throws MemoryAccessException {
+	private void handleInterrupt(int returnPc, int vectorLow, int vectorHigh) {
 		// Set the break flag before pushing.
 		setBreakFlag();
 		// Push program counter + 1 onto the stack
@@ -1078,14 +1078,6 @@ public class Cpu implements InstructionTable {
 
 	public void setProgramCounter(int addr) {
 		state.pc = addr;
-
-		// As a side-effect of setting the program counter,
-		// we want to peek ahead at the next state.
-		try {
-			peekAhead();
-		} catch (MemoryAccessException ex) {
-			Thistle.log.error("Could not peek ahead at next instruction state.");
-		}
 	}
 
 	public int getStackPointer() {
@@ -1197,7 +1189,7 @@ public class Cpu implements InstructionTable {
 	 * Will wrap-around if already at the bottom of the stack (This
 	 * is the same behavior as the real 6502)
 	 */
-	void stackPush(int data) throws MemoryAccessException {
+	void stackPush(int data) {
 		bus.write(0x100 + state.sp, data);
 
 		if (state.sp == 0) {
@@ -1212,7 +1204,7 @@ public class Cpu implements InstructionTable {
 	 * Will wrap-around if already at the top of the stack (This
 	 * is the same behavior as the real 6502)
 	 */
-	int stackPop() throws MemoryAccessException {
+	int stackPop() {
 		if (state.sp == 0xff) {
 			state.sp = 0x00;
 		} else {
@@ -1225,7 +1217,7 @@ public class Cpu implements InstructionTable {
 	/**
 	 * Peek at the value currently at the top of the stack
 	 */
-	int stackPeek() throws MemoryAccessException {
+	int stackPeek() {
 		return bus.read(0x100 + state.sp + 1);
 	}
 
@@ -1331,26 +1323,15 @@ public class Cpu implements InstructionTable {
 	}
 
 	/**
-	 * Return a formatted string representing the next instruction and
-	 * operands to be executed.
-	 *
-	 * @return A string representing the mnemonic and operands of the instruction
-	 */
-	public String disassembleNextOp() {
-		return Cpu.disassembleOp(state.nextIr, state.nextArgs);
-	}
-
-	/**
 	 * @param address Address to disassemble
 	 * @return String containing the disassembled instruction and operands.
 	 */
-	public String disassembleOpAtAddress(int address) throws MemoryAccessException {
+	public String disassembleOpAtAddress(int address) {
 		int opCode = bus.read(address);
 		int args[] = new int[2];
 		int size = Cpu.instructionSizes[opCode];
 		for (int i = 1; i < size; i++) {
-			int nextRead = (address + i) % bus.endAddress();
-			args[i - 1] = bus.read(nextRead);
+			args[i - 1] = bus.read(address + i);
 		}
 
 		return disassembleOp(opCode, args);

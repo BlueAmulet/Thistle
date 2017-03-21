@@ -23,7 +23,6 @@
 
 package com.loomcom.symon.devices;
 
-import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.exceptions.MemoryRangeException;
 
 /**
@@ -55,7 +54,7 @@ public class Acia6551 extends Acia {
 	}
 
 	@Override
-	public int read(int address) throws MemoryAccessException {
+	public int read(int address) {
 		switch (address) {
 		case DATA_REG:
 			return rxRead();
@@ -66,12 +65,12 @@ public class Acia6551 extends Acia {
 		case CTRL_REG:
 			return controlRegister;
 		default:
-			throw new MemoryAccessException("No register.");
+			return 0;
 		}
 	}
 
 	@Override
-	public void write(int address, int data) throws MemoryAccessException {
+	public void write(int address, int data) {
 		switch (address) {
 		case 0:
 			txWrite(data);
@@ -85,8 +84,6 @@ public class Acia6551 extends Acia {
 		case 3:
 			setControlRegister(data);
 			break;
-		default:
-			throw new MemoryAccessException("No register.");
 		}
 	}
 

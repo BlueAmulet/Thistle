@@ -1,259 +1,118 @@
-/*
- * Copyright (c) 2016 Seth J. Morabito <web@loomcom.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
 package com.loomcom.symon;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import com.loomcom.symon.devices.Device;
-import com.loomcom.symon.exceptions.MemoryAccessException;
-import com.loomcom.symon.exceptions.MemoryRangeException;
 
-import gamax92.thistle.ThistleConfig;
 import gamax92.thistle.ThistleMachine;
+import gamax92.thistle.api.IThistleDevice;
+import gamax92.thistle.devices.BankSelector;
+import li.cil.oc.api.machine.Signal;
+import net.minecraft.nbt.NBTTagCompound;
 
-/**
- * The Bus ties the whole thing together, man.
+/*
+ * This is not an original/modified Symon file, this class exists in Symon's
+ * package because it replaced an implementation of Symon's old Bus.
  */
 public class Bus {
 
-	// The default address at which to load programs
-	public static int DEFAULT_LOAD_ADDRESS = 0x0200;
-
-	// By default, our bus starts at 0, and goes up to 64K
-	private int startAddress = 0x0000;
-	private int endAddress = 0xffff;
-
-	// The CPU
-	private Cpu cpu;
-
-	// Ordered sets of IO devices, associated with their priority
-	private Map<Integer, SortedSet<Device>> deviceMap;
-
-	// an array for quick lookup of adresses, brute-force style
-	private Device[] deviceAddressArray;
+	// EEPROM data+code at $EF00-$FFFF
+	private static final int EEPROM_DATA_BASE = 0xEF00;
+	private static final int EEPROM_CODE_BASE = 0xF000;
 
 	private ThistleMachine machine;
+	private ArrayList<Device> deviceList = new ArrayList<Device>();
 
-	public Bus(int size) {
-		this(0, size - 1);
-	}
-
-	public Bus(int startAddress, int endAddress) {
-		this.deviceMap = new HashMap<Integer, SortedSet<Device>>();
-		this.startAddress = startAddress;
-		this.endAddress = endAddress;
-	}
-
-	public int startAddress() {
-		return startAddress;
-	}
-
-	public int endAddress() {
-		return endAddress;
-	}
-
-	private void buildDeviceAddressArray() {
-		int size = (this.endAddress - this.startAddress) + 1;
-		deviceAddressArray = new Device[size];
-
-		// getDevices() provides an OrderedSet with devices ordered by priorities
-		for (Device device : getDevices()) {
-			MemoryRange range = device.getMemoryRange();
-			for (int address = range.startAddress; address <= range.endAddress; ++address) {
-				deviceAddressArray[address - this.startAddress] = device;
+	public int read(int address) {
+		address &= 0xFFFF;
+		if (address < 0xE000 || address >= EEPROM_CODE_BASE) {
+			int select = address >>> 12;
+			int bankMask = machine.getComponentSelector().getMask();
+			if (select == 15 && (bankMask & (1 << 4)) == 0) {
+				return machine.getEEPROM().read(address - EEPROM_DATA_BASE) & 0xFF; // This reads EEPROM code but offset must be data
+			} else if (select >= 10 && (bankMask & (1 << (select - 10))) == 0) {
+				int index = address >>> 8;
+				index = (0xD0 - (index & 0xF0)) | (index & 0x0F);
+				IThistleDevice device = machine.getComponentSelector().getComponent(index);
+				if (device != null)
+					return device.readThistle(machine.getContext(), address & 0xFF) & 0xFF;
+			} else {
+				BankSelector banksel = machine.getBankSelector();
+				int memaddr = (banksel.bankSelect[select] << 12) | (address & 0xFFF);
+				if (memaddr < machine.getMemsize())
+					return machine.readMem(memaddr) & 0xFF;
+			}
+			return 0;
+		}
+		for (Device device : deviceList) {
+			MemoryRange memoryRange = device.getMemoryRange();
+			if (address >= memoryRange.startAddress && address <= memoryRange.endAddress) {
+				return device.read(address - memoryRange.startAddress) & 0xFF;
 			}
 		}
-
+		return 0;
 	}
 
-	/**
-	 * Add a device to the bus.
-	 *
-	 * @param device Device to add
-	 * @param priority Bus prioirity.
-	 * @throws MemoryRangeException
-	 */
-	public void addDevice(Device device, int priority) throws MemoryRangeException {
-
-		MemoryRange range = device.getMemoryRange();
-
-		if (range.startAddress() < this.startAddress || range.startAddress() > this.endAddress) {
-			throw new MemoryRangeException("start address of device " + device.getName() + " does not fall within the address range of the bus");
-		}
-
-		if (range.endAddress() < this.startAddress || range.endAddress() > this.endAddress) {
-			throw new MemoryRangeException("end address of device " + device.getName() + " does not fall within the address range of the bus");
-		}
-
-		SortedSet<Device> deviceSet = deviceMap.get(priority);
-
-		if (deviceSet == null) {
-			deviceSet = new TreeSet<Device>();
-			deviceMap.put(priority, deviceSet);
-		}
-
-		device.setBus(this);
-		deviceSet.add(device);
-		buildDeviceAddressArray();
-	}
-
-	/**
-	 * Add a device to the bus. Throws a MemoryRangeException if the device overlaps with any others.
-	 *
-	 * @param device Device to add
-	 * @throws MemoryRangeException
-	 */
-	public void addDevice(Device device) throws MemoryRangeException {
-		addDevice(device, 0);
-	}
-
-	/**
-	 * Remove a device from the bus.
-	 *
-	 * @param device Device to remove
-	 */
-	public void removeDevice(Device device) {
-		for (SortedSet<Device> deviceSet : deviceMap.values()) {
-			deviceSet.remove(device);
-		}
-		buildDeviceAddressArray();
-	}
-
-	public void setCpu(Cpu cpu) {
-		this.cpu = cpu;
-		cpu.setBus(this);
-	}
-
-	/**
-	 * Returns true if the memory map is full, i.e., there are no
-	 * gaps between any IO devices.  All memory locations map to some
-	 * device.
-	 */
-	public boolean isComplete() {
-		if (deviceAddressArray == null) {
-			buildDeviceAddressArray();
-		}
-
-		for (int address = startAddress; address <= endAddress; ++address) {
-			if (deviceAddressArray[address - startAddress] == null) {
-				return false;
+	public void write(int address, int data) {
+		address &= 0xFFFF;
+		data &= 0xFF;
+		if (address < 0xE000 || address >= EEPROM_CODE_BASE) {
+			int select = address >>> 12;
+			int bankMask = machine.getComponentSelector().getMask();
+			if (select == 15 && (bankMask & (1 << 4)) == 0) {
+				machine.getEEPROM().write(address - EEPROM_DATA_BASE, data); // This reads eeprom code but offset must be data
+			} else if (select >= 10 && (bankMask & (1 << (select - 10))) == 0) {
+				int index = address >>> 8;
+				index = (0xD0 - (index & 0xF0)) | (index & 0x0F);
+				IThistleDevice device = machine.getComponentSelector().getComponent(index);
+				if (device != null)
+					device.writeThistle(machine.getContext(), address & 0xFF, data);
+			} else {
+				BankSelector banksel = machine.getBankSelector();
+				int memaddr = (banksel.bankSelect[select] << 12) | (address & 0xFFF);
+				if (memaddr < machine.getMemsize())
+					machine.writeMem(memaddr, (byte) data);
 			}
+			return;
 		}
-
-		return true;
-	}
-
-	public int read(int address) throws MemoryAccessException {
-		try {
-			Device d = deviceAddressArray[address - this.startAddress];
-			if (d != null) {
-				MemoryRange range = d.getMemoryRange();
-				int devAddr = address - range.startAddress();
-				return d.read(devAddr) & 0xff;
-			}
-			throw new MemoryAccessException(String.format("Bus read failed. No device at address $%04X", address));
-		} catch (MemoryAccessException mae) {
-			if (ThistleConfig.busError)
-				throw mae;
-			else
-				return 0;
-		}
-	}
-
-	public void write(int address, int value) throws MemoryAccessException {
-		try {
-			Device d = deviceAddressArray[address - this.startAddress];
-			if (d != null) {
-				MemoryRange range = d.getMemoryRange();
-				int devAddr = address - range.startAddress();
-				d.write(devAddr, value);
+		for (Device device : deviceList) {
+			MemoryRange memoryRange = device.getMemoryRange();
+			if (address >= memoryRange.startAddress && address <= memoryRange.endAddress) {
+				device.write(address - memoryRange.startAddress, data);
 				return;
 			}
-			throw new MemoryAccessException(String.format("Bus write failed. No device at address $%04X", address));
-		} catch (MemoryAccessException mae) {
-			if (ThistleConfig.busError)
-				throw mae;
 		}
+	}
+
+	public void onSignal(Signal signal) {
+		for (Device device : deviceList)
+			device.onSignal(signal);
+	}
+
+	public void load(NBTTagCompound nbt) {
+		for (Device device : deviceList)
+			device.load(nbt);
+	}
+
+	public void save(NBTTagCompound nbt) {
+		for (Device device : deviceList)
+			device.save(nbt);
 	}
 
 	public void assertIrq() {
-		if (cpu != null) {
-			cpu.assertIrq();
-		}
+		machine.getCpu().assertIrq();
 	}
 
 	public void clearIrq() {
-		if (cpu != null) {
-			cpu.clearIrq();
-		}
+		machine.getCpu().clearIrq();
 	}
 
 	public void assertNmi() {
-		if (cpu != null) {
-			cpu.assertNmi();
-		}
+		machine.getCpu().assertNmi();
 	}
 
 	public void clearNmi() {
-		if (cpu != null) {
-			cpu.clearNmi();
-		}
-	}
-
-	public SortedSet<Device> getDevices() {
-		// create an ordered set of devices, ordered by device priorities
-		SortedSet<Device> devices = new TreeSet<Device>();
-
-		List<Integer> priorities = new ArrayList<Integer>(deviceMap.keySet());
-		Collections.sort(priorities);
-
-		for (int priority : priorities) {
-			SortedSet<Device> deviceSet = deviceMap.get(priority);
-			for (Device device : deviceSet) {
-				devices.add(device);
-			}
-		}
-
-		return devices;
-	}
-
-	public Cpu getCpu() {
-		return cpu;
-	}
-
-	public void loadProgram(int... program) throws MemoryAccessException {
-		int address = getCpu().getProgramCounter();
-		int i = 0;
-		for (int d : program) {
-			write(address + i++, d);
-		}
+		machine.getCpu().clearNmi();
 	}
 
 	public ThistleMachine getMachine() {
@@ -262,5 +121,14 @@ public class Bus {
 
 	public void setMachine(ThistleMachine machine) {
 		this.machine = machine;
+	}
+
+	public void setCpu(Cpu cpu) {
+		cpu.setBus(this);
+	}
+
+	public void addDevice(Device device) {
+		deviceList.add(device);
+		device.setBus(this);
 	}
 }

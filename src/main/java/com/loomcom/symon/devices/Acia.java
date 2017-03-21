@@ -31,13 +31,9 @@ import com.loomcom.symon.exceptions.MemoryRangeException;
 
 public abstract class Acia extends Device {
 
-	private String name;
-
 	/**
 	 * Register addresses
 	 */
-	int baseAddress;
-
 	boolean receiveIrqEnabled = false;
 	boolean transmitIrqEnabled = false;
 	boolean overrun = false;
@@ -58,8 +54,6 @@ public abstract class Acia extends Device {
 
 	public Acia(int address, int size, String name) throws MemoryRangeException {
 		super(address, size, name);
-		this.name = name;
-		this.baseAddress = address;
 	}
 
 	/*
@@ -97,11 +91,6 @@ public abstract class Acia extends Device {
 	 * @return The contents of the status register.
 	 */
 	public abstract int statusReg();
-
-	@Override
-	public String toString() {
-		return name + "@" + String.format("%04X", baseAddress);
-	}
 
 	public synchronized int rxRead() {
 		lastRxRead = System.nanoTime();

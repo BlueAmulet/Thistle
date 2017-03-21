@@ -1,4 +1,4 @@
-package gamax92.thistle;
+package gamax92.thistle.util;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -25,7 +25,6 @@ public class ConsoleDriver {
 	private boolean canWrite = false;
 	private boolean canRead = false;
 
-	private LinkedList<Integer> fifo = new LinkedList<Integer>();
 	private LinkedList<Integer> databuf = new LinkedList<Integer>();
 
 	private int X = 1;
@@ -42,6 +41,7 @@ public class ConsoleDriver {
 	private int textFG = 7;
 	private int textBG = 0;
 
+	private boolean showCursor = true;
 	private boolean cursor = false;
 	private long lastTime = System.currentTimeMillis();
 	private int cursorFG;
@@ -69,16 +69,24 @@ public class ConsoleDriver {
 					screenADDR = address;
 			}
 			if (gpuADDR != null && screenADDR != null) {
-				try {
-					canWrite = true;
-					// Attempt to setup the GPU
-					for (int i = -1; i >= -6; i--)
-						databuf.add(i);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				canWrite = true;
+				// Attempt to setup the GPU
+				for (int i = -1; i >= -6; i--)
+					databuf.add(i);
 			}
 		}
+	}
+
+	private String getString(NBTTagCompound nbt, String key) {
+		if (nbt.hasKey(key))
+			return nbt.getString(key);
+		else
+			return null;
+	}
+
+	private void setString(NBTTagCompound nbt, String key, String value) {
+		if (value != null)
+			nbt.setString(key, value);
 	}
 
 	// TODO: Needs more things
@@ -88,8 +96,8 @@ public class ConsoleDriver {
 			NBTTagCompound consoleTag = nbt.getCompoundTag("console");
 			this.canRead = consoleTag.getBoolean("canRead");
 			this.canWrite = consoleTag.getBoolean("canWrite");
-			this.gpuADDR = consoleTag.getString("gpuADDR");
-			this.screenADDR = consoleTag.getString("screenADDR");
+			this.gpuADDR = getString(consoleTag, "gpuADDR");
+			this.screenADDR = getString(consoleTag, "screenADDR");
 			this.cursor = consoleTag.getBoolean("cursor");
 			this.X = consoleTag.getInteger("X");
 			this.Y = consoleTag.getInteger("Y");
@@ -103,10 +111,6 @@ public class ConsoleDriver {
 			this.parseANSI = consoleTag.getBoolean("parseANSI");
 			this.ansiCode.setLength(0);
 			this.ansiCode.append(consoleTag.getString("ansiCode"));
-			int[] fifo = consoleTag.getIntArray("fifo");
-			this.fifo.clear();
-			for (int v : fifo)
-				this.fifo.add(v);
 			int[] databuf = consoleTag.getIntArray("data");
 			this.databuf.clear();
 			for (int v : databuf)
@@ -119,8 +123,8 @@ public class ConsoleDriver {
 		NBTTagCompound consoleTag = new NBTTagCompound();
 		consoleTag.setBoolean("canRead", this.canRead);
 		consoleTag.setBoolean("canWrite", this.canWrite);
-		consoleTag.setString("gpuADDR", this.gpuADDR);
-		consoleTag.setString("screenADDR", this.screenADDR);
+		setString(consoleTag, "gpuADDR", this.gpuADDR);
+		setString(consoleTag, "screenADDR", this.screenADDR);
 		consoleTag.setBoolean("cursor", this.cursor);
 		consoleTag.setInteger("X", this.X);
 		consoleTag.setInteger("Y", this.Y);
@@ -133,13 +137,8 @@ public class ConsoleDriver {
 		consoleTag.setBoolean("ansiDetect", this.ansiDetect);
 		consoleTag.setBoolean("parseANSI", this.parseANSI);
 		consoleTag.setString("ansiCode", this.ansiCode.toString());
-		int[] fifo = new int[this.fifo.size()];
-		int i = 0;
-		for (int v : this.fifo)
-			fifo[i++] = v;
-		consoleTag.setIntArray("fifo", fifo);
 		int[] databuf = new int[this.databuf.size()];
-		i = 0;
+		int i = 0;
 		for (int v : this.databuf)
 			databuf[i++] = v;
 		consoleTag.setIntArray("data", databuf);
@@ -170,10 +169,10 @@ public class ConsoleDriver {
 	}
 
 	// TODO: Combine multiple characters in one "set"
-	public void flush() {
+	public void flush() throws Exception {
 		if (canWrite) {
 			try {
-				if (System.currentTimeMillis() - this.lastTime >= 500 && !parseANSI && !ansiDetect) {
+				if (showCursor && System.currentTimeMillis() - this.lastTime >= 500 && !parseANSI && !ansiDetect) {
 					lastTime = System.currentTimeMillis();
 					databuf.addFirst(-1004);
 					databuf.addFirst(-1003);
@@ -260,6 +259,21 @@ public class ConsoleDriver {
 								break;
 							case 'X':
 								// TODO: Set n characters including cursor to space (Erase)
+								break;
+							case 'h':
+								if (ansiCode.equals("?25"))
+									showCursor = true;
+								break;
+							case 'l':
+								if (ansiCode.equals("?25")) {
+									showCursor = false;
+									if (cursor) {
+										databuf.add(1, -1004);
+										databuf.add(1, -1003);
+										databuf.add(1, -1002);
+										databuf.add(1, -1001);
+									}
+								}
 								break;
 							case 'm':
 								boolean newBrightFG = this.brightFG;
@@ -432,21 +446,8 @@ public class ConsoleDriver {
 					databuf.removeFirst();
 				}
 			} catch (LimitReachedException e) {
-			} catch (Exception e) {
-				e.printStackTrace();
+				// The rest of the data will be written during the next flush
 			}
 		}
-	}
-
-	public void pushChar(int character) {
-		fifo.add(character);
-	}
-
-	public boolean hasInput() {
-		return !fifo.isEmpty();
-	}
-
-	public int read() {
-		return fifo.removeFirst();
 	}
 }

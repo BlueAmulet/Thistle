@@ -1,17 +1,16 @@
 package gamax92.thistle;
 
 import com.loomcom.symon.Cpu;
-import com.loomcom.symon.devices.Acia;
-import com.loomcom.symon.devices.Memory;
-import com.loomcom.symon.exceptions.MemoryAccessException;
+
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 import li.cil.oc.api.machine.Context;
 
 public class ThistleVM {
 	// The simulated machine
 	public ThistleMachine machine;
-
-	// The console
-	public ConsoleDriver console;
 
 	// Allocated cycles per tick
 	public int cyclesPerTick;
@@ -20,52 +19,34 @@ public class ThistleVM {
 		super();
 		try {
 			machine = new ThistleMachine(context);
-			machine.getCpu().reset();
-		} catch (Exception e) {
-			Thistle.log.warn("Failed to setup Symon", e);
-		}
-	}
-
-	/*
-	 * Perform a reset.
-	 */
-	private void handleReset(boolean isColdReset) {
-		try {
-			Thistle.log.info("Reset requested. Resetting CPU.");
-			// Reset CPU
-			machine.getCpu().reset();
-			// If we're doing a cold reset, clear the memory.
-			if (isColdReset) {
-				Memory mem = machine.getRam();
-				if (mem != null)
-					mem.fill(0);
+			if (context.node().network() == null) {
+				// Loading from NBT
+				return;
 			}
-		} catch (MemoryAccessException ex) {
-			Thistle.log.error("Exception during simulator reset: " + ex.getMessage());
+			machine.getCpu().reset();
+			FMLCommonHandler.instance().bus().register(this);
+		} catch (Exception e) {
+			Thistle.log.warn("Failed to setup Thistle", e);
 		}
-	}
-
-	/**
-	 * Perform a single step of the simulated system.
-	 */
-	public void step() throws MemoryAccessException {
-		machine.getCpu().step();
-
-		Acia mACIA = machine.getAcia();
-		// Read from the ACIA and immediately update the console if there's
-		// output ready.
-		if (mACIA != null && mACIA.hasTxChar())
-			console.write(mACIA.txRead()); // This is thread-safe
-
-		// If a key has been pressed, fill the ACIA.
-		if (mACIA != null && console.hasInput() && !mACIA.hasRxChar())
-			mACIA.rxWrite(console.read());
 	}
 
 	void run() throws Exception {
+		machine.getComponentSelector().checkDelay();
 		Cpu mCPU = machine.getCpu();
-		mCPU.addCycles(cyclesPerTick);
 		while (mCPU.getCycles() > 0)
-			step();
+			mCPU.step();
+		machine.getGioDev().flush();
+	}
+
+	@SubscribeEvent
+	public void onServerTick(TickEvent.ServerTickEvent event) {
+		Context context = machine.getContext();
+		if (!context.isRunning() && !context.isPaused()) {
+			FMLCommonHandler.instance().bus().unregister(this);
+			return;
+		}
+		Cpu mCPU = machine.getCpu();
+		if (event.phase == Phase.START && mCPU.getCycles() < cyclesPerTick)
+			mCPU.addCycles(cyclesPerTick);
 	}
 }

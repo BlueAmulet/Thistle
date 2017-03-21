@@ -31,7 +31,6 @@ import java.io.RandomAccessFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.exceptions.MemoryRangeException;
 
 /**
@@ -69,7 +68,7 @@ public class SdController extends Device {
 	}
 
 	@Override
-	public void write(int address, int data) throws MemoryAccessException {
+	public void write(int address, int data) {
 		switch (address) {
 		case 0:
 			writeData(data);
@@ -89,7 +88,7 @@ public class SdController extends Device {
 	}
 
 	@Override
-	public int read(int address) throws MemoryAccessException {
+	public int read(int address) {
 		switch (address) {
 		case 0:
 			return readData();
@@ -195,10 +194,4 @@ public class SdController extends Device {
 			this.status = Status.IDLE;
 		}
 	}
-
-	@Override
-	public String toString() {
-		return getName() + "@" + String.format("%04X", this.getMemoryRange().startAddress);
-	}
-
 }

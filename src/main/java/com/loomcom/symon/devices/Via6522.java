@@ -23,7 +23,6 @@
 
 package com.loomcom.symon.devices;
 
-import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.exceptions.MemoryRangeException;
 
 /**
@@ -43,11 +42,11 @@ public class Via6522 extends Pia {
 	}
 
 	@Override
-	public void write(int address, int data) throws MemoryAccessException {
+	public void write(int address, int data) {
 		Register[] registers = Register.values();
 
 		if (address >= registers.length) {
-			throw new MemoryAccessException("Unknown register: " + address);
+			return;
 		}
 
 		Register r = registers[address];
@@ -74,11 +73,11 @@ public class Via6522 extends Pia {
 	}
 
 	@Override
-	public int read(int address) throws MemoryAccessException {
+	public int read(int address) {
 		Register[] registers = Register.values();
 
 		if (address >= registers.length) {
-			throw new MemoryAccessException("Unknown register: " + address);
+			return 0;
 		}
 
 		Register r = registers[address];

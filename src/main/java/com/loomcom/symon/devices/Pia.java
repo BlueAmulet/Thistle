@@ -27,15 +27,7 @@ import com.loomcom.symon.exceptions.MemoryRangeException;
 
 public abstract class Pia extends Device {
 
-	private final String name;
-
 	public Pia(int startAddress, int deviceLength, String name) throws MemoryRangeException {
 		super(startAddress, deviceLength, name);
-		this.name = name;
-	}
-
-	@Override
-	public String toString() {
-		return name;
 	}
 }

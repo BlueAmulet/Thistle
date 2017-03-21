@@ -29,7 +29,6 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.exceptions.MemoryRangeException;
 
 public class Memory extends Device {
@@ -64,10 +63,8 @@ public class Memory extends Device {
 	}
 
 	@Override
-	public void write(int address, int data) throws MemoryAccessException {
-		if (readOnly) {
-			throw new MemoryAccessException("Cannot write to read-only memory at address " + address);
-		} else {
+	public void write(int address, int data) {
+		if (!readOnly) {
 			this.mem[address] = data;
 		}
 	}
@@ -92,7 +89,7 @@ public class Memory extends Device {
 	}
 
 	@Override
-	public int read(int address) throws MemoryAccessException {
+	public int read(int address) {
 		return this.mem[address];
 	}
 

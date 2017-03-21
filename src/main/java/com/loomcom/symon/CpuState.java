@@ -37,11 +37,10 @@ public class CpuState {
 	public int ir;
 
 	/**
-	 * Peek-Ahead to next IR
+	 * Last Loaded Instruction Arguments
 	 */
-	public int nextIr;
 	public int[] args = new int[2];
-	public int[] nextArgs = new int[2];
+
 	public int instSize;
 	public boolean opTrap;
 	public boolean irqAsserted;
@@ -56,7 +55,9 @@ public class CpuState {
 	public boolean decimalModeFlag;
 	public boolean breakFlag;
 	public boolean overflowFlag;
-	public long stepCounter = 0L;
+
+	// KIL opcode lockup
+	public boolean dead = false;
 
 	/**
 	 * Create an empty CPU State.
@@ -79,12 +80,9 @@ public class CpuState {
 		this.sp = s.sp;
 		this.pc = s.pc;
 		this.ir = s.ir;
-		this.nextIr = s.nextIr;
 		this.lastPc = s.lastPc;
 		this.args[0] = s.args[0];
 		this.args[1] = s.args[1];
-		this.nextArgs[0] = s.nextArgs[0];
-		this.nextArgs[1] = s.nextArgs[1];
 		this.instSize = s.instSize;
 		this.opTrap = s.opTrap;
 		this.irqAsserted = s.irqAsserted;
@@ -95,7 +93,7 @@ public class CpuState {
 		this.decimalModeFlag = s.decimalModeFlag;
 		this.breakFlag = s.breakFlag;
 		this.overflowFlag = s.overflowFlag;
-		this.stepCounter = s.stepCounter;
+		this.dead = s.dead;
 	}
 
 	/**

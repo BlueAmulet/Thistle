@@ -1,32 +1,49 @@
 package gamax92.thistle;
 
-import java.util.ArrayList;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.io.IOUtils;
+
+import com.loomcom.symon.Cpu;
+import gamax92.thistle.devices.BankSelector;
+import gamax92.thistle.exceptions.CallSynchronizedException;
+import gamax92.thistle.exceptions.CallSynchronizedException.Cleanup;
+import gamax92.thistle.util.ValueManager;
 import li.cil.oc.Settings;
 import li.cil.oc.api.Driver;
 import li.cil.oc.api.driver.item.Processor;
+import li.cil.oc.api.driver.item.Memory;
 import li.cil.oc.api.machine.Architecture;
+import li.cil.oc.api.machine.Callback;
 import li.cil.oc.api.machine.ExecutionResult;
+import li.cil.oc.api.machine.LimitReachedException;
 import li.cil.oc.api.machine.Machine;
 import li.cil.oc.api.machine.Signal;
+import li.cil.oc.api.machine.Value;
+import li.cil.oc.api.network.Component;
+import li.cil.oc.api.network.Node;
+import li.cil.oc.common.SaveHandler;
 import li.cil.oc.server.PacketSender;
+import li.cil.oc.server.machine.Callbacks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-
-import com.loomcom.symon.Cpu;
-import com.loomcom.symon.devices.Acia;
-import com.loomcom.symon.devices.Memory;
-
-import gamax92.thistle.devices.Bank;
+import scala.Option;
 
 @Architecture.Name("6502 Thistle")
 public class ThistleArchitecture implements Architecture {
 	private final Machine machine;
 
 	private ThistleVM vm;
-	private ConsoleDriver console;
 
 	private boolean initialized = false;
+
+	private boolean inSynchronizedCall = false;
+
+	private CallSynchronizedException syncCall;
 
 	/** The constructor must have exactly this signature. */
 	public ThistleArchitecture(Machine machine) {
@@ -41,8 +58,8 @@ public class ThistleArchitecture implements Architecture {
 	private static int calculateMemory(Iterable<ItemStack> components) {
 		int memory = 0;
 		for (ItemStack component : components) {
-			if (Driver.driverFor(component) instanceof li.cil.oc.api.driver.item.Memory) {
-				li.cil.oc.api.driver.item.Memory memdrv = (li.cil.oc.api.driver.item.Memory) Driver.driverFor(component);
+			if (Driver.driverFor(component) instanceof Memory) {
+				Memory memdrv = (Memory) Driver.driverFor(component);
 				memory += memdrv.amount(component) * 1024;
 			}
 		}
@@ -51,24 +68,30 @@ public class ThistleArchitecture implements Architecture {
 
 	@Override
 	public boolean recomputeMemory(Iterable<ItemStack> components) {
-		int memory = calculateMemory(components);
-		if (vm != null) // OpenComputers, why are you calling this before initialize?
-			vm.machine.getBank().resize(memory);
+		if (vm != null) {
+			int memory = calculateMemory(components);
+			vm.machine.resize(memory);
+		}
 		return true;
 	}
 
 	@Override
 	public boolean initialize() {
 		// Set up new VM here
-		console = new ConsoleDriver(machine);
 		vm = new ThistleVM(machine);
-		vm.console = console;
-		vm.machine.getBank().init(calculateMemory(machine.host().internalComponents()));
+		BankSelector banksel = this.vm.machine.getBankSelector();
+		int memory = calculateMemory(this.machine.host().internalComponents());
+		vm.machine.resize(memory);
+		vm.machine.reset();
 		for (ItemStack component : machine.host().internalComponents()) {
 			if (Driver.driverFor(component) instanceof Processor) {
-				vm.cyclesPerTick = (Driver.driverFor(component).tier(component) + 1) * 15000;
+				vm.cyclesPerTick = (Driver.driverFor(component).tier(component) + 1) * ThistleConfig.clocksPerTick;
 				break;
 			}
+		}
+		try {
+			PacketSender.sendSound(machine.host().world(), machine.host().xPosition(), machine.host().yPosition(), machine.host().zPosition(), ".");
+		} catch (Throwable e) {
 		}
 		initialized = true;
 		return true;
@@ -76,6 +99,7 @@ public class ThistleArchitecture implements Architecture {
 
 	@Override
 	public void close() {
+		ValueManager.removeAll(this.machine);
 		vm = null;
 	}
 
@@ -89,24 +113,20 @@ public class ThistleArchitecture implements Architecture {
 				while (true) {
 					signal = machine.popSignal();
 					if (signal != null) {
-						if (signal.name().equals("key_down")) {
-							int character = (int) (double) (Double) signal.args()[1]; // castception
-							if (character != 0) // Not a character
-								console.pushChar(character);
-						} else if (signal.name().equals("clipboard")) {
-							char[] paste = ((String) signal.args()[1]).toCharArray();
-							for (char character : paste)
-								console.pushChar(character);
-						}
-						vm.machine.getSigDev().queue(signal.name(), signal.args());
+						vm.machine.getBus().onSignal(signal);
 					} else
 						break;
 				}
 			}
 			vm.run();
-			console.flush();
 
 			return new ExecutionResult.Sleep(0);
+		} catch (CallSynchronizedException e) {
+			if (e.getCleanup() != null)
+				syncCall = e;
+			return new ExecutionResult.SynchronizedCall();
+		} catch (LimitReachedException e) {
+			return new ExecutionResult.SynchronizedCall();
 		} catch (Throwable t) {
 			t.printStackTrace();
 			return new ExecutionResult.Error(t.toString());
@@ -115,12 +135,29 @@ public class ThistleArchitecture implements Architecture {
 
 	@Override
 	public void runSynchronized() {
-		try {
-			vm.run();
-			console.flush();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (syncCall != null) {
+			// Nice clean method for us to avoid multiple bus writes
+			Object thing = syncCall.getThing();
+			Cleanup cleanup = syncCall.getCleanup();
+			try {
+				Object[] results = null;
+				if (thing instanceof String)
+					results = machine.invoke((String) thing, syncCall.getMethod(), syncCall.getArgs());
+				else if (thing instanceof Value)
+					results = machine.invoke((Value) thing, syncCall.getMethod(), syncCall.getArgs());
+				cleanup.run(results);
+			} catch (Exception e) {
+				cleanup.error(e);
+			}
+			cleanup.finish();
+			syncCall = null;
+		} else {
+			// Attempt to invoke again by re-executing the last instruction
+			inSynchronizedCall = true;
+			Cpu cpu = vm.machine.getCpu();
+			cpu.getCpuState().pc = cpu.getCpuState().lastPc;
+			cpu.step();
+			inSynchronizedCall = false;
 		}
 	}
 
@@ -130,9 +167,37 @@ public class ThistleArchitecture implements Architecture {
 
 	@Override
 	public void onConnect() {
+	}
+
+	public Object[] invoke(String address, String method, Object[] args) throws Exception {
+		if (!inSynchronizedCall) {
+			Node node = machine.node().network().node(address);
+			if (node instanceof Component) {
+				Callback callback = ((Component) node).annotation(method);
+				if (callback != null && !callback.direct())
+					throw new CallSynchronizedException(address, method, args);
+			}
+		}
 		try {
-			PacketSender.sendSound(machine.host().world(), machine.host().xPosition(), machine.host().yPosition(), machine.host().zPosition(), ".");
-		} catch (Throwable e) {
+			return machine.invoke(address, method, args);
+		} catch (LimitReachedException e) {
+			throw new CallSynchronizedException(address, method, args);
+		}
+	}
+
+	public Object[] invoke(Value value, String method, Object[] args) throws Exception {
+		if (!inSynchronizedCall) {
+			Option<Callbacks.Callback> option = Callbacks.apply(value).get(method);
+			if (option != null) {
+				Callbacks.Callback callback = option.get();
+				if (callback != null && !callback.annotation().direct())
+					throw new CallSynchronizedException(value, method, args);
+			}
+		}
+		try {
+			return machine.invoke(value, method, args);
+		} catch (LimitReachedException e) {
+			throw new CallSynchronizedException(value, method, args);
 		}
 	}
 
@@ -141,14 +206,24 @@ public class ThistleArchitecture implements Architecture {
 	public void load(NBTTagCompound nbt) {
 		// Restore Machine
 
-		// Restore Acia
-		if (nbt.hasKey("acia")) {
-			Acia mACIA = vm.machine.getAcia();
-			NBTTagCompound aciaTag = nbt.getCompoundTag("acia");
-			mACIA.setBaudRate(aciaTag.getInteger("baudRate"));
+		// Restore Memory
+		byte[] gzmem = SaveHandler.load(nbt, this.machine.node().address() + "_memory");
+		if (gzmem.length > 0) {
+			try {
+				ByteArrayInputStream bais = new ByteArrayInputStream(gzmem);
+				GZIPInputStream gzis = new GZIPInputStream(bais);
+				byte[] mem = IOUtils.toByteArray(gzis);
+				IOUtils.closeQuietly(gzis);
+				vm.machine.resize(mem.length);
+				for (int i = 0; i < mem.length; i++)
+					vm.machine.writeMem(i, mem[i]);
+			} catch (IOException e) {
+				Thistle.log.error("Failed to decompress memory from disk.");
+				e.printStackTrace();
+			}
 		}
 
-		// Restore Cpu
+		// Restore CPU
 		if (nbt.hasKey("cpu")) {
 			Cpu mCPU = vm.machine.getCpu();
 			NBTTagCompound cpuTag = nbt.getCompoundTag("cpu");
@@ -160,37 +235,11 @@ public class ThistleArchitecture implements Architecture {
 			mCPU.setYRegister(cpuTag.getInteger("rY"));
 		}
 
-		// Restore Ram
-		if (nbt.hasKey("ram")) {
-			Memory mRAM = vm.machine.getRam();
-			NBTTagCompound ramTag = nbt.getCompoundTag("ram");
-			int[] mem = ramTag.getIntArray("mem");
-			System.arraycopy(mem, 0, mRAM.getDmaAccess(), 0, mem.length);
-		}
+		// Restore Values
+		if (nbt.hasKey("values"))
+			ValueManager.load(nbt.getCompoundTag("values"));
 
-		// Restore Rom
-		if (nbt.hasKey("rom")) {
-			Memory mROM = vm.machine.getRom();
-			NBTTagCompound romTag = nbt.getCompoundTag("rom");
-			int[] mem = romTag.getIntArray("mem");
-			System.arraycopy(mem, 0, mROM.getDmaAccess(), 0, mem.length);
-		}
-
-		// Restore Banked Ram
-		if (nbt.hasKey("bank")) {
-			Bank mBANK = vm.machine.getBank();
-			NBTTagCompound bankTag = nbt.getCompoundTag("bank");
-			mBANK.setBank(bankTag.getInteger("bank"));
-			mBANK.setBankSize(bankTag.getInteger("bankSize"));
-			mBANK.setMemsize(bankTag.getInteger("size"));
-			int[] mem = bankTag.getIntArray("mem");
-			ArrayList<Integer> almem = mBANK.getDmaAccess();
-			almem.clear();
-			for (int v : mem)
-				almem.add(v);
-		}
-
-		console.load(nbt);
+		vm.machine.getBus().load(nbt);
 	}
 
 	// TODO: Needs more things
@@ -198,15 +247,22 @@ public class ThistleArchitecture implements Architecture {
 	public void save(NBTTagCompound nbt) {
 		// Persist Machine
 
-		// Persist Acia
-		Acia mACIA = vm.machine.getAcia();
-		if (mACIA != null) {
-			NBTTagCompound aciaTag = new NBTTagCompound();
-			aciaTag.setInteger("baudRate", mACIA.getBaudRate());
-			nbt.setTag("acia", aciaTag);
+		// Persist Memory
+		byte mem[] = new byte[vm.machine.getMemsize()];
+		for (int i = 0; i < mem.length; i++)
+			mem[i] = vm.machine.readMem(i);
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			GZIPOutputStream gzos = new GZIPOutputStream(baos);
+			gzos.write(mem);
+			gzos.close();
+			SaveHandler.scheduleSave(machine.host(), nbt, machine.node().address() + "_memory", baos.toByteArray());
+		} catch (IOException e) {
+			Thistle.log.error("Failed to compress memory to disk");
+			e.printStackTrace();
 		}
 
-		// Persist Cpu
+		// Persist CPU
 		Cpu mCPU = vm.machine.getCpu();
 		if (mCPU != null) {
 			NBTTagCompound cpuTag = new NBTTagCompound();
@@ -219,40 +275,11 @@ public class ThistleArchitecture implements Architecture {
 			nbt.setTag("cpu", cpuTag);
 		}
 
-		// Persist Ram
-		Memory mRAM = vm.machine.getRam();
-		if (mRAM != null) {
-			NBTTagCompound ramTag = new NBTTagCompound();
-			int[] mem = mRAM.getDmaAccess();
-			ramTag.setIntArray("mem", mem);
-			nbt.setTag("ram", ramTag);
-		}
+		// Persist Values
+		NBTTagCompound valueTag = new NBTTagCompound();
+		ValueManager.save(valueTag);
+		nbt.setTag("values", valueTag);
 
-		// Persist Rom
-		Memory mROM = vm.machine.getRom();
-		if (mROM != null) {
-			NBTTagCompound romTag = new NBTTagCompound();
-			int[] mem = mROM.getDmaAccess();
-			romTag.setIntArray("mem", mem);
-			nbt.setTag("rom", romTag);
-		}
-
-		// Persist Banked Ram
-		Bank mBANK = vm.machine.getBank();
-		if (mBANK != null) {
-			NBTTagCompound bankTag = new NBTTagCompound();
-			bankTag.setInteger("bank", mBANK.getBank());
-			bankTag.setInteger("bankSize", mBANK.getBankSize());
-			bankTag.setInteger("size", mBANK.getMemsize());
-			ArrayList<Integer> almem = mBANK.getDmaAccess();
-			int mem[] = new int[almem.size()];
-			int i = 0;
-			for (int v : almem)
-				mem[i++] = v;
-			bankTag.setIntArray("mem", mem);
-			nbt.setTag("bank", bankTag);
-		}
-
-		console.save(nbt);
+		vm.machine.getBus().save(nbt);
 	}
 }

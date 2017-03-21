@@ -28,10 +28,10 @@ import java.util.Set;
 
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.MemoryRange;
-import com.loomcom.symon.exceptions.MemoryAccessException;
 import com.loomcom.symon.exceptions.MemoryRangeException;
 
 import li.cil.oc.api.machine.Signal;
+import net.minecraft.nbt.NBTTagCompound;
 
 /**
  * A memory-mapped IO Device.
@@ -55,6 +55,11 @@ public abstract class Device implements Comparable<Device> {
 	private String name;
 
 	/**
+	 * Short name for debugging.
+	 */
+	private String shortname;
+
+	/**
 	 * Reference to the bus where this Device is attached.
 	 */
 	private Bus bus;
@@ -68,16 +73,19 @@ public abstract class Device implements Comparable<Device> {
 		this.memoryRange = new MemoryRange(startAddress, startAddress + deviceLength - 1);
 		this.size = deviceLength;
 		this.name = name;
+		this.shortname = name.replaceAll("\\s+", "");
 		this.deviceChangeListeners = new HashSet<DeviceChangeListener>();
 	}
 
 	/* Methods required to be implemented by inheriting classes. */
-	public abstract void write(int address, int data) throws MemoryAccessException;
+	public abstract int read(int address);
 
-	public abstract int read(int address) throws MemoryAccessException;
+	public abstract void write(int address, int data);
 
 	@Override
-	public abstract String toString();
+	public String toString() {
+		return String.format("%s@$%04X", shortname, memoryRange.startAddress());
+	}
 
 	public Bus getBus() {
 		return this.bus;
@@ -105,6 +113,7 @@ public abstract class Device implements Comparable<Device> {
 
 	public void setName(String name) {
 		this.name = name;
+		this.shortname = name.replaceAll("\\s+", "");
 	}
 
 	public int getSize() {
@@ -122,6 +131,12 @@ public abstract class Device implements Comparable<Device> {
 	}
 
 	public void onSignal(Signal signal) {
+	}
+
+	public void load(NBTTagCompound nbt) {
+	}
+
+	public void save(NBTTagCompound nbt) {
 	}
 
 	/**
