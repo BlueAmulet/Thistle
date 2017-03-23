@@ -17,7 +17,7 @@ banks       1
 
 .db "--[[CABE:Thistle:"
 
-; 
+; TSF Component Data
 fslist: .db 10,10,0,"filesystem",0 ; 14
 umlist: .db 10,5,0,"drive",0 ; 9
 secread: .db 10,10,0,"readSector",3,1,0 ; 16
@@ -109,13 +109,13 @@ uuidprint:
 	iny
 	cpy #$10
 	beq ++
-	cpy #$03
+	cpy #$04
 	beq +
-	cpy #$05
+	cpy #$06
 	beq +
-	cpy #$07
+	cpy #$08
 	beq +
-	cpy #$09
+	cpy #$0A
 	beq +
 	jmp --
 +	lda #$2D
@@ -231,32 +231,34 @@ bootfs:
 	copys_uu fsread $0001 16 ; Copy read command
 	copys_pu $D001 $0008 5 ; Inject handle
 
--	ldx #$00
+-	ldx $00
 	cpx #$D0
 	beq ++ ; Too much data read
-	stx $e046
 	copys_up $0001 $D001 16 ; Call "read"
-	stx $D000
-	lda $D000
-	cmp #$00
-	bne ++ ; No more data to read
+	lda #$00
+	sta $D000
 
-	ldx $D001 ; Discard Tag and length
-	ldx $D001
-	ldx $D001
+	lda $D001 ; Check TSF Tag
+	cmp #$09 ; Byte array?
+	beq +
+	cmp #$0A ; String?
+	beq +
+	jmp ++ ; No more data to read
 
-	sta $E043 ; Setup Copy Engine
-	lda #$01
-	sta $E041
++	ldy #$01 ; Setup Copy Engine
+	sty $E041
 	lda #$D0
 	sta $E042
+	ldx #$00
+	stx $E043
 	lda $00
 	sta $E044
-	lda #$00
+	lda $D001
 	sta $E045
-	lda #$01
+	lda $D001
 	sta $E046
-	sta $E040
+	sty $E040 ; Execute Copy Engine Command
+	stx $E046 ; Put high byte of size back to 0
 	inc $00
 	jmp -
 
@@ -295,7 +297,7 @@ havemem:
 	; Store list to memory
 	lda $E011
 	sta $03
-	readlist 5
+	readlist 8
 
 	; Parse list
 	lda $03
@@ -320,7 +322,7 @@ fschk:
 	; Store list to memory
 	lda $E011
 	sta $03
-	readlist 10
+	readlist 13
 
 	; Parse list
 -	lda $03
