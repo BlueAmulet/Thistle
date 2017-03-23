@@ -108,7 +108,6 @@ public class ThistleArchitecture implements Architecture {
 		try {
 			if (!isSynchronizedReturn) {
 				// Since our machine is a memory mapped one, parse signals here
-				// TODO: Signal device
 				Signal signal = null;
 				while (true) {
 					signal = machine.popSignal();
@@ -201,7 +200,6 @@ public class ThistleArchitecture implements Architecture {
 		}
 	}
 
-	// TODO: Needs more things
 	@Override
 	public void load(NBTTagCompound nbt) {
 		// Restore Machine
@@ -242,7 +240,6 @@ public class ThistleArchitecture implements Architecture {
 		vm.machine.getBus().load(nbt);
 	}
 
-	// TODO: Needs more things
 	@Override
 	public void save(NBTTagCompound nbt) {
 		// Persist Machine
