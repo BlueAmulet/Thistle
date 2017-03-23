@@ -26,7 +26,6 @@ public class ThistleIO extends Device {
 	private LinkedList<byte[]> signalbuf = new LinkedList<byte[]>();
 	private Queue<Byte> queuebuf = new LinkedList<Byte>();
 	private int signalpos = 0;
-	// TODO: Objects array and input buffer for queuing signals
 	private int queuestat = 0;
 	private int irqmask = 0;
 	private int nmimask = 0;
