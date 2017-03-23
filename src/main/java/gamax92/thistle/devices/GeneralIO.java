@@ -20,7 +20,7 @@ import li.cil.oc.api.machine.Machine;
 import li.cil.oc.api.machine.Signal;
 import net.minecraft.nbt.NBTTagCompound;
 
-public class ThistleIO extends Device {
+public class GeneralIO extends Device {
 
 	private EvictingQueue<Byte> inputbuf = EvictingQueue.create(255);
 	private LinkedList<byte[]> signalbuf = new LinkedList<byte[]>();
@@ -46,8 +46,8 @@ public class ThistleIO extends Device {
 	static final int GIO_IRQMASK_REG = 8;
 	static final int GIO_NMIMASK_REG = 9;
 
-	public ThistleIO(int address) throws MemoryRangeException {
-		super(address, 16, "Generic IO");
+	public GeneralIO(int address) throws MemoryRangeException {
+		super(address, 16, "General IO");
 	}
 
 	private void utf8clear(int len, int data) {
