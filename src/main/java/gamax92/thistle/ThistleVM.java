@@ -45,8 +45,11 @@ public class ThistleVM {
 			FMLCommonHandler.instance().bus().unregister(this);
 			return;
 		}
+		if (event.phase != Phase.START)
+			return;
 		Cpu mCPU = machine.getCpu();
-		if (event.phase == Phase.START && mCPU.getCycles() < cyclesPerTick)
+		if (mCPU.getCycles() < cyclesPerTick)
 			mCPU.addCycles(cyclesPerTick);
+		machine.getRTC().onServerTick();
 	}
 }
