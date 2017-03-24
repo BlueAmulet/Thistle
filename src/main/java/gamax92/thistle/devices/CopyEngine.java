@@ -13,6 +13,7 @@ public class CopyEngine extends Device {
 	private int dmaAddress = 0;
 	private int dmaTarget = 0;
 	private int dmaLength = 0;
+	private boolean working = false;
 
 	static final int COPYENG_STATUS_REG = 0;
 	static final int COPYENG_ADDRESS_REG_L = 1;
@@ -52,9 +53,14 @@ public class CopyEngine extends Device {
 	public void write(int address, int data) {
 		switch (address) {
 		case COPYENG_STATUS_REG:
-			if (data > 7)
+			if (working)
+				break;
+			if (data > 7) {
 				status = 0xff;
+				break;
+			}
 			status = 0;
+			working = true;
 			boolean sUnpack = (data & 0x02) != 0;
 			boolean tUnpack = (data & 0x01) != 0;
 			Bus bus = this.getBus();
@@ -74,6 +80,7 @@ public class CopyEngine extends Device {
 				}
 				cpu.addCycles(-dmaLength*2);
 			}
+			working = false;
 			break;
 		case COPYENG_ADDRESS_REG_L:
 			this.dmaAddress = (this.dmaAddress & 0xFF00) | (data & 0xFF);
