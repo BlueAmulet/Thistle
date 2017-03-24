@@ -758,6 +758,7 @@ public class Cpu implements InstructionTable {
 		setZeroFlag(result == 0);
 		setNegativeFlag(false); // BCD is never negative
 		setOverflowFlag(false); // BCD never sets overflow flag
+		this.cycles--;
 		return result;
 	}
 
@@ -789,6 +790,7 @@ public class Cpu implements InstructionTable {
 		setZeroFlag(result == 0);
 		setNegativeFlag(false); // BCD is never negative
 		setOverflowFlag(false); // BCD never sets overflow flag
+		this.cycles--;
 		return (result & 0xff);
 	}
 
