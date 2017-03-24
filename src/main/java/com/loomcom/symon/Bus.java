@@ -52,11 +52,11 @@ public class Bus {
 			}
 			return 0;
 		}
+		if (ThistleConfig.debugDeviceReads)
+			Thistle.log.info(String.format("[Bus] Device Read $%04X", address));
 		for (Device device : deviceList) {
 			MemoryRange memoryRange = device.getMemoryRange();
 			if (address >= memoryRange.startAddress && address <= memoryRange.endAddress) {
-				if (ThistleConfig.debugDeviceReads)
-					Thistle.log.info(String.format("[Bus] Device Read $%04X", address));
 				return device.read(address - memoryRange.startAddress) & 0xFF;
 			}
 		}
@@ -71,11 +71,11 @@ public class Bus {
 			int bankMask = machine.getComponentSelector().getMask();
 			if (select == 15 && (bankMask & (1 << 4)) == 0) {
 				if (ThistleConfig.debugEEPROMWrites)
-					Thistle.log.info(String.format("[Bus] EEPROM Write $%04X", address, data));
+					Thistle.log.info(String.format("[Bus] EEPROM Write $%04X = 0x%02X", address, data));
 				machine.getEEPROM().write(address - EEPROM_DATA_BASE, data); // This reads eeprom code but offset must be data
 			} else if (select >= 10 && (bankMask & (1 << (select - 10))) == 0) {
 				if (ThistleConfig.debugComponentWrites)
-					Thistle.log.info(String.format("[Bus] Component Write $%04X", address, data));
+					Thistle.log.info(String.format("[Bus] Component Write $%04X = 0x%02X", address, data));
 				int index = address >>> 8;
 				index = (0xD0 - (index & 0xF0)) | (index & 0x0F);
 				IThistleDevice device = machine.getComponentSelector().getComponent(index);
@@ -83,7 +83,7 @@ public class Bus {
 					device.writeThistle(machine.getContext(), address & 0xFF, data);
 			} else {
 				if (ThistleConfig.debugMemoryWrites)
-					Thistle.log.info(String.format("[Bus] Memory Write $%04X", address, data));
+					Thistle.log.info(String.format("[Bus] Memory Write $%04X = 0x%02X", address, data));
 				BankSelector banksel = machine.getBankSelector();
 				int memaddr = (banksel.bankSelect[select] << 12) | (address & 0xFFF);
 				if (memaddr < machine.getMemsize())
@@ -91,11 +91,11 @@ public class Bus {
 			}
 			return;
 		}
+		if (ThistleConfig.debugDeviceWrites)
+			Thistle.log.info(String.format("[Bus] Device Write $%04X = 0x%02X", address, data));
 		for (Device device : deviceList) {
 			MemoryRange memoryRange = device.getMemoryRange();
 			if (address >= memoryRange.startAddress && address <= memoryRange.endAddress) {
-				if (ThistleConfig.debugDeviceWrites)
-					Thistle.log.info(String.format("[Bus] Device Write $%04X", address, data));
 				device.write(address - memoryRange.startAddress, data);
 				return;
 			}
