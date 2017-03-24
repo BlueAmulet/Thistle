@@ -223,6 +223,8 @@ public class GeneralIO extends Device {
 			if (character == 0) {
 				inputbuf.add((byte) 0);
 				inputbuf.add((byte) (double) (Double) args[2]);
+			} else if (character == 13) {
+				inputbuf.add((byte) 10); // Make \r into \n
 			} else if (character > 0 && character < 128) {
 				inputbuf.add((byte) character);
 			} else {
