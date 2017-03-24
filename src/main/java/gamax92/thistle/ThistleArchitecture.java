@@ -9,6 +9,8 @@ import java.util.zip.GZIPOutputStream;
 import org.apache.commons.io.IOUtils;
 
 import com.loomcom.symon.Cpu;
+
+import cpw.mods.fml.common.FMLCommonHandler;
 import gamax92.thistle.devices.BankSelector;
 import gamax92.thistle.exceptions.CallSynchronizedException;
 import gamax92.thistle.exceptions.CallSynchronizedException.Cleanup;
@@ -100,7 +102,10 @@ public class ThistleArchitecture implements Architecture {
 	@Override
 	public void close() {
 		ValueManager.removeAll(this.machine);
-		vm = null;
+		if (vm != null) {
+			FMLCommonHandler.instance().bus().unregister(vm.machine);
+			vm = null;
+		}
 	}
 
 	@Override

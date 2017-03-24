@@ -17,6 +17,7 @@ public class ThistleVM {
 
 	public ThistleVM(Context context) {
 		super();
+		FMLCommonHandler.instance().bus().register(this);
 		try {
 			machine = new ThistleMachine(context);
 			if (context.node().network() == null) {
@@ -24,7 +25,6 @@ public class ThistleVM {
 				return;
 			}
 			machine.getCpu().reset();
-			FMLCommonHandler.instance().bus().register(this);
 		} catch (Exception e) {
 			Thistle.log.warn("Failed to setup Thistle", e);
 		}
