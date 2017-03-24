@@ -157,6 +157,8 @@ loaduuid:
 	; Clobbers: A, X, Y, (uuidprint)
 	jsr uuidprint
 	ldy $00
+	lda #$00
+	sta $00
 	ldx #$10
 	lda #$0b ; UUID Tag
 	sta $E012
