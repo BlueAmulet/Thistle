@@ -187,126 +187,142 @@ public class ConsoleDriver {
 							parseANSI = false;
 							String ansiCode = this.ansiCode.toString();
 							String[] ansiParts = this.ansiCode.toString().split(";", -1);
-							switch (character) {
-							case 'A':
-								Y = Math.max(Y - parseCode(ansiCode), 1);
-								break;
-							case 'B':
-								Y = Math.min(Y + parseCode(ansiCode), H);
-								break;
-							case 'C':
-								X = Math.min(X + parseCode(ansiCode), W);
-								break;
-							case 'D':
-								X = Math.max(X - parseCode(ansiCode), 1);
-								break;
-							case 'E':
-								Y = Math.min(Y + parseCode(ansiCode), H);
-								X = 1;
-								break;
-							case 'F':
-								Y = Math.max(Y - parseCode(ansiCode), 1);
-								X = 1;
-								break;
-							case 'G':
-								X = clampW(parseCode(ansiCode));
-								break;
-							case 'H':
-								if (ansiParts.length > 2) {
+							try {
+								switch (character) {
+								case 'A':
+									Y = Math.max(Y - parseCode(ansiCode), 1);
 									break;
-								}
-								X = 1;
-								Y = 1;
-								if (ansiParts.length >= 1)
-									Y = clampH(Integer.parseInt(ansiParts[0]));
-								if (ansiParts.length == 2)
-									X = clampW(Integer.parseInt(ansiParts[1]));
-								break;
-							case 'J':
-								if (ansiCode.length() == 0 || ansiCode.equals("0")) {
-									if (this.Y < this.H)
-										databuf.add(1, -500);
-									databuf.add(1, -502);
-								} else if (ansiCode.equals("1")) {
-									if (this.Y > 1)
-										databuf.add(1, -501);
-									databuf.add(1, -503);
-								} else if (ansiCode.equals("2"))
-									databuf.add(1, -6);
-								break;
-							case 'K':
-								if (ansiCode.length() == 0 || ansiCode.equals("0"))
-									databuf.add(1, -502);
-								else if (ansiCode.equals("1"))
-									databuf.add(1, -503);
-								else if (ansiCode.equals("2"))
-									databuf.add(1, -504);
-								break;
-							case 'L':
-								// TODO: Insert n lines
-								break;
-							case 'M':
-								// TODO: Delete n lines
-								break;
-							case 'P':
-								// TODO: Shift characters past cursor left n (Delete)
-								break;
-							case 'S':
-								// TODO: Scroll display up n lines
-								break;
-							case 'T':
-								// TODO: Scroll display down n lines
-								break;
-							case 'X':
-								// TODO: Set n characters including cursor to space (Erase)
-								break;
-							case 'h':
-								if (ansiCode.equals("?25"))
-									showCursor = true;
-								break;
-							case 'l':
-								if (ansiCode.equals("?25")) {
-									showCursor = false;
-									if (cursor) {
-										databuf.add(1, -1004);
-										databuf.add(1, -1003);
-										databuf.add(1, -1002);
-										databuf.add(1, -1001);
+								case 'B':
+									Y = Math.min(Y + parseCode(ansiCode), H);
+									break;
+								case 'C':
+									X = Math.min(X + parseCode(ansiCode), W);
+									break;
+								case 'D':
+									X = Math.max(X - parseCode(ansiCode), 1);
+									break;
+								case 'E':
+									Y = Math.min(Y + parseCode(ansiCode), H);
+									X = 1;
+									break;
+								case 'F':
+									Y = Math.max(Y - parseCode(ansiCode), 1);
+									X = 1;
+									break;
+								case 'G':
+									X = clampW(parseCode(ansiCode));
+									break;
+								case 'H':
+									if (ansiParts.length > 2) {
+										break;
 									}
+									X = 1;
+									Y = 1;
+									if (ansiParts.length >= 1)
+										Y = clampH(Integer.parseInt(ansiParts[0]));
+									if (ansiParts.length == 2)
+										X = clampW(Integer.parseInt(ansiParts[1]));
+									break;
+								case 'J':
+									if (ansiCode.length() == 0 || ansiCode.equals("0")) {
+										if (this.Y < this.H)
+											databuf.add(1, -500);
+										databuf.add(1, -502);
+									} else if (ansiCode.equals("1")) {
+										if (this.Y > 1)
+											databuf.add(1, -501);
+										databuf.add(1, -503);
+									} else if (ansiCode.equals("2"))
+										databuf.add(1, -6);
+									break;
+								case 'K':
+									if (ansiCode.length() == 0 || ansiCode.equals("0"))
+										databuf.add(1, -502);
+									else if (ansiCode.equals("1"))
+										databuf.add(1, -503);
+									else if (ansiCode.equals("2"))
+										databuf.add(1, -504);
+									break;
+								case 'L':
+									// TODO: Insert n lines
+									break;
+								case 'M':
+									// TODO: Delete n lines
+									break;
+								case 'P':
+									// TODO: Shift characters past cursor left n (Delete)
+									break;
+								case 'S':
+									// TODO: Scroll display up n lines
+									break;
+								case 'T':
+									// TODO: Scroll display down n lines
+									break;
+								case 'X':
+									// TODO: Set n characters including cursor to space (Erase)
+									break;
+								case 'h':
+									if (ansiCode.equals("?25"))
+										showCursor = true;
+									break;
+								case 'l':
+									if (ansiCode.equals("?25")) {
+										showCursor = false;
+										if (cursor) {
+											databuf.add(1, -1004);
+											databuf.add(1, -1003);
+											databuf.add(1, -1002);
+											databuf.add(1, -1001);
+										}
+									}
+									break;
+								case 'm':
+									boolean newBrightFG = this.brightFG;
+									boolean newBrightBG = this.brightBG;
+									int newTextFG = this.textFG;
+									int newTextBG = this.textBG;
+									for (String part : ansiParts) {
+										int ipart = Integer.parseInt(part);
+										if (ipart == 0) {
+											newBrightFG = false;
+											newBrightBG = false;
+											newTextFG = 7;
+											newTextBG = 0;
+										} else if (ipart == 1)
+											newBrightFG = true;
+										else if (ipart == 5)
+											newBrightBG = true;
+										else if (ipart >= 30 && ipart <= 37)
+											newTextFG = ipart - 30;
+										else if (ipart >= 40 && ipart <= 47)
+											newTextBG = ipart - 40;
+									}
+									if (newBrightBG != this.brightBG || newTextBG != this.textBG) {
+										this.brightBG = newBrightBG;
+										this.textBG = newTextBG;
+										databuf.add(1, -4);
+									}
+									if (newBrightFG != this.brightFG || newTextFG != this.textFG) {
+										this.brightFG = newBrightFG;
+										this.textFG = newTextFG;
+										databuf.add(1, -5);
+									}
+									break;
+								default:
+									for (int i = ansiCode.length()-1; i >= 0; i--) {
+										databuf.addFirst((int) ansiCode.charAt(i));
+									}
+									databuf.addFirst(91);
+									databuf.addFirst(-27);
+									databuf.addFirst(-1000);
 								}
-								break;
-							case 'm':
-								boolean newBrightFG = this.brightFG;
-								boolean newBrightBG = this.brightBG;
-								int newTextFG = this.textFG;
-								int newTextBG = this.textBG;
-								for (String part : ansiParts) {
-									int ipart = Integer.parseInt(part);
-									if (ipart == 0) {
-										newBrightFG = false;
-										newBrightBG = false;
-										newTextFG = 7;
-										newTextBG = 0;
-									} else if (ipart == 1)
-										newBrightFG = true;
-									else if (ipart == 5)
-										newBrightBG = true;
-									else if (ipart >= 30 && ipart <= 37)
-										newTextFG = ipart - 30;
-									else if (ipart >= 40 && ipart <= 47)
-										newTextBG = ipart - 40;
+							} catch (NumberFormatException e) {
+								for (int i = ansiCode.length()-1; i >= 0; i--) {
+									databuf.addFirst((int) ansiCode.charAt(i));
 								}
-								if (newBrightBG != this.brightBG || newTextBG != this.textBG) {
-									this.brightBG = newBrightBG;
-									this.textBG = newTextBG;
-									databuf.add(1, -4);
-								}
-								if (newBrightFG != this.brightFG || newTextFG != this.textFG) {
-									this.brightFG = newBrightFG;
-									this.textFG = newTextFG;
-									databuf.add(1, -5);
-								}
-								break;
+								databuf.addFirst(91);
+								databuf.addFirst(-27);
+								databuf.addFirst(-1000);
 							}
 						} else
 							ansiCode.append((char) character);
