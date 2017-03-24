@@ -1,5 +1,6 @@
 package gamax92.thistle.util;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.collect.BiMap;
@@ -12,38 +13,53 @@ import net.minecraft.nbt.NBTTagCompound;
 
 public class ValueManager {
 
-	private static BiMap<Integer, Value> valuemap = HashBiMap.create();
+	private static Map<Context, BiMap<Integer, Value>> valuestore = new HashMap();
 
-    private static void addValue(Value value) {
+	private static BiMap<Integer, Value> getValueMap(Context context) {
+		BiMap<Integer, Value> valuemap = valuestore.get(context);
+		if (valuemap == null) {
+			valuemap = HashBiMap.create();
+			valuestore.put(context, valuemap);
+		}
+		return valuemap;
+	}
+
+    private static void addValue(BiMap<Integer, Value> valuemap, Value value) {
 		Integer id = value.hashCode();
 		while (valuemap.containsKey(id))
 			id = (int) ((Math.random()*2-1) * -((double) Integer.MIN_VALUE));
 		valuemap.put(id, value);
     }
 
-    public static Value getValue(int id) {
-		return valuemap.get(id);
+    public static Value getValue(int id, Context context) {
+		return getValueMap(context).get(id);
     }
 
-    public static int getID(Value value) {
+    public static int getID(Value value, Context context) {
+    	BiMap<Integer, Value> valuemap = getValueMap(context);
 		if (!valuemap.containsValue(value))
-			addValue(value);
+			addValue(valuemap, value);
 		return valuemap.inverse().get(value);
     }
 
     public static void removeValue(Value value, Context context) {
 		value.dispose(context);
-		valuemap.inverse().remove(value);
+		getValueMap(context).inverse().remove(value);
     }
 
     public static void removeAll(Context context) {
-		for (Value value : valuemap.values()) {
-			value.dispose(context);
+		BiMap<Integer, Value> valuemap = valuestore.get(context);
+		if (valuemap != null) {
+			for (Value value : valuemap.values()) {
+				value.dispose(context);
+			}
+			valuemap.clear();
+			valuestore.remove(context);
 		}
-		valuemap.clear();
     }
 
-	public static void load(NBTTagCompound nbt) {
+	public static void load(NBTTagCompound nbt, Context context) {
+    	BiMap<Integer, Value> valuemap = getValueMap(context);
 		int length = nbt.getInteger("length");
 		for (int i = 0; i < length; i++) {
 			try {
@@ -57,9 +73,9 @@ public class ValueManager {
 		}
 	}
 
-	public static void save(NBTTagCompound nbt) {
+	public static void save(NBTTagCompound nbt, Context context) {
 		int i = 0;
-		for (Map.Entry<Integer, Value> entry : valuemap.entrySet()) {
+		for (Map.Entry<Integer, Value> entry : getValueMap(context).entrySet()) {
 			Value value = entry.getValue();
 			NBTTagCompound valueTag = new NBTTagCompound();
 			value.save(valueTag);

@@ -16,12 +16,14 @@ import com.loomcom.symon.exceptions.MemoryRangeException;
 
 import gamax92.thistle.util.ConsoleDriver;
 import gamax92.thistle.util.TSFHelper;
+import li.cil.oc.api.machine.Context;
 import li.cil.oc.api.machine.Machine;
 import li.cil.oc.api.machine.Signal;
 import net.minecraft.nbt.NBTTagCompound;
 
 public class GeneralIO extends Device {
 
+	private Context context;
 	private EvictingQueue<Byte> inputbuf = EvictingQueue.create(255);
 	private LinkedList<byte[]> signalbuf = new LinkedList<byte[]>();
 	private Queue<Byte> queuebuf = new LinkedList<Byte>();
@@ -142,7 +144,7 @@ public class GeneralIO extends Device {
 			break;
 		case GIO_QUEUESTAT_REG:
 			if (data == 0) {
-				Object[] tsfdata = TSFHelper.readArray(queuebuf, true);
+				Object[] tsfdata = TSFHelper.readArray(queuebuf, context, true);
 				if (tsfdata == null || tsfdata.length < 1 || !(tsfdata[0] instanceof String)) {
 					queuestat = 2;
 					break;
@@ -250,7 +252,7 @@ public class GeneralIO extends Device {
 		if (signalbuf.size() < 255) {
 			Queue<Byte> signaldata = new LinkedList<Byte>();
 			TSFHelper.writeString(signaldata, name);
-			TSFHelper.writeArray(signaldata, args, 0x08);
+			TSFHelper.writeArray(signaldata, args, context, 0x08);
 			signalbuf.add(ArrayUtils.toPrimitive(signaldata.toArray(new Byte[0])));
 			if ((nmimask & 2) != 0)
 				cpu.assertNmi();
@@ -262,6 +264,7 @@ public class GeneralIO extends Device {
 	@Override
 	public void setBus(Bus bus) {
 		super.setBus(bus);
-		console = new ConsoleDriver((Machine) bus.getMachine().getContext());
+		this.context = getBus().getMachine().getContext();
+		this.console = new ConsoleDriver((Machine) this.context);
 	}
 }

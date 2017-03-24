@@ -152,7 +152,7 @@ public class ThistleArchitecture implements Architecture {
 					results = machine.invoke((String) thing, syncCall.getMethod(), syncCall.getArgs());
 				else if (thing instanceof Value)
 					results = machine.invoke((Value) thing, syncCall.getMethod(), syncCall.getArgs());
-				cleanup.run(results);
+				cleanup.run(results, machine);
 			} catch (Exception e) {
 				cleanup.error(e);
 			}
@@ -243,7 +243,7 @@ public class ThistleArchitecture implements Architecture {
 
 		// Restore Values
 		if (nbt.hasKey("values"))
-			ValueManager.load(nbt.getCompoundTag("values"));
+			ValueManager.load(nbt.getCompoundTag("values"), this.machine);
 
 		vm.machine.getBus().load(nbt);
 	}
@@ -282,7 +282,7 @@ public class ThistleArchitecture implements Architecture {
 
 		// Persist Values
 		NBTTagCompound valueTag = new NBTTagCompound();
-		ValueManager.save(valueTag);
+		ValueManager.save(valueTag, this.machine);
 		nbt.setTag("values", valueTag);
 
 		vm.machine.getBus().save(nbt);

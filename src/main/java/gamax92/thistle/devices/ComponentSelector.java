@@ -83,7 +83,7 @@ public class ComponentSelector extends Device {
 				return select;
 			}
 		}
-		Object[] tsfdata = TSFHelper.readArray(buffer, false);
+		Object[] tsfdata = TSFHelper.readArray(buffer, machine, false);
 		if (tsfdata == null || tsfdata.length != 1 || !(tsfdata[0] instanceof String || tsfdata[0] instanceof UUID)) {
 			return null;
 		} else {
@@ -239,7 +239,7 @@ public class ComponentSelector extends Device {
 				break;
 			case 4: // destroy value
 				status = 0;
-				Object[] tsfarray = TSFHelper.readArray(inputbuf);
+				Object[] tsfarray = TSFHelper.readArray(inputbuf, machine);
 				if (tsfarray == null || tsfarray.length != 1 || !(tsfarray[0] instanceof Value)) {
 					status = 1;
 					break;
