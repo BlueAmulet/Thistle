@@ -85,7 +85,7 @@ public class ThistleArchitecture implements Architecture {
 		vm.machine.reset();
 		for (ItemStack component : machine.host().internalComponents()) {
 			if (Driver.driverFor(component) instanceof Processor) {
-				vm.cyclesPerTick = (Driver.driverFor(component).tier(component) + 1) * ThistleConfig.clocksPerTick;
+				vm.cyclesPerTick = ThistleConfig.debugCpuSlowDown ? 10 : (Driver.driverFor(component).tier(component) + 1) * ThistleConfig.clocksPerTick;
 				break;
 			}
 		}
@@ -121,8 +121,11 @@ public class ThistleArchitecture implements Architecture {
 
 			return new ExecutionResult.Sleep(0);
 		} catch (CallSynchronizedException e) {
-			if (e.getCleanup() != null)
+			if (e.getCleanup() != null) {
+				if (ThistleConfig.debugCpuTraceLog) // Exceptions thrown cause ThistleVM to skip trace logging.
+					Thistle.log.info("[Cpu] " + vm.machine.getCpu().getCpuState().toTraceEvent());
 				syncCall = e;
+			}
 			return new ExecutionResult.SynchronizedCall();
 		} catch (LimitReachedException e) {
 			return new ExecutionResult.SynchronizedCall();

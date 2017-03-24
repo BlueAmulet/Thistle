@@ -7,7 +7,9 @@ import java.util.Queue;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import gamax92.thistle.Thistle;
 import gamax92.thistle.ThistleArchitecture;
+import gamax92.thistle.ThistleConfig;
 import gamax92.thistle.api.ThistleWrapper;
 import gamax92.thistle.exceptions.CallSynchronizedException;
 import gamax92.thistle.exceptions.CallSynchronizedException.Cleanup;
@@ -35,12 +37,16 @@ public class GenericDevice extends ThistleWrapper {
 		@Override
 		public void run(Object[] results) {
 			status = 0;
+			if (ThistleConfig.debugComponentCalls)
+				Thistle.log.info("[Generic] (" + host().node().address() + ") Results: " + Arrays.deepToString(results));
 			if (results != null) {
 				TSFHelper.writeArray(outputbuf, results, flag);
 			}
 		}
 		@Override
 		public void error(Exception e) {
+			if (ThistleConfig.debugComponentCalls)
+				Thistle.log.info("[Generic] (" + host().node().address() + ") Error: ", e);
 			if (e instanceof IllegalArgumentException) {
 				status = 2;
 			} else {
@@ -109,6 +115,8 @@ public class GenericDevice extends ThistleWrapper {
 			switch (data) {
 			case 0: // invoke
 				Object[] tsfdata = TSFHelper.readArray(inputbuf, flag);
+				if (ThistleConfig.debugComponentCalls)
+					Thistle.log.info("[Generic] Invoke: " + host().node().address() + Arrays.deepToString(tsfdata));
 				if (tsfdata == null || tsfdata.length < 1) {
 					status = 3;
 					break;

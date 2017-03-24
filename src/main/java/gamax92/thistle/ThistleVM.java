@@ -33,8 +33,11 @@ public class ThistleVM {
 	void run() throws Exception {
 		machine.getComponentSelector().checkDelay();
 		Cpu mCPU = machine.getCpu();
-		while (mCPU.getCycles() > 0)
+		while (mCPU.getCycles() > 0) {
 			mCPU.step();
+			if (ThistleConfig.debugCpuTraceLog)
+				Thistle.log.info("[Cpu] " + mCPU.getCpuState().toTraceEvent());
+		}
 		machine.getGioDev().flush();
 	}
 
