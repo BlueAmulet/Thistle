@@ -1260,7 +1260,9 @@ public class Cpu implements InstructionTable {
 	 */
 	int relAddress(int offset) {
 		// Cast the offset to a signed byte to handle negative offsets
-		return (state.pc + (byte) offset) & 0xffff;
+		int newpc = (state.pc + (byte) offset) & 0xffff;
+		this.cycles -= ((newpc & 0xFF00) != (state.pc & 0xFF00)) ? 2 : 1;
+		return newpc;
 	}
 
 	/**
