@@ -1,77 +1,61 @@
-.memorymap
-defaultslot  0
-slotsize     $1000
-slot 0       $F000 ; eeprom
-.endme
+;
+; Thistle Boot ROM
+;
+	.setcpu		"6502"
 
-.rombankmap
-bankstotal  1
-banksize    $1000 ; EEPROM
-banks       1
-.endro
+.segment	"STARTUP"
 
-.emptyfill $FF
-
-.bank 0 slot 0
-.org $0000
-
-.db "--[[CABE:Thistle:"
+.byte "--[[CABE:Thistle:"
 
 ; TSF Component Data
-fslist: .db 10,10,0,"filesystem",0 ; 14
-umlist: .db 10,5,0,"drive",0 ; 9
-secread: .db 10,10,0,"readSector",3,1,0 ; 16
-fsopend: .db 10,4,0,"open",10,12,0,"Thistle/boot",0 ; 23
-fsopenf: .db 10,4,0,"open",10,7,0,"Thistle",0 ; 18
-fsclose: .db 10,5,0,"close" ; 8
-fsread: .db 10,4,0,"read",14,0,0,0,0,4,0,1,0 ; 16
+fslist: .byte 10,10,0,"filesystem",0
+umlist: .byte 10,5,0,"drive",0
+secread: .byte 10,10,0,"readSector",3,1,0
+fsopend: .byte 10,4,0,"open",10,12,0,"Thistle/boot",0
+fsopenf: .byte 10,4,0,"open",10,7,0,"Thistle",0
+fsclose: .byte 10,5,0,"close"
+fsread: .byte 10,4,0,"read",14,0,0,0,0,4,0,1,0
 
 ; Messages
-greeting: .db "Thistle Boot ROM",10,10
-nomem: .db "No Memory installed"
-drives: .db "Checking drives ...",10 ; 20
-fsmsg: .db 10,"Checking filesystems ...",10 ; 26
-bootmsg .db "Booting ...",10 ; 12
-noboot: .db "Nothing to boot from"
+greeting: .byte "Thistle Boot ROM",10,10
+nomem: .byte "No Memory installed"
+drives: .byte "Checking drives ...",10
+fsmsg: .byte 10,"Checking filesystems ...",10
+bootmsg: .byte "Booting ...",10
+noboot: .byte "Nothing to boot from"
 
-hexlookup: .db "0123456789abcdef"
+hexlookup: .byte "0123456789abcdef"
 
-.macro _copy_base_short
-	lda #<\1
+.macro _copy_base_short src, dest, len, mode
+	lda #<src
 	sta $E041
-	lda #>\1
+	lda #>src
 	sta $E042
-	lda #<\2
+	lda #<dest
 	sta $E043
-	lda #>\2
+	lda #>dest
 	sta $E044
-	lda #<\3
+	lda #<len
 	sta $E045
-.endm
-
-.macro copys_pp
-	_copy_base_short \1 \2 \3
-	lda #$00
+	lda #mode
 	sta $e040
-.endm
+.endmacro
 
-.macro copys_pu
-	_copy_base_short \1 \2 \3
-	lda #$01
-	sta $e040
-.endm
+.macro copys_pp src, dest, len
+	_copy_base_short src, dest, len, $00
+.endmacro
 
-.macro copys_up
-	_copy_base_short \1 \2 \3
-	lda #$02
-	sta $e040
-.endm
+.macro copys_pu src, dest, len
+	_copy_base_short src, dest, len, $01
+.endmacro
 
-.macro copys_uu
-	_copy_base_short \1 \2 \3
-	lda #$03
-	sta $e040
-.endm
+.macro copys_up src, dest, len
+	_copy_base_short src, dest, len, $02
+.endmacro
+
+.macro copys_uu src, dest, len
+	_copy_base_short src, dest, len, $03
+.endmacro
 
 hexprint:
 	; Prints a byte to the screen
@@ -104,24 +88,24 @@ uuidprint:
 	; $00, $01 - Address of UUID
 	; Clobbers: A, X (hexprint), Y
 	ldy #$00
---	lda ($00),Y
+@loop:	lda ($00),Y
 	jsr hexprint
 	iny
 	cpy #$10
-	beq ++
+	beq @done
 	cpy #$04
-	beq +
+	beq @dash
 	cpy #$06
-	beq +
+	beq @dash
 	cpy #$08
-	beq +
+	beq @dash
 	cpy #$0A
-	beq +
-	jmp --
-+	lda #$2D
+	beq @dash
+	jmp @loop
+@dash:	lda #$2D
 	sta $E003
-	jmp --
-++	lda #$0a
+	jmp @loop
+@done:	lda #$0a
 	sta $E003
 	rts
 
@@ -134,38 +118,38 @@ _readlist:
 	tay
 	lda #$02
 	sta $01
---	lda $E012
+@loop1:	lda $E012
 	cmp #$00 ; TSF End Tag
-	beq ++
+	beq @done
 
 	; Read UUID
 	ldx #$10
--	lda $E012
+@loop2:	lda $E012
 	sta ($00),Y
 	iny
 	cpy #$00
-	bne +
+	bne @skip
 	inc $01 ; Increment $01 when Y wraps to 0
-+	dex
+@skip:	dex
 	cpx #$00
-	bne -
+	bne @loop2
 
 	; Drop component name
 	ldx $02
--	lda $E012
+@loop3:	lda $E012
 	dex
 	cpx #$00
-	bne -
-	jmp --
-++	lda #$02
+	bne @loop3
+	jmp @loop1
+@done:	lda #$02
 	sta $01
 	rts
 
-.macro readlist
-	lda #\1
+.macro readlist skip
+	lda #skip
 	sta $02
 	jsr _readlist
-.endm
+.endmacro
 
 loaduuid:
 	; Load a UUID into the component selector buffer
@@ -176,15 +160,15 @@ loaduuid:
 	ldx #$10
 	lda #$0b ; UUID Tag
 	sta $E012
--	lda ($00),Y ; UUID Byte loop
+@loop:	lda ($00),Y ; UUID Byte loop
 	sta $E012
 	iny
 	cpy #$00
-	bne +
+	bne @skip
 	inc $01
-+ dex
+@skip:	dex
 	cpx #$00
-	bne -
+	bne @loop
 	sty $00
 	stx $E012 ; End Tag
 	stx $E010 ; Map Component
@@ -194,9 +178,9 @@ bootdrive:
 	; Checks and boots from a drive
 	lda $D000
 	cmp #$00
-	beq +
+	beq @boot
 	rts
-+	copys_up bootmsg $E003 12
+@boot:	copys_up bootmsg, $E003, .sizeof(bootmsg)
 	lda #$01 ; Setup Copy Engine
 	sta $E041
 	lda #$D0
@@ -223,29 +207,29 @@ bootfs:
 	; Boots from a file
 	lda $D000
 	cmp #$00
-	beq +
+	beq @boot
 	rts
-+	copys_up bootmsg $E003 12
+@boot:	copys_up bootmsg, $E003, .sizeof(bootmsg)
 	lda #$02 ; Something to boot!
 	sta $00
-	copys_uu fsread $0001 16 ; Copy read command
-	copys_pu $D001 $0008 5 ; Inject handle
+	copys_uu fsread, $0001, .sizeof(fsread) ; Copy read command
+	copys_pu $D001, $0008, 5 ; Inject handle
 
--	ldx $00
+@loop:	ldx $00
 	cpx #$D0
-	beq ++ ; Too much data read
-	copys_up $0001 $D001 16 ; Call "read"
+	beq @done ; Too much data read
+	copys_up $0001, $D001, .sizeof(fsread) ; Call "read"
 	lda #$00
 	sta $D000
 
 	lda $D001 ; Check TSF Tag
 	cmp #$09 ; Byte array?
-	beq +
+	beq @skip
 	cmp #$0A ; String?
-	beq +
-	jmp ++ ; No more data to read
+	beq @skip
+	jmp @done ; No more data to read
 
-+	ldy #$01 ; Setup Copy Engine
+@skip:	ldy #$01 ; Setup Copy Engine
 	sty $E041
 	lda #$D0
 	sta $E042
@@ -260,13 +244,13 @@ bootfs:
 	sty $E040 ; Execute Copy Engine Command
 	stx $E046 ; Put high byte of size back to 0
 	inc $00
-	jmp -
+	jmp @loop
 
-++	copys_up fsclose $D001 8 ; Call close
-	copys_up $0008 $D001 5
+@done:	copys_up fsclose, $D001, .sizeof(fsclose) ; Call close
+	copys_up $0008, $D001, 5
 	stx $D001
 	stx $D000
-	copys_up $0008 $E012 5 ; Destroy value
+	copys_up $0008, $E012, 5 ; Destroy value
 	stx $E012
 	lda #$04
 	sta $E010
@@ -274,7 +258,7 @@ bootfs:
 
 reset:
 	; Display boot greeting
-	copys_up greeting $E003 18
+	copys_up greeting, $E003, .sizeof(greeting)
 
 	; Memory Check
 	lda $E018
@@ -284,13 +268,13 @@ reset:
 	cmp #$00
 	bne havemem
 	; No Memory Installed
-	copys_up nomem $E003 19
--	jmp -
+	copys_up nomem, $E003, .sizeof(nomem)
+@loop:	jmp @loop
 
 havemem:
-	copys_up drives $E003 20
+	copys_up drives, $E003, .sizeof(drives)
 	; Look for "drive" components
-	copys_up umlist $E012 9
+	copys_up umlist, $E012, .sizeof(umlist)
 	lda #$03
 	sta $E010
 
@@ -304,7 +288,7 @@ havemem:
 	cmp #$00
 	beq fschk ; No "drive" componets left to check
 	jsr loaduuid
-	copys_up secread $D001 16 ; Call readSector
+	copys_up secread, $D001, .sizeof(secread) ; Call readSector
 	lda #$00
 	sta $D000
 	jsr bootdrive
@@ -313,9 +297,9 @@ havemem:
 	; Check the drive components
 
 fschk:
-	copys_up fsmsg $E003 26
+	copys_up fsmsg, $E003, .sizeof(fsmsg)
 	; Look for "filesystem" components
-	copys_up fslist $E012 14
+	copys_up fslist, $E012, .sizeof(fslist)
 	lda #$03
 	sta $E010
 
@@ -325,24 +309,24 @@ fschk:
 	readlist 13
 
 	; Parse list
--	lda $03
+@loop:	lda $03
 	cmp #$00
 	beq failboot ; No "filesystem" componets left to check
 	jsr loaduuid
-	copys_up fsopend $D001 23 ; open Thistle/boot
+	copys_up fsopend, $D001, .sizeof(fsopend) ; open Thistle/boot
 	lda #$00
 	sta $D000
 	jsr bootfs
-	copys_up fsopenf $D001 18 ; open Thistle
+	copys_up fsopenf, $D001, .sizeof(fsopenf) ; open Thistle
 	lda #$00
 	sta $D000
 	jsr bootfs
 	dec $03
-	jmp -
+	jmp @loop
 
 failboot:
-	copys_up noboot $E003 20
--	jmp -
+	copys_up noboot, $E003, .sizeof(noboot)
+@loop:	jmp @loop
 
 nmi:
 	rti
@@ -350,9 +334,10 @@ nmi:
 irq:
 	rti
 
-.db "]]error\"Thistle architecture required\"--"
+.byte "]]error",$22,"Thistle architecture required",$22,"--"
 
-.orga $FFFA
-.dw nmi
-.dw reset
-.dw irq
+.segment	"VECTORS"
+
+.word nmi
+.word reset
+.word irq
