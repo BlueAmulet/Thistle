@@ -40,10 +40,8 @@ public class BootROM extends Device {
 		if (!checkEEPROM())
 			return 0;
 		Node node = this.machine.node().network().node(this.eepromAddress);
-		if (node == null) {
-			Thistle.log.warn("EEPROM vanished from us.");
+		if (node == null)
 			return 0;
-		}
 		EEPROM eeprom = (EEPROM) node.host();
 		if (address < 256) {
 			byte[] volatileData = eeprom.volatileData();
@@ -66,10 +64,8 @@ public class BootROM extends Device {
 		if (!checkEEPROM())
 			return;
 		Node node = this.machine.node().network().node(this.eepromAddress);
-		if (node == null) {
-			Thistle.log.warn("EEPROM vanished from us.");
+		if (node == null)
 			return;
-		}
 		EEPROM eeprom = (EEPROM) node.host();
 		if (eeprom.readonly())
 			return;
