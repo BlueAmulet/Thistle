@@ -55,7 +55,7 @@ public class Thistle {
 		if (romImage != null) {
 			try {
 				byte[] code = IOUtils.toByteArray(romImage);
-				Items.registerEEPROM("Thistle", code, null, false);
+				Items.registerEEPROM("EEPROM (Thistle)", code, null, false);
 			} catch (IOException e) {
 				log.warn("Failed reading boot.rom, no custom EEPROMs available");
 				e.printStackTrace();
