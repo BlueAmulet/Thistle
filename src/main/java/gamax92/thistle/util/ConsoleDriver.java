@@ -1,6 +1,5 @@
 package gamax92.thistle.util;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -24,7 +23,6 @@ public class ConsoleDriver {
 	private String screenADDR;
 
 	private boolean canWrite = false;
-	private boolean canRead = false;
 
 	private LinkedList<Integer> databuf = new LinkedList<Integer>();
 
@@ -42,6 +40,7 @@ public class ConsoleDriver {
 	private int textFG = 7;
 	private int textBG = 0;
 
+	private boolean setup = true;
 	private boolean showCursor = true;
 	private boolean cursor = false;
 	private long lastTime = System.currentTimeMillis();
@@ -63,11 +62,19 @@ public class ConsoleDriver {
 
 		this.machine = machine;
 		if (!machine.isRunning()) {
-			Map<String, String> components = this.machine.components();
-			Iterator<Map.Entry<String, String>> entries = components.entrySet().iterator();
+			updateComponents();
+		}
+	}
 
-			while (entries.hasNext()) {
-				Map.Entry<String, String> entry = entries.next();
+	private void updateComponents() {
+		if (gpuADDR != null && this.machine.node().network().node(gpuADDR) == null)
+			gpuADDR = null;
+		if (screenADDR != null && this.machine.node().network().node(screenADDR) == null)
+			screenADDR = null;
+		if (gpuADDR == null || screenADDR == null ) {
+			canWrite = false;
+			cursor = false;
+			for (Map.Entry<String, String> entry : this.machine.components().entrySet()) {
 				String address = entry.getKey();
 				String type = entry.getValue();
 				if (type.equals("gpu") && gpuADDR == null)
@@ -78,8 +85,9 @@ public class ConsoleDriver {
 			if (gpuADDR != null && screenADDR != null) {
 				canWrite = true;
 				// Attempt to setup the GPU
-				for (int i = -1; i >= -6; i--)
-					databuf.add(i);
+				for (int i = -6; i <= -1; i++)
+					databuf.addFirst(i);
+				setup = true;
 			}
 		}
 	}
@@ -101,11 +109,12 @@ public class ConsoleDriver {
 		// Restore Console
 		if (nbt.hasKey("console")) {
 			NBTTagCompound consoleTag = nbt.getCompoundTag("console");
-			this.canRead = consoleTag.getBoolean("canRead");
 			this.canWrite = consoleTag.getBoolean("canWrite");
 			this.gpuADDR = getString(consoleTag, "gpuADDR");
 			this.screenADDR = getString(consoleTag, "screenADDR");
 			this.cursor = consoleTag.getBoolean("cursor");
+			this.showCursor = consoleTag.getBoolean("showCursor");
+			this.setup = consoleTag.getBoolean("setup");
 			this.X = consoleTag.getInteger("X");
 			this.Y = consoleTag.getInteger("Y");
 			this.W = consoleTag.getInteger("W");
@@ -128,11 +137,12 @@ public class ConsoleDriver {
 	public void save(NBTTagCompound nbt) {
 		// Persist Console
 		NBTTagCompound consoleTag = new NBTTagCompound();
-		consoleTag.setBoolean("canRead", this.canRead);
 		consoleTag.setBoolean("canWrite", this.canWrite);
 		setString(consoleTag, "gpuADDR", this.gpuADDR);
 		setString(consoleTag, "screenADDR", this.screenADDR);
 		consoleTag.setBoolean("cursor", this.cursor);
+		consoleTag.setBoolean("showCursor", this.showCursor);
+		consoleTag.setBoolean("setup", this.setup);
 		consoleTag.setInteger("X", this.X);
 		consoleTag.setInteger("Y", this.Y);
 		consoleTag.setInteger("W", this.W);
@@ -159,6 +169,7 @@ public class ConsoleDriver {
 	}
 
 	public void write(int character) {
+		updateComponents();
 		if (canWrite)
 			databuf.add(character);
 	}
@@ -177,9 +188,10 @@ public class ConsoleDriver {
 
 	// TODO: Combine multiple characters in one "set"
 	public void flush() throws Exception {
+		updateComponents();
 		if (canWrite) {
 			try {
-				if (showCursor && System.currentTimeMillis() - this.lastTime >= 500 && !parseANSI && !ansiDetect) {
+				if (showCursor && System.currentTimeMillis() - this.lastTime >= 500 && !setup && !parseANSI && !ansiDetect) {
 					lastTime = System.currentTimeMillis();
 					databuf.addFirst(-1004);
 					databuf.addFirst(-1003);
@@ -345,7 +357,7 @@ public class ConsoleDriver {
 							}
 							ansiDetect = false;
 						}
-						if ((character < -1004 || character > -1001) && cursor) {
+						if ((character < -1004 || character > -1000) && cursor) {
 							databuf.addFirst(-1004);
 							databuf.addFirst(-1003);
 							databuf.addFirst(-1002);
@@ -376,6 +388,7 @@ public class ConsoleDriver {
 							break;
 						case -6:
 							machine.invoke(gpuADDR, "fill", new Object[] { 1, 1, this.W, this.H, " " });
+							setup = false;
 							break;
 						case -7:
 							machine.invoke(gpuADDR, "copy", new Object[] { 1, 1, this.W, this.H, 0, -1 });
