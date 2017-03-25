@@ -131,11 +131,11 @@ public class ComponentSelector extends Device {
 		case COMPSEL_FLAG_REG:
 			return fSpecific ? 1 : 0;
 		case COMPSEL_MEM_REG_L:
-			int memavail = Math.min((this.getBus().getMachine().getMemsize() / 0x1000), 0xFFFF);
+			int memavail = Math.min(this.getBus().getMachine().getMemsize() / 0x1000, 0xFFFF);
 			return memavail & 0xFF;
 		case COMPSEL_MEM_REG_H:
-			memavail = Math.min((this.getBus().getMachine().getMemsize() / 0x1000), 0xFFFF);
-			return (memavail >>> 8);
+			memavail = Math.min(this.getBus().getMachine().getMemsize() / 0x1000, 0xFFFF);
+			return memavail >>> 8;
 		case COMPSEL_MASK_REG:
 			return bankMask;
 		default:

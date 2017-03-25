@@ -14,7 +14,7 @@ import net.minecraft.nbt.NBTTagCompound;
 
 public class RTC extends Device {
 
-    private Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+	private Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
 	private Machine machine;
 	private int timerA = 0;
 	private int timerB = 0;

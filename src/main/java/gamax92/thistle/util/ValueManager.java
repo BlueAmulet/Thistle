@@ -24,30 +24,30 @@ public class ValueManager {
 		return valuemap;
 	}
 
-    private static void addValue(BiMap<Integer, Value> valuemap, Value value) {
+	private static void addValue(BiMap<Integer, Value> valuemap, Value value) {
 		Integer id = value.hashCode();
 		while (valuemap.containsKey(id))
 			id = (int) ((Math.random()*2-1) * -((double) Integer.MIN_VALUE));
 		valuemap.put(id, value);
-    }
+	}
 
-    public static Value getValue(int id, Context context) {
+	public static Value getValue(int id, Context context) {
 		return getValueMap(context).get(id);
-    }
+	}
 
-    public static int getID(Value value, Context context) {
-    	BiMap<Integer, Value> valuemap = getValueMap(context);
+	public static int getID(Value value, Context context) {
+		BiMap<Integer, Value> valuemap = getValueMap(context);
 		if (!valuemap.containsValue(value))
 			addValue(valuemap, value);
 		return valuemap.inverse().get(value);
-    }
+	}
 
-    public static void removeValue(Value value, Context context) {
+	public static void removeValue(Value value, Context context) {
 		value.dispose(context);
 		getValueMap(context).inverse().remove(value);
-    }
+	}
 
-    public static void removeAll(Context context) {
+	public static void removeAll(Context context) {
 		BiMap<Integer, Value> valuemap = valuestore.get(context);
 		if (valuemap != null) {
 			for (Value value : valuemap.values()) {
@@ -56,10 +56,10 @@ public class ValueManager {
 			valuemap.clear();
 			valuestore.remove(context);
 		}
-    }
+	}
 
 	public static void load(NBTTagCompound nbt, Context context) {
-    	BiMap<Integer, Value> valuemap = getValueMap(context);
+		BiMap<Integer, Value> valuemap = getValueMap(context);
 		int length = nbt.getInteger("length");
 		for (int i = 0; i < length; i++) {
 			try {

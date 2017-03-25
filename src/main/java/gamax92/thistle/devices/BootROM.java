@@ -27,10 +27,10 @@ public class BootROM extends Device {
 		if (this.eepromAddress != null && this.machine.components().containsKey(this.eepromAddress))
 			return true;
 		for (Map.Entry<String, String> entry : this.machine.components().entrySet()) {
-		    if (entry.getValue().equals("eeprom")) {
-		    	this.eepromAddress = entry.getKey();
-		    	return true;
-		    }
+			if (entry.getValue().equals("eeprom")) {
+				this.eepromAddress = entry.getKey();
+				return true;
+			}
 		}
 		return false;
 	}
