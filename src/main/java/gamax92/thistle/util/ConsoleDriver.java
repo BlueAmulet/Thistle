@@ -7,6 +7,7 @@ import java.util.Map;
 import li.cil.oc.api.machine.LimitReachedException;
 import li.cil.oc.api.machine.Machine;
 import li.cil.oc.server.PacketSender;
+import li.cil.oc.util.PackedColor.MutablePaletteFormat;
 import net.minecraft.nbt.NBTTagCompound;
 
 /*
@@ -49,11 +50,17 @@ public class ConsoleDriver {
 	private char cursorChar;
 
 	private double[] colors = {
-		0x000000,0xAA0000,0x00AA00,0xAA5500,0x0000AA,0xAA00AA,0x00AAAA,0xAAAAAA,
-		0x555555,0xFF5555,0x55FF55,0xFFFF55,0x5555FF,0xFF55FF,0x55FFFF,0xFFFFFF
+		0x000000,0xFF3333,0x336600,0x663300,0x333399,0x9933CC,0x336699,0xCCCCCC,
+		0x333333,0xFF6699,0x33CC33,0xFFFF33,0x6699FF,0xCC66CC,0xFFCC33,0xFFFFFF
 	};
 
 	public ConsoleDriver(Machine machine) {
+		MutablePaletteFormat test = new MutablePaletteFormat();
+		int[] palette = test.palette();
+		for (int i=0; i<16; i++) {
+			colors[i] = palette[15-i];
+		}
+
 		this.machine = machine;
 		if (!machine.isRunning()) {
 			Map<String, String> components = this.machine.components();
