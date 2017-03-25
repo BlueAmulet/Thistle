@@ -116,7 +116,7 @@ public class GenericDevice extends ThistleWrapper {
 			case 0: // invoke
 				Object[] tsfdata = TSFHelper.readArray(inputbuf, context, flag);
 				if (ThistleConfig.debugComponentCalls)
-					Thistle.log.info("[Generic] Invoke: " + host().node().address() + Arrays.deepToString(tsfdata));
+					Thistle.log.info("[Generic] (" + host().node().address() + ") Invoke: " + Arrays.deepToString(tsfdata));
 				if (tsfdata == null || tsfdata.length < 1) {
 					status = 3;
 					break;
