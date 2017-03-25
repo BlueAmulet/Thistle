@@ -32,6 +32,8 @@ unkop: .byte "Unknown Opcode",10
 unkcmd: .byte "Unknown Command",10
 
 cmdlist:
+.asciiz "load"
+.word cmd_load
 .asciiz "run"
 .word cmd_run
 .asciiz ""
@@ -72,11 +74,19 @@ format:
 .byte "($__),Y",$00,$0a
 .byte "0X__",$00,$0b
 .byte "-0X__",$00,$0b
-.byte $00,$00
-
-.byte "]]error",$22,"Thistle architecture required",$22,"--"
+.byte $00,$00 ; Must be last
 
 .segment "STARTUP"
+
+.define inputlen $80
+.define good $81
+.define formattype $82
+.define addrmode $83
+.define opcode $84
+.define indlow $85
+.define indhigh $86
+.define curlow $87
+.define curhigh $88
 
 .macro _copy_base_short src, dest, len, mode
 	lda #<src
@@ -228,6 +238,65 @@ loaduuid:
 	stx $E010 ; Map Component
 	rts
 
+loadfile:
+	; Reads a file into memory starting at $0200
+	lda #$00
+	sta curlow
+	lda #$02
+	sta curhigh
+	copys_uu fsread, $0001, .sizeof(fsread) ; Copy read command
+	copys_pu $D001, $0008, 5 ; Inject handle
+
+@loop:	ldx curhigh
+	cpx #$D0
+	beq @done ; Too much data read
+	copys_up $0001, $D001, .sizeof(fsread) ; Call "read"
+	lda #$00
+	sta $D000
+
+	lda $D001 ; Check TSF Tag
+	cmp #$09 ; Byte array?
+	beq @skip
+	cmp #$0A ; String?
+	beq @skip
+	jmp @done ; No more data to read
+
+@skip:	lda $D001 ; Read length
+	sta indlow
+	lda $D001
+	sta indhigh
+	ldy #$01 ; Setup Copy Engine
+	sty $E041
+	lda #$D0
+	sta $E042
+	clc ; Load address and add at same time
+	lda curlow
+	sta $E043
+	adc indlow
+	sta curlow
+	lda curhigh
+	sta $E044
+	adc indhigh
+	sta curhigh
+	lda indlow
+	sta $E045
+	lda indhigh
+	sta $E046
+	sty $E040 ; Execute Copy Engine Command
+	jmp @loop
+
+@done:	lda #$00 ; Put high byte of size back to 0
+	sta $E046
+	copys_up fsclose, $D001, .sizeof(fsclose) ; Call close
+	copys_up $0008, $D001, 5
+	stx $D001
+	stx $D000
+	copys_up $0008, $E012, 5 ; Destroy value
+	stx $E012
+	lda #$04
+	sta $E010
+	rts
+
 bootdrive:
 	; Checks and boots from a drive
 	lda $D000
@@ -262,52 +331,9 @@ bootfs:
 	lda $D000
 	cmp #$00
 	beq @boot
-	rts
+	rts ; No file opened
 @boot:	copys_up bootmsg, $E003, .sizeof(bootmsg)
-	lda #$02 ; Something to boot!
-	sta $00
-	copys_uu fsread, $0001, .sizeof(fsread) ; Copy read command
-	copys_pu $D001, $0008, 5 ; Inject handle
-
-@loop:	ldx $00
-	cpx #$D0
-	beq @done ; Too much data read
-	copys_up $0001, $D001, .sizeof(fsread) ; Call "read"
-	lda #$00
-	sta $D000
-
-	lda $D001 ; Check TSF Tag
-	cmp #$09 ; Byte array?
-	beq @skip
-	cmp #$0A ; String?
-	beq @skip
-	jmp @done ; No more data to read
-
-@skip:	ldy #$01 ; Setup Copy Engine
-	sty $E041
-	lda #$D0
-	sta $E042
-	ldx #$00
-	stx $E043
-	lda $00
-	sta $E044
-	lda $D001
-	sta $E045
-	lda $D001
-	sta $E046
-	sty $E040 ; Execute Copy Engine Command
-	stx $E046 ; Put high byte of size back to 0
-	inc $00
-	jmp @loop
-
-@done:	copys_up fsclose, $D001, .sizeof(fsclose) ; Call close
-	copys_up $0008, $D001, 5
-	stx $D001
-	stx $D000
-	copys_up $0008, $E012, 5 ; Destroy value
-	stx $E012
-	lda #$04
-	sta $E010
+	jsr loadfile
 	jmp $0200 ; Boot
 
 reset:
@@ -378,16 +404,6 @@ fschk:
 	jsr bootfs
 	dec $03
 	jmp @loop
-
-.define inputlen $80
-.define good $81
-.define formattype $82
-.define addrmode $83
-.define opcode $84
-.define indlow $85
-.define indhigh $86
-.define curlow $87
-.define curhigh $88
 
 hex2val:
 	; Converts two hexadecimal characters to a value
@@ -704,9 +720,57 @@ failboot:
 	copys_up unkcmd, $E003, .sizeof(unkcmd)
 	jmp @setup
 
+.segment "RODATA"
+
+loadfail: .byte "Could not open file",10
+loadmsg: .byte "Loading file ...",10
+
+.segment "STARTUP"
+
+cmd_load:
+	lda inputlen
+	cmp #$06
+	bcs :+
+	rts
+:	copys_up fsopenf, $D001, 8 ; Copy 10,4,0,"open",10
+	lda inputlen
+	clc
+	sbc #$04
+	sta $D001
+	sta $E045 ; Copy Engine Length
+	lda #$00
+	sta $D001
+
+	lda #$05 ; Setup Copy Engine
+	sta $E041
+	ldx #$00
+	stx $E042
+	lda #$01
+	sta $E043
+	lda #$D0
+	sta $E044
+	lda #$02 ; Copy
+	sta $E040
+	stx $D001 ; TSF End Tag
+	stx $D000 ; Invoke
+	lda $D000
+	cmp #$00
+	beq :+
+	copys_up loadfail, $E003, .sizeof(loadfail) ; No file opened
+	rts
+:	copys_up loadmsg, $E003, .sizeof(loadmsg)
+	jsr loadfile
+	rts
+
 cmd_run:
 	jsr $0200
 	rts
+
+.segment "RODATA"
+
+.byte "]]error",$22,"Thistle architecture required",$22,"--"
+
+.segment "STARTUP"
 
 nmi:
 	rti
