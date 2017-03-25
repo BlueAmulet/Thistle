@@ -212,24 +212,30 @@ public class ComponentSelector extends Device {
 				break;
 			case 3: // list
 				status = 0;
-				tsfdata = parseTSF(inputbuf, true);
-				if (tsfdata == null) {
-					status = 1;
-					break;
-				}
-				if (tsfdata instanceof String) {
-					String name = (String) tsfdata;
-					for (Map.Entry<String, String> entry : machine.components().entrySet()) {
-						if (entry.getValue().equals(name)) {
-							info++;
-							TSFHelper.writeUUID(outputbuf, UUID.fromString(entry.getKey()));
-							TSFHelper.writeString(outputbuf, entry.getValue());
-						}
+				tsfdata = null;
+				if (inputbuf.size() > 0) {
+					Object[] tsfdataz = TSFHelper.readArray(inputbuf, machine, false);
+					if (tsfdataz == null || tsfdataz.length != 1 || !(tsfdataz[0] instanceof String || tsfdataz[0] instanceof UUID || tsfdataz[0] instanceof Number)) {
+						status = 1;
+						break;
+					} else {
+						tsfdata = tsfdataz[0];
 					}
-				} else if (tsfdata instanceof UUID) {
-					String uuid = ((UUID) tsfdata).toString();
+				}
+				if (tsfdata instanceof Number) {
+					int select = ((Number) tsfdata).intValue() & 0x3F;
+					Environment environment = getEnvironment(select);
+					if (environment != null) {
+						info++;
+						TSFHelper.writeUUID(outputbuf, UUID.fromString(environment.node().address()));
+						TSFHelper.writeString(outputbuf, ((Component) environment.node()).name());
+					}
+				} else {
 					for (Map.Entry<String, String> entry : machine.components().entrySet()) {
-						if (entry.getKey().equals(uuid)) {
+						if (tsfdata == null ||
+						    tsfdata instanceof String && entry.getValue().equals(tsfdata) ||
+						    tsfdata instanceof UUID && entry.getKey().equals(((UUID) tsfdata).toString()))
+						{
 							info++;
 							TSFHelper.writeUUID(outputbuf, UUID.fromString(entry.getKey()));
 							TSFHelper.writeString(outputbuf, entry.getValue());
