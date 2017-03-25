@@ -366,7 +366,7 @@ public class ConsoleDriver {
 							this.H = (Integer) response[1];
 							break;
 						case -3:
-							machine.invoke(gpuADDR, "setResolution", new Object[] { (double) this.W, (double) this.H });
+							machine.invoke(gpuADDR, "setResolution", new Object[] { this.W, this.H });
 							break;
 						case -4:
 							machine.invoke(gpuADDR, "setBackground", new Object[] { colors[(this.brightBG ? 8 : 0) + this.textBG] });
@@ -375,29 +375,29 @@ public class ConsoleDriver {
 							machine.invoke(gpuADDR, "setForeground", new Object[] { colors[(this.brightFG ? 8 : 0) + this.textFG] });
 							break;
 						case -6:
-							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) 1, (double) this.W, (double) this.H, " " });
+							machine.invoke(gpuADDR, "fill", new Object[] { 1, 1, this.W, this.H, " " });
 							break;
 						case -7:
-							machine.invoke(gpuADDR, "copy", new Object[] { (double) 1, (double) 1, (double) this.W, (double) this.H, (double) 0, (double) -1 });
+							machine.invoke(gpuADDR, "copy", new Object[] { 1, 1, this.W, this.H, 0, -1 });
 							break;
 						case -8:
-							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) this.H, (double) this.W, (double) 1, " " });
+							machine.invoke(gpuADDR, "fill", new Object[] { 1, this.H, this.W, 1, " " });
 							this.Y = this.H;
 							break;
 						case -500: // ANSI 0J
-							machine.invoke(gpuADDR, "fill", new Object[] { (double) this.X, (double) this.Y + 1, (double) this.W, (double) (this.H - this.Y), " " });
+							machine.invoke(gpuADDR, "fill", new Object[] { this.X, this.Y + 1, this.W, (this.H - this.Y), " " });
 							break;
 						case -501: // ANSI 1J
-							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) 1, (double) this.W, (double) this.Y - 1, " " });
+							machine.invoke(gpuADDR, "fill", new Object[] { 1, 1, this.W, this.Y - 1, " " });
 							break;
 						case -502: // ANSI 0K
-							machine.invoke(gpuADDR, "fill", new Object[] { (double) this.X, (double) this.Y, (double) (this.W - this.X + 1), (double) 1, " " });
+							machine.invoke(gpuADDR, "fill", new Object[] { this.X, this.Y, (this.W - this.X + 1), 1, " " });
 							break;
 						case -503: // ANSI 1K
-							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) this.Y, (double) this.X, (double) 1, " " });
+							machine.invoke(gpuADDR, "fill", new Object[] { 1, this.Y, this.X, 1, " " });
 							break;
 						case -504: // ANSI 2K
-							machine.invoke(gpuADDR, "fill", new Object[] { (double) 1, (double) this.Y, (double) this.W, (double) 1, " " });
+							machine.invoke(gpuADDR, "fill", new Object[] { 1, this.Y, this.W, 1, " " });
 							break;
 						case -1001: // Cursor GET
 							Object[] response2 = machine.invoke(gpuADDR, "get", new Object[] { this.X, this.Y });
@@ -406,13 +406,13 @@ public class ConsoleDriver {
 							this.cursorBG = (Integer) response2[1];
 							break;
 						case -1002: // Cursor Set BG
-							machine.invoke(gpuADDR, "setBackground", new Object[] { (double) this.cursorBG });
+							machine.invoke(gpuADDR, "setBackground", new Object[] { this.cursorBG });
 							break;
 						case -1003: // Cursor Set FG
-							machine.invoke(gpuADDR, "setForeground", new Object[] { (double) this.cursorFG });
+							machine.invoke(gpuADDR, "setForeground", new Object[] { this.cursorFG });
 							break;
 						case -1004: // Cursor Set Character
-							machine.invoke(gpuADDR, "set", new Object[] { (double) this.X, (double) this.Y, Character.toString(this.cursorChar) });
+							machine.invoke(gpuADDR, "set", new Object[] { this.X, this.Y, Character.toString(this.cursorChar) });
 							this.cursor = !this.cursor;
 							if (!this.cursor) {
 								if (this.cursorBG != colors[(this.brightBG ? 8 : 0) + this.textBG])
@@ -434,7 +434,7 @@ public class ConsoleDriver {
 								else
 									dX = 1;
 							}
-							machine.invoke(gpuADDR, "set", new Object[] { (double) dX, (double) dY, " " });
+							machine.invoke(gpuADDR, "set", new Object[] { dX, dY, " " });
 							this.X = dX;
 							this.Y = dY;
 							break;
@@ -456,7 +456,7 @@ public class ConsoleDriver {
 						case -27:
 							character = 27;
 						default:
-							machine.invoke(gpuADDR, "set", new Object[] { (double) this.X, (double) this.Y, Character.toString((char) character) });
+							machine.invoke(gpuADDR, "set", new Object[] { this.X, this.Y, Character.toString((char) character) });
 							this.X = this.X + 1;
 							if (this.X > this.W) {
 								this.Y = this.Y + 1;
