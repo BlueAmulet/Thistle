@@ -95,18 +95,42 @@ format:
 .define curhigh $88
 
 .macro _copy_base_short src, dest, len, mode
-	lda #<src
-	sta $E041
-	lda #>src
-	sta $E042
-	lda #<dest
-	sta $E043
-	lda #>dest
-	sta $E044
-	lda #<len
-	sta $E045
-	lda #mode
-	sta $e040
+	.if .const(src) .and .lobyte(src) = 0
+		stz $E041
+	.else
+		lda #<src
+		sta $E041
+	.endif
+	.if .const(src) .and .hibyte(src) = 0
+		stz $E042
+	.else
+		lda #>src
+		sta $E042
+	.endif
+	.if .const(dest) .and .lobyte(dest) = 0
+		stz $E043
+	.else
+		lda #<dest
+		sta $E043
+	.endif
+	.if .const(dest) .and .hibyte(dest) = 0
+		stz $E044
+	.else
+		lda #>dest
+		sta $E044
+	.endif
+	.if .const(len) .and len = 0
+		stz $E045
+	.else
+		lda #<len
+		sta $E045
+	.endif
+	.if .const(mode) .and mode = 0
+		stz $E040
+	.else
+		lda #mode
+		sta $E040
+	.endif
 .endmacro
 
 .macro copys_pp src, dest, len
@@ -130,10 +154,8 @@ hexprint:
 	; A - byte to print
 	; Clobbers: X
 	pha
+	phy
 	tax
-	tya
-	pha
-	txa
 	lsr
 	lsr
 	lsr
@@ -146,8 +168,7 @@ hexprint:
 	tay
 	lda hexlookup,Y
 	sta $E003
-	pla
-	tay
+	ply
 	pla
 	rts
 
@@ -181,9 +202,8 @@ _readlist:
 	; Reads component list to $0200
 	; $02 - Bytes to skip for component type
 	; Clobbers: A, X, Y, $00, $01
-	lda #$00
-	sta $00
-	tay
+	stz $00
+	ldy #$00
 	lda #$02
 	sta $01
 @loop1:	lda $E012
@@ -225,8 +245,7 @@ loaduuid:
 	; Clobbers: A, X, Y, (uuidprint)
 	jsr uuidprint
 	ldy $00
-	lda #$00
-	sta $00
+	stz $00
 	ldx #$10
 	lda #$0b ; UUID Tag
 	sta $E012
@@ -240,14 +259,13 @@ loaduuid:
 	cpx #$00
 	bne @loop
 	sty $00
-	stx $E012 ; End Tag
-	stx $E010 ; Map Component
+	stz $E012 ; End Tag
+	stz $E010 ; Map Component
 	rts
 
 loadfile:
 	; Reads a file into memory starting at $0200
-	lda #$00
-	sta curlow
+	stz curlow
 	lda #$02
 	sta curhigh
 	copys_uu fsread, $0001, .sizeof(fsread) ; Copy read command
@@ -257,8 +275,7 @@ loadfile:
 	cpx #$D0
 	beq @done ; Too much data read
 	copys_up $0001, $D001, .sizeof(fsread) ; Call "read"
-	lda #$00
-	sta $D000
+	stz $D000
 
 	lda $D001 ; Check TSF Tag
 	cmp #$09 ; Byte array?
@@ -290,15 +307,14 @@ loadfile:
 	sta $E046
 	sty $E040 ; Execute Copy Engine Command
 	bra @loop
-
-@done:	lda #$00 ; Put high byte of size back to 0
-	sta $E046
+@done:
+	stz $E046 ; Put high byte of size back to 0
 	copys_up fsclose, $D001, .sizeof(fsclose) ; Call close
 	copys_up $0008, $D001, 5
-	stx $D001
-	stx $D000
+	stz $D001
+	stz $D000
 	copys_up $0008, $E012, 5 ; Destroy value
-	stx $E012
+	stz $E012
 	lda #$04
 	sta $E010
 	rts
@@ -314,8 +330,7 @@ bootdrive:
 	sta $E041
 	lda #$D0
 	sta $E042
-	lda #$00
-	sta $E043
+	stz $E043
 	lda #$02
 	sta $E044
 
@@ -328,8 +343,7 @@ bootdrive:
 	lda #$01 ; Copy
 	sta $E040
 
-	lda #$00
-	sta $E046
+	stz $E046
 	jmp $0200 ; Boot
 
 bootfs:
@@ -375,8 +389,7 @@ havemem:
 	beq fschk ; No "drive" componets left to check
 	jsr loaduuid
 	copys_up secread, $D001, .sizeof(secread) ; Call readSector
-	lda #$00
-	sta $D000
+	stz $D000
 	jsr bootdrive
 	dec $03
 
@@ -401,12 +414,10 @@ fschk:
 	jmp failboot ; No "filesystem" componets left to check
 :	jsr loaduuid
 	copys_up fsopend, $D001, .sizeof(fsopend) ; open Thistle/boot
-	lda #$00
-	sta $D000
+	stz $D000
 	jsr bootfs
 	copys_up fsopenf, $D001, .sizeof(fsopenf) ; open Thistle
-	lda #$00
-	sta $D000
+	stz $D000
 	jsr bootfs
 	dec $03
 	bra @loop
@@ -449,9 +460,8 @@ inc_y:
 
 failboot:
 	copys_up noboot, $E003, .sizeof(noboot)
-	lda #$00
-	sta $E001 ; Drop all input
-	sta curlow
+	stz $E001 ; Drop all input
+	stz curlow
 	lda #$02
 	sta curhigh
 @setup:	lda #'$'
@@ -465,8 +475,7 @@ failboot:
 	lda #'>'
 	sta $E003
 	stx $E003
-	lda #$00
-	sta inputlen
+	stz inputlen
 @loop:	lda $E000
 	cmp #$00
 	beq @loop ; No Input
@@ -502,7 +511,7 @@ failboot:
 	sta indhigh
 	ldx #$00
 	ldy #$00
-	sty good
+	stz good
 	; Compare against cmd list
 @ncloop:
 	lda (indlow),Y
@@ -526,8 +535,7 @@ failboot:
 	cmp #' '
 	beq @ncfound
 @ncbad:
-	lda #$00 ; Did not match, reset
-	sta good
+	stz good ; Did not match, reset
 	ldx #$00
 	jsr inc_y ; Skip over address
 	jsr inc_y
@@ -557,11 +565,11 @@ failboot:
 :	inx
 	cpx inputlen
 	bne @ucloop
-	; @setup for comparing format strings
+	; Setup for comparing format strings
 	ldx #$04
 	ldy #$00
-	sty formattype
-	sty good
+	stz formattype
+	stz good
 	lda inputlen
 	cmp #$03 ; Three characters?
 	bcs :+
@@ -597,8 +605,7 @@ failboot:
 	cmp #' '
 	beq @amfound
 @ambad:
-	lda #$00 ; Wrong addressing mode, reset
-	sta good
+	stz good ; Wrong addressing mode, reset
 	ldx #$04
 	iny
 	inc formattype
@@ -612,8 +619,8 @@ failboot:
 	sta indhigh
 	ldy #$00
 	ldx #$00
-	sty opcode
-	sty good
+	stz opcode
+	stz good
 	; Compare opcode names
 @oploop:
 	lda (indlow),Y
@@ -737,13 +744,11 @@ loadinput:
 	inc
 	sta $D001
 	sta $E045 ; Copy Engine Length
-	lda #$00
-	sta $D001
+	stz $D001
 
 	lda good ; Setup Copy Engine
 	sta $E041
-	ldx #$00
-	stx $E042
+	stz $E042
 	lda #$01
 	sta $E043
 	lda #$D0
