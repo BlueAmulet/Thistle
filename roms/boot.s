@@ -169,10 +169,10 @@ uuidprint:
 	beq @dash
 	cpy #$0A
 	beq @dash
-	jmp @loop
+	bra @loop
 @dash:	lda #$2D
 	sta $E003
-	jmp @loop
+	bra @loop
 @done:	lda #$0a
 	sta $E003
 	rts
@@ -208,7 +208,7 @@ _readlist:
 	dex
 	cpx #$00
 	bne @loop3
-	jmp @loop1
+	bra @loop1
 @done:	lda #$02
 	sta $01
 	rts
@@ -265,7 +265,7 @@ loadfile:
 	beq @skip
 	cmp #$0A ; String?
 	beq @skip
-	jmp @done ; No more data to read
+	bra @done ; No more data to read
 
 @skip:	lda $D001 ; Read length
 	sta indlow
@@ -289,7 +289,7 @@ loadfile:
 	lda indhigh
 	sta $E046
 	sty $E040 ; Execute Copy Engine Command
-	jmp @loop
+	bra @loop
 
 @done:	lda #$00 ; Put high byte of size back to 0
 	sta $E046
@@ -355,7 +355,7 @@ reset:
 	bne havemem
 	; No Memory Installed
 	copys_up nomem, $E003, .sizeof(nomem)
-@loop:	jmp @loop
+@loop:	bra @loop
 
 havemem:
 	copys_up drives, $E003, .sizeof(drives)
@@ -409,7 +409,7 @@ fschk:
 	sta $D000
 	jsr bootfs
 	dec $03
-	jmp @loop
+	bra @loop
 
 hex2val:
 	; Converts two hexadecimal characters to a value
@@ -475,14 +475,14 @@ failboot:
 	cmp #$00 ; Scancode, discard
 	bne :+
 	lda $E001
-	jmp @loop
+	bra @loop
 :	cmp #$08 ; Backspace
 	bne :+
 	cpx #$00
 	beq @loop ; No input to delete
 	sta $E003
 	dec inputlen
-	jmp @loop
+	bra @loop
 :	cmp #$0A ; Enter
 	beq @exec
 	cpx #$80 ; Character
@@ -490,7 +490,7 @@ failboot:
 	sta $E003
 	sta $00,X
 	inc inputlen
-	jmp @loop
+	bra @loop
 @exec:
 	sta $E003
 	cpx #$00 ; No Input
@@ -513,7 +513,7 @@ failboot:
 	stx good ; Mark as bad
 :	inx
 	jsr inc_y
-	jmp @ncloop
+	bra @ncloop
 @nccheck:
 	jsr inc_y
 	cpx #$00 ; No more cmd entries?
@@ -531,7 +531,7 @@ failboot:
 	ldx #$00
 	jsr inc_y ; Skip over address
 	jsr inc_y
-	jmp @ncloop
+	bra @ncloop
 @ncfound:
 	lda #$4C ; JMP $XXXX
 	sta opcode
@@ -583,7 +583,7 @@ failboot:
 	stx good ; Mark as bad
 :	inx
 	iny
-	jmp @amloop
+	bra @amloop
 @amcheck:
 	iny
 	cpx #$04 ; No more format entries?
@@ -602,7 +602,7 @@ failboot:
 	ldx #$04
 	iny
 	inc formattype
-	jmp @amloop
+	bra @amloop
 @amfound:
 	lda format,Y
 	sta addrmode
@@ -639,7 +639,7 @@ failboot:
 	cmp #$00 ; Wrapped back to 0
 	bne :+
 	jmp @badop
-:	jmp @oploop
+:	bra @oploop
 @opfound:
 	ldy #$00
 	lda opcode
@@ -672,30 +672,30 @@ failboot:
 	beq @read21
 	cmp #$0c ; relative w/ minus
 	beq @relminus
-	jmp @opskip
+	bra @opskip
 @readchar:
 	ldx #$06
 	lda $00,X
 	sta (curlow),Y
-	jmp @opskip
+	bra @opskip
 @read20:
 	ldx #$06
 	jsr hex2val
-	jmp @opskip
+	bra @opskip
 @read21:
 	ldx #$07
 	jsr hex2val
-	jmp @opskip
+	bra @opskip
 @read40:
 	ldx #$08
 	jsr hex2val
 	jsr hex2val
-	jmp @opskip
+	bra @opskip
 @read41:
 	ldx #$09
 	jsr hex2val
 	jsr hex2val
-	jmp @opskip
+	bra @opskip
 @relminus:
 	ldx #$08
 	jsr hex2val
@@ -704,7 +704,7 @@ failboot:
 	lda #$00
 	sbc (curlow),Y
 	sta (curlow),Y
-	jmp @opskip
+	bra @opskip
 @opskip:
 	ldy addrmode
 	ldx length,Y
