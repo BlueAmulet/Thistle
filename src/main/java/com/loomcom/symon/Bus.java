@@ -34,7 +34,7 @@ public class Bus {
 				if (ThistleConfig.debugEEPROMReads)
 					Thistle.log.info(String.format("[Bus] EEPROM Read $%04X", address));
 				return machine.getEEPROM().read(address - EEPROM_DATA_BASE) & 0xFF; // This reads EEPROM code but offset must be data
-			} else if (select >= 10 && (bankMask & (1 << (select - 10))) == 0) {
+			} else if (select >= 10 && select <= 13 && (bankMask & (1 << (select - 10))) == 0) {
 				if (ThistleConfig.debugComponentReads)
 					Thistle.log.info(String.format("[Bus] Component Read $%04X", address));
 				int index = address >>> 8;
@@ -73,7 +73,7 @@ public class Bus {
 				if (ThistleConfig.debugEEPROMWrites)
 					Thistle.log.info(String.format("[Bus] EEPROM Write $%04X = 0x%02X", address, data));
 				machine.getEEPROM().write(address - EEPROM_DATA_BASE, data); // This reads eeprom code but offset must be data
-			} else if (select >= 10 && (bankMask & (1 << (select - 10))) == 0) {
+			} else if (select >= 10 && select <= 13 && (bankMask & (1 << (select - 10))) == 0) {
 				if (ThistleConfig.debugComponentWrites)
 					Thistle.log.info(String.format("[Bus] Component Write $%04X = 0x%02X", address, data));
 				int index = address >>> 8;
