@@ -1,15 +1,13 @@
 package gamax92.thistle.devices;
 
 import com.loomcom.symon.devices.Device;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
 import net.minecraft.nbt.NBTTagCompound;
 
 public class BankSelector extends Device {
 
 	public int[] bankSelect = new int[16];
 
-	public BankSelector(int address) throws MemoryRangeException {
+	public BankSelector(int address) {
 		super(address, 32, "Bank Selector");
 		for (int i = 0; i < bankSelect.length; i++)
 			bankSelect[i] = i;

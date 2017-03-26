@@ -5,8 +5,6 @@ import java.util.Map;
 
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.devices.Device;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
 import gamax92.thistle.Thistle;
 import li.cil.oc.Settings;
 import li.cil.oc.api.machine.Machine;
@@ -19,7 +17,7 @@ public class BootROM extends Device {
 	private String eepromAddress;
 	private Machine machine;
 
-	public BootROM(int address) throws MemoryRangeException {
+	public BootROM(int address) {
 		super(address, 4096+256, "EEPROM");
 	}
 

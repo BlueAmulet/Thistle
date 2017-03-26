@@ -23,8 +23,6 @@
 
 package com.loomcom.symon;
 
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
 /**
  * MemoryRange is a simple container class representing a literal
  * range of memory, with a staraddress, and an end address.  It has
@@ -43,12 +41,12 @@ public class MemoryRange implements Comparable<MemoryRange> {
 	 */
 	public int endAddress;
 
-	public MemoryRange(int startAddress, int endAddress) throws MemoryRangeException {
+	public MemoryRange(int startAddress, int endAddress) {
 		if (startAddress < 0 || endAddress < 0) {
-			throw new MemoryRangeException("Addresses cannot be less than 0.");
+			throw new IllegalArgumentException("Addresses cannot be less than 0.");
 		}
 		if (startAddress > endAddress) {
-			throw new MemoryRangeException("End address cannot be less than start address.");
+			throw new IllegalArgumentException("End address cannot be less than start address.");
 		}
 		this.startAddress = startAddress;
 		this.endAddress = endAddress;

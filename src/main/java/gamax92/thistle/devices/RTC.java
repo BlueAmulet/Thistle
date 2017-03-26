@@ -7,8 +7,6 @@ import java.util.TimeZone;
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.Cpu;
 import com.loomcom.symon.devices.Device;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
 import li.cil.oc.api.machine.Machine;
 import net.minecraft.nbt.NBTTagCompound;
 
@@ -40,7 +38,7 @@ public class RTC extends Device {
 	static final int RTC_IRQMASK_REG = 14;
 	static final int RTC_NMIMASK_REG = 15;
 
-	public RTC(int address) throws MemoryRangeException {
+	public RTC(int address) {
 		super(address, 16, "Real Time Clock");
 	}
 

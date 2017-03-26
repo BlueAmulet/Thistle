@@ -2,8 +2,6 @@ package gamax92.thistle.devices;
 
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.devices.Device;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
 import gamax92.thistle.util.UUIDHelper;
 import li.cil.oc.api.machine.Machine;
 import net.minecraft.nbt.NBTTagCompound;
@@ -13,7 +11,7 @@ public class ComputerInfo extends Device {
 	private byte[] computerUUID;
 	private byte[] tmpfsUUID;
 
-	public ComputerInfo(int address) throws MemoryRangeException {
+	public ComputerInfo(int address) {
 		super(address, 32, "Computer Info");
 	}
 

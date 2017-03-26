@@ -3,8 +3,6 @@ package gamax92.thistle.devices;
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.Cpu;
 import com.loomcom.symon.devices.Device;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
 import net.minecraft.nbt.NBTTagCompound;
 
 public class CopyEngine extends Device {
@@ -23,7 +21,7 @@ public class CopyEngine extends Device {
 	static final int COPYENG_LENGTH_REG_L = 5;
 	static final int COPYENG_LENGTH_REG_H = 6;
 
-	public CopyEngine(int address) throws MemoryRangeException {
+	public CopyEngine(int address) {
 		super(address, 16, "Copy Engine");
 	}
 

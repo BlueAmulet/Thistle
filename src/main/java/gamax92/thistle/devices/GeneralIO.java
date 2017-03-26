@@ -12,8 +12,6 @@ import com.google.common.collect.EvictingQueue;
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.Cpu;
 import com.loomcom.symon.devices.Device;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
 import gamax92.thistle.util.ConsoleDriver;
 import gamax92.thistle.util.TSFHelper;
 import li.cil.oc.api.machine.Context;
@@ -48,7 +46,7 @@ public class GeneralIO extends Device {
 	static final int GIO_IRQMASK_REG = 8;
 	static final int GIO_NMIMASK_REG = 9;
 
-	public GeneralIO(int address) throws MemoryRangeException {
+	public GeneralIO(int address) {
 		super(address, 16, "General IO");
 	}
 

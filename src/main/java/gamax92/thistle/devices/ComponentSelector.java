@@ -10,8 +10,6 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.devices.Device;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
 import gamax92.thistle.api.IThistleDevice;
 import gamax92.thistle.api.ThistleWrapper;
 import gamax92.thistle.api.WrapperRegistry;
@@ -48,7 +46,7 @@ public class ComponentSelector extends Device {
 	static final int COMPSEL_MEM_REG_H = 9;
 	static final int COMPSEL_MASK_REG = 10;
 
-	public ComponentSelector(int address) throws MemoryRangeException {
+	public ComponentSelector(int address) {
 		super(address, 16, "Component Selector");
 	}
 
