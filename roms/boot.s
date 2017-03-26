@@ -1,7 +1,7 @@
 ;
 ; Thistle Boot ROM
 ;
-	.setcpu		"6502"
+	.setcpu		"65c02"
 
 .segment	"STARTUP"
 
@@ -32,8 +32,14 @@ unkop: .byte "Unknown Opcode",10
 unkcmd: .byte "Unknown Command",10
 
 cmdlist:
+.asciiz "ls"
+.word cmd_ls
+.asciiz "list"
+.word cmd_list
 .asciiz "load"
 .word cmd_load
+.asciiz "save"
+.word cmd_save
 .asciiz "run"
 .word cmd_run
 .asciiz ""
@@ -720,9 +726,83 @@ failboot:
 	copys_up unkcmd, $E003, .sizeof(unkcmd)
 	jmp @setup
 
+loadinput:
+	; Loads string from input buffer into Component 1
+	lda inputlen
+	cmp good
+	bcs :+
+	lda good
+:	clc
+	sbc good
+	inc
+	sta $D001
+	sta $E045 ; Copy Engine Length
+	lda #$00
+	sta $D001
+
+	lda good ; Setup Copy Engine
+	sta $E041
+	ldx #$00
+	stx $E042
+	lda #$01
+	sta $E043
+	lda #$D0
+	sta $E044
+	lda #$02 ; Copy
+	sta $E040
+	rts
+
 .segment "RODATA"
 
-loadfail: .byte "Could not open file",10
+listtest: .byte 10,4,0,"list",10
+listfail: .byte "Listing failed",10
+
+.segment "STARTUP"
+
+cmd_ls:
+	lda #$03 ; inputlen
+	sta good
+	bra :+
+cmd_list:
+	lda #$05 ; inputlen
+	sta good
+:	copys_up listtest, $D001, .sizeof(listtest)
+	jsr loadinput
+	stz $D001 ; TSF End Tag
+	stz $D000 ; Invoke
+	lda $D000
+	cmp #$00
+	beq :+
+	copys_up listfail, $E003, .sizeof(listfail)
+	rts
+:	lda $D001 ; Drop Array Tag
+@loop:
+	lda $D001
+	cmp #$00 ; TSF End Tag
+	beq @done
+	ldy $D001 ; Length low
+	ldx $D001 ; Length high
+@readloop:
+	cpy #$00
+	bne :+
+	cpx #$00
+	bne :+
+	lda #$0A
+	sta $E003
+	bra @loop
+:	lda $D001
+	sta $E003
+	dey
+	cpy #$FF
+	bne :+
+	dex
+:	bra @readloop
+@done:
+	rts
+
+.segment "RODATA"
+
+openfail: .byte "Could not open file",10
 loadmsg: .byte "Loading file ...",10
 
 .segment "STARTUP"
@@ -733,33 +813,75 @@ cmd_load:
 	bcs :+
 	rts
 :	copys_up fsopenf, $D001, 8 ; Copy 10,4,0,"open",10
-	lda inputlen
-	clc
-	sbc #$04
-	sta $D001
-	sta $E045 ; Copy Engine Length
-	lda #$00
-	sta $D001
+	lda #$05 ; inputlen
+	sta good
+	jsr loadinput
+	stz $D001 ; TSF End Tag
+	stz $D000 ; Invoke
+	lda $D000
+	cmp #$00
+	beq :+
+	copys_up openfail, $E003, .sizeof(openfail) ; No file opened
+	rts
+:	copys_up loadmsg, $E003, .sizeof(loadmsg)
+	jsr loadfile
+	rts
 
-	lda #$05 ; Setup Copy Engine
-	sta $E041
-	ldx #$00
-	stx $E042
+.segment "RODATA"
+
+savemsg: .byte "Saving file ...",10
+fswrite: .byte 10,5,0,"write"
+
+.segment "STARTUP"
+
+cmd_save:
+	lda inputlen
+	cmp #$06
+	bcs :+
+	rts
+:	copys_up fsopenf, $D001, 8 ; Copy 10,4,0,"open",10
+	lda #$05 ; inputlen
+	sta good
+	jsr loadinput
+	lda #10
+	sta $D001
+	lda #1
+	sta $D001
+	stz $D001
+	lda #'w'
+	sta $D001
+	stz $D001 ; TSF End Tag
+	stz $D000 ; Invoke
+	lda $D000
+	cmp #$00
+	beq :+
+	copys_up openfail, $E003, .sizeof(openfail) ; No file opened
+	rts
+:	copys_up savemsg, $E003, .sizeof(savemsg)
+	copys_up fswrite, $D001, .sizeof(fswrite) ; Copy write command
+	copys_pp $D001, $D001, 5 ; Inject handle
+	lda #9
+	sta $D001
+	ldx curlow
+	stx $D001
+	ldy curhigh
+	dey
+	dey
+	sty $D001
+	stz $E041
+	lda #$02 ; Setup Copy Engine
+	sta $E042
 	lda #$01
 	sta $E043
 	lda #$D0
 	sta $E044
+	stx $E045
+	sty $E046
 	lda #$02 ; Copy
 	sta $E040
-	stx $D001 ; TSF End Tag
-	stx $D000 ; Invoke
-	lda $D000
-	cmp #$00
-	beq :+
-	copys_up loadfail, $E003, .sizeof(loadfail) ; No file opened
-	rts
-:	copys_up loadmsg, $E003, .sizeof(loadmsg)
-	jsr loadfile
+	stz $E046 ; Put high byte back to zero
+	stz $D001
+	stz $D000
 	rts
 
 cmd_run:
