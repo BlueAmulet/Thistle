@@ -27,7 +27,7 @@ public class ThistleConfig {
 
 		clocksPerTick = config.get(CATEGORY_GENERAL, "clocksPerTick", clocksPerTick).getInt();
 
-		// 6502 Debugging
+		// 65C02 Debugging
 		debugCpuSlowDown = config.get(CATEGORY_DEBUG, "cpuSlowDown", false, "Slows down the cpu for easier debugging.").getBoolean();
 		debugCpuTraceLog = config.get(CATEGORY_DEBUG, "cpuTraceLog", false, "Log all opcodes the cpu runs. Use with cpuSlowDown.").getBoolean();
 		debugMemoryReads = config.get(CATEGORY_DEBUG, "memoryReads", false, "Log all reads to memory.").getBoolean();

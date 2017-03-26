@@ -42,7 +42,6 @@ public class CpuState {
 	public int[] args = new int[2];
 
 	public int instSize;
-	public boolean opTrap;
 	public boolean irqAsserted;
 	public boolean nmiAsserted;
 	public int lastPc;
@@ -56,7 +55,7 @@ public class CpuState {
 	public boolean breakFlag;
 	public boolean overflowFlag;
 
-	// KIL opcode lockup
+	// Processor lockup
 	public boolean dead = false;
 
 	/**
@@ -84,7 +83,6 @@ public class CpuState {
 		this.args[0] = s.args[0];
 		this.args[1] = s.args[1];
 		this.instSize = s.instSize;
-		this.opTrap = s.opTrap;
 		this.irqAsserted = s.irqAsserted;
 		this.carryFlag = s.carryFlag;
 		this.negativeFlag = s.negativeFlag;
@@ -136,7 +134,7 @@ public class CpuState {
 	}
 
 	public String getInstructionByteStatus() {
-		switch (InstructionTable.instructionSizes[ir]) {
+		switch (InstructionTable.instructionModes[ir].getLength()) {
 		case 0:
 		case 1:
 			return Utils.wordToHex(lastPc) + "  " + Utils.byteToHex(ir) + "      ";

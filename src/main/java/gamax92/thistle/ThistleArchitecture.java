@@ -35,7 +35,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import scala.Option;
 
-@Architecture.Name("6502 Thistle")
+@Architecture.Name("65C02 Thistle")
 public class ThistleArchitecture implements Architecture {
 	private final Machine machine;
 
