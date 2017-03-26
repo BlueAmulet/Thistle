@@ -104,6 +104,9 @@ public class Cpu implements InstructionTable {
 		// Reset Processor lockup
 		state.dead = false;
 
+		// Reset Sleeping state
+		state.sleep = false;
+
 		// Reset registers.
 		state.a = 0;
 		state.x = 0;
@@ -142,6 +145,11 @@ public class Cpu implements InstructionTable {
 			handleNmi();
 		} else if (state.irqAsserted && !getIrqDisableFlag()) {
 			handleIrq(state.pc);
+		}
+
+		if (state.sleep) {
+			cycles = 0;
+			return;
 		}
 
 		// Fetch memory location for this instruction.
@@ -340,7 +348,7 @@ public class Cpu implements InstructionTable {
 			setArithmeticFlags(state.x);
 			break;
 		case 0xcb: // WAI - Wait For Interrupt - Implied
-			// TODO
+			setSleepState();
 			break;
 		case 0xd0: // BNE - Branch if Not Equal to Zero - Relative
 			if (!getZeroFlag()) {
@@ -355,6 +363,7 @@ public class Cpu implements InstructionTable {
 			break;
 		case 0xdb: // STP - Stop The Processor - Implied
 			// TODO
+			setDeadState();
 			break;
 		case 0xe8: // INX - Increment X Register - Implied
 			state.x = ++state.x & 0xff;
@@ -762,7 +771,7 @@ public class Cpu implements InstructionTable {
 
 		/** Unimplemented Instructions ****************************************/
 		default:
-			setDead();
+			setDeadState();
 			break;
 		}
 	}
@@ -788,6 +797,8 @@ public class Cpu implements InstructionTable {
 	 * @throws MemoryAccessException
 	 */
 	private void handleInterrupt(int returnPc, int vectorLow, int vectorHigh, boolean isBreak) {
+		// Wake the processor up if it's asleep.
+		clearSleepState();
 		// Set the break flag accordingly.
 		if (isBreak) {
 			setBreakFlag();
@@ -1123,17 +1134,31 @@ public class Cpu implements InstructionTable {
 	}
 
 	/**
-	 * Set the illegal instruction trap.
+	 * Set the processor lockup state
 	 */
-	public void setDead() {
+	public void setDeadState() {
 		state.dead = true;
 	}
 
 	/**
-	 * Clear the illegal instruction trap.
+	 * Clear the processor lockup state
 	 */
-	public void clearDead() {
+	public void clearDeadState() {
 		state.dead = false;
+	}
+
+	/**
+	 * Set the processor sleeping state
+	 */
+	public void setSleepState() {
+		state.sleep = true;
+	}
+
+	/**
+	 * Clear the processor sleeping state
+	 */
+	public void clearSleepState() {
+		state.sleep = false;
 	}
 
 	public int getAccumulator() {

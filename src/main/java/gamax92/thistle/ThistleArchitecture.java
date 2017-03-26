@@ -9,6 +9,7 @@ import java.util.zip.GZIPOutputStream;
 import org.apache.commons.io.IOUtils;
 
 import com.loomcom.symon.Cpu;
+import com.loomcom.symon.CpuState;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import gamax92.thistle.devices.BankSelector;
@@ -232,13 +233,18 @@ public class ThistleArchitecture implements Architecture {
 		// Restore CPU
 		if (nbt.hasKey("cpu")) {
 			Cpu mCPU = vm.machine.getCpu();
+			CpuState cpuState = mCPU.getCpuState();
 			NBTTagCompound cpuTag = nbt.getCompoundTag("cpu");
-			mCPU.setAccumulator(cpuTag.getInteger("rA"));
+			cpuState.a = cpuTag.getInteger("rA");
 			mCPU.setProcessorStatus(cpuTag.getInteger("rP"));
-			mCPU.setProgramCounter(cpuTag.getInteger("rPC"));
-			mCPU.setStackPointer(cpuTag.getInteger("rSP"));
-			mCPU.setXRegister(cpuTag.getInteger("rX"));
-			mCPU.setYRegister(cpuTag.getInteger("rY"));
+			cpuState.pc = cpuTag.getInteger("rPC");
+			cpuState.sp = cpuTag.getInteger("rSP");
+			cpuState.x = cpuTag.getInteger("rX");
+			cpuState.y = cpuTag.getInteger("rY");
+			cpuState.irqAsserted = cpuTag.getBoolean("iI");
+			cpuState.nmiAsserted = cpuTag.getBoolean("iN");
+			cpuState.dead = cpuTag.getBoolean("sD");
+			cpuState.sleep = cpuTag.getBoolean("sS");
 		}
 
 		// Restore Values
@@ -270,13 +276,18 @@ public class ThistleArchitecture implements Architecture {
 		// Persist CPU
 		Cpu mCPU = vm.machine.getCpu();
 		if (mCPU != null) {
+			CpuState cpuState = mCPU.getCpuState();
 			NBTTagCompound cpuTag = new NBTTagCompound();
-			cpuTag.setInteger("rA", mCPU.getAccumulator());
+			cpuTag.setInteger("rA", cpuState.a);
 			cpuTag.setInteger("rP", mCPU.getProcessorStatus());
-			cpuTag.setInteger("rPC", mCPU.getProgramCounter());
-			cpuTag.setInteger("rSP", mCPU.getStackPointer());
-			cpuTag.setInteger("rX", mCPU.getXRegister());
-			cpuTag.setInteger("rY", mCPU.getYRegister());
+			cpuTag.setInteger("rPC", cpuState.pc);
+			cpuTag.setInteger("rSP", cpuState.sp);
+			cpuTag.setInteger("rX", cpuState.x);
+			cpuTag.setInteger("rY", cpuState.y);
+			cpuTag.setBoolean("iI", cpuState.irqAsserted);
+			cpuTag.setBoolean("iN", cpuState.nmiAsserted);
+			cpuTag.setBoolean("sD", cpuState.dead);
+			cpuTag.setBoolean("sS", cpuState.sleep);
 			nbt.setTag("cpu", cpuTag);
 		}
 
