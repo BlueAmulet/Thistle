@@ -47,40 +47,44 @@ cmdlist:
 .define inval $FF,$FF,$FF
 
 opcodetbl:
-.byte "BRK",$00,"ORA",$09,inval,$00,inval,$09,inval,$03,"ORA",$03,"ASL",$03,inval,$03,"PHP",$00,"ORA",$01,"ASL",$00,inval,$01,inval,$02,"ORA",$02,"ASL",$02,inval,$02
-.byte "BPL",$0B,"ORA",$0A,inval,$00,inval,$0A,inval,$06,"ORA",$06,"ASL",$06,inval,$06,"CLC",$00,"ORA",$05,inval,$00,inval,$05,inval,$04,"ORA",$04,"ASL",$04,inval,$04
-.byte "JSR",$02,"AND",$09,inval,$00,inval,$09,"BIT",$03,"AND",$03,"ROL",$03,inval,$03,"PLP",$00,"AND",$01,"ROL",$00,inval,$01,"BIT",$02,"AND",$02,"ROL",$02,inval,$02
-.byte "BMI",$0B,"AND",$0A,inval,$00,inval,$0A,inval,$06,"AND",$06,"ROL",$06,inval,$06,"SEC",$00,"AND",$05,inval,$00,inval,$05,inval,$04,"AND",$04,"ROL",$04,inval,$04
-.byte "RTI",$00,"EOR",$09,inval,$00,inval,$09,inval,$03,"EOR",$03,"LSR",$03,inval,$03,"PHA",$00,"EOR",$01,"LSR",$00,inval,$01,"JMP",$02,"EOR",$02,"LSR",$02,inval,$02
-.byte "BVC",$0B,"EOR",$0A,inval,$00,inval,$0A,inval,$06,"EOR",$06,"LSR",$06,inval,$06,"CLI",$00,"EOR",$05,inval,$00,inval,$05,inval,$04,"EOR",$04,"LSR",$04,inval,$04
-.byte "RTS",$00,"ADC",$09,inval,$00,inval,$09,inval,$03,"ADC",$03,"ROR",$03,inval,$03,"PLA",$00,"ADC",$01,"ROR",$00,inval,$01,"JMP",$08,"ADC",$02,"ROR",$02,inval,$02
-.byte "BVS",$0B,"ADC",$0A,inval,$00,inval,$0A,inval,$06,"ADC",$06,"ROR",$06,inval,$06,"SEI",$00,"ADC",$05,inval,$00,inval,$05,inval,$04,"ADC",$04,"ROR",$04,inval,$04
-.byte "BCS",$01,"STA",$09,inval,$01,inval,$09,"STY",$03,"STA",$03,"STX",$03,inval,$03,"DEY",$00,inval,$01,"TXA",$00,inval,$01,"STY",$02,"STA",$02,"STX",$02,inval,$02
-.byte "BCC",$0B,"STA",$0A,inval,$00,inval,$0A,"STY",$06,"STA",$06,"STX",$07,inval,$07,"TYA",$00,"STA",$05,"TXS",$00,inval,$05,inval,$04,"STA",$04,inval,$05,inval,$05
-.byte "LDY",$01,"LDA",$09,"LDX",$01,inval,$09,"LDY",$03,"LDA",$03,"LDX",$03,inval,$03,"TAY",$00,"LDA",$01,"TAX",$00,inval,$01,"LDY",$02,"LDA",$02,"LDX",$02,inval,$02
-.byte "BCS",$0B,"LDA",$0A,inval,$00,inval,$0A,"LDY",$06,"LDA",$06,"LDX",$07,inval,$07,"CLV",$00,"LDA",$05,"TSX",$00,inval,$05,"LDY",$04,"LDA",$04,"LDX",$05,inval,$05
-.byte "CPY",$01,"CMP",$09,inval,$01,inval,$09,"CPY",$03,"CMP",$03,"DEC",$03,inval,$03,"INY",$00,"CMP",$01,"DEX",$00,inval,$01,"CPY",$02,"CMP",$02,"DEC",$02,inval,$02
-.byte "BNE",$0B,"CMP",$0A,inval,$00,inval,$0A,inval,$06,"CMP",$06,"DEC",$06,inval,$06,"CLD",$00,"CMP",$05,inval,$00,inval,$05,inval,$04,"CMP",$04,"DEC",$04,inval,$04
-.byte "CPX",$01,"SBC",$09,inval,$01,inval,$09,"CPX",$03,"SBC",$03,"INC",$03,inval,$03,"INX",$00,"SBC",$01,"NOP",$00,inval,$01,"CPX",$02,"SBC",$02,"INC",$02,inval,$02
-.byte "BEQ",$0B,"SBC",$0A,inval,$00,inval,$0A,inval,$06,"SBC",$06,"INC",$06,inval,$06,"SED",$00,"SBC",$05,inval,$00,inval,$05,inval,$04,"SBC",$04,"INC",$04,inval,$04
+.byte "BRK",$07,"ORA",$09,inval,$00,inval,$07,"TSB",$01,"ORA",$01,"ASL",$01,"RB0",$01,"PHP",$07,"ORA",$00,"ASL",$07,inval,$07,"TSB",$04,"ORA",$04,"ASL",$04,"BR0",$0E
+.byte "BPL",$08,"ORA",$0A,"ORA",$0D,inval,$07,"TRB",$01,"ORA",$02,"ASL",$02,"RB1",$01,"CLC",$07,"ORA",$06,"INC",$07,inval,$07,"TRB",$04,"ORA",$05,"ASL",$05,"BR1",$0E
+.byte "JSR",$04,"AND",$09,inval,$00,inval,$07,"BIT",$01,"AND",$01,"ROL",$01,"RB2",$01,"PLP",$07,"AND",$00,"ROL",$07,inval,$07,"BIT",$04,"AND",$04,"ROL",$04,"BR2",$0E
+.byte "BMI",$08,"AND",$0A,"AND",$0D,inval,$07,"BIT",$02,"AND",$02,"ROL",$02,"RB3",$01,"SEC",$07,"AND",$06,"DEC",$07,inval,$07,"BIT",$05,"AND",$05,"ROL",$05,"BR3",$0E
+.byte "RTI",$07,"EOR",$09,inval,$00,inval,$07,inval,$01,"EOR",$01,"LSR",$01,"RB4",$01,"PHA",$07,"EOR",$00,"LSR",$07,inval,$07,"JMP",$04,"EOR",$04,"LSR",$04,"BR4",$0E
+.byte "BVC",$08,"EOR",$0A,"EOR",$0D,inval,$07,inval,$02,"EOR",$02,"LSR",$02,"RB5",$01,"CLI",$07,"EOR",$06,"PHY",$07,inval,$07,inval,$04,"EOR",$05,"LSR",$05,"BR5",$0E
+.byte "RTS",$07,"ADC",$09,inval,$00,inval,$07,"STZ",$01,"ADC",$01,"ROR",$01,"RB6",$01,"PLA",$07,"ADC",$00,"ROR",$07,inval,$07,"JMP",$0B,"ADC",$04,"ROR",$04,"BR6",$0E
+.byte "BVS",$08,"ADC",$0A,"ADC",$0D,inval,$07,"STZ",$02,"ADC",$02,"ROR",$02,"RB7",$01,"SEI",$07,"ADC",$06,"PLY",$07,inval,$07,"JMP",$0C,"ADC",$05,"ROR",$05,"BR7",$0E
+.byte "BRA",$08,"STA",$09,inval,$00,inval,$07,"STY",$01,"STA",$01,"STX",$01,"SB0",$01,"DEY",$07,"BIT",$00,"TXA",$07,inval,$07,"STY",$04,"STA",$04,"STX",$04,"BS0",$0E
+.byte "BCC",$08,"STA",$0A,"STA",$0D,inval,$07,"STY",$02,"STA",$02,"STX",$03,"SB1",$01,"TYA",$07,"STA",$06,"TXS",$07,inval,$07,"STZ",$04,"STA",$05,"STZ",$05,"BS1",$0E
+.byte "LDY",$00,"LDA",$09,"LDX",$00,inval,$07,"LDY",$01,"LDA",$01,"LDX",$01,"SB2",$01,"TAY",$07,"LDA",$00,"TAX",$07,inval,$07,"LDY",$04,"LDA",$04,"LDX",$04,"BS2",$0E
+.byte "BCS",$08,"LDA",$0A,"LDA",$0D,inval,$07,"LDY",$02,"LDA",$02,"LDX",$03,"SB3",$01,"CLV",$07,"LDA",$06,"TSX",$07,inval,$07,"LDY",$05,"LDA",$05,"LDX",$06,"BS3",$0E
+.byte "CPY",$00,"CMP",$09,inval,$00,inval,$07,"CPY",$01,"CMP",$01,"DEC",$01,"SB4",$01,"INY",$07,"CMP",$00,"DEX",$07,"WAI",$07,"CPY",$04,"CMP",$04,"DEC",$04,"BS4",$0E
+.byte "BNE",$08,"CMP",$0A,"CMP",$0D,inval,$07,inval,$02,"CMP",$02,"DEC",$02,"SB5",$01,"CLD",$07,"CMP",$06,"PHX",$07,"STP",$07,inval,$04,"CMP",$05,"DEC",$05,"BS5",$0E
+.byte "CPX",$00,"SBC",$09,inval,$00,inval,$07,"CPX",$01,"SBC",$01,"INC",$01,"SB6",$01,"INX",$07,"SBC",$00,"NOP",$07,inval,$07,"CPX",$04,"SBC",$04,"INC",$04,"BS6",$0E
+.byte "BEQ",$08,"SBC",$0A,"SBC",$0D,inval,$07,inval,$02,"SBC",$02,"INC",$02,"SB7",$01,"SED",$07,"SBC",$06,"PLX",$07,inval,$07,inval,$04,"SBC",$05,"INC",$05,"BS7",$0E
 
-length: .byte 1,2,3,2,3,3,2,2,3,2,2,2
+length: .byte 2,2,2,2,3,3,3,1,2,2,2,3,3,2,3
 
 format:
-.byte "#$__",$00,$01
-.byte "#'_'",$00,$01
-.byte "$____",$00,$02
-.byte "$__",$00,$03
-.byte "$____,X",$00,$04
-.byte "$____,Y",$00,$05
-.byte "$__,X",$00,$06
-.byte "$__,Y",$00,$07
-.byte "($____)",$00,$08
+.byte "#$__",$00,$00
+.byte "#'_'",$00,$00
+.byte "$__",$00,$01
+.byte "$__,X",$00,$02
+.byte "$__,Y",$00,$03
+.byte "$____",$00,$04
+.byte "$____,X",$00,$05
+.byte "$____,Y",$00,$06
+.byte "0X__",$00,$08
+.byte "-0X__",$00,$08
 .byte "($__,X)",$00,$09
 .byte "($__),Y",$00,$0a
-.byte "0X__",$00,$0b
-.byte "-0X__",$00,$0b
-.byte $00,$00 ; Must be last
+.byte "($____)",$00,$0b
+.byte "($____,X)",$00,$0c
+.byte "($__)",$00,$0d
+.byte "$__,0X__",$00,$0e
+.byte "$__,-0X__",$00,$0e
+.byte $00,$07 ; Must be last
 
 .segment "STARTUP"
 
@@ -655,30 +659,38 @@ failboot:
 	lda formattype
 	cmp #$00 ; immediate
 	beq @read21
-	cmp #$01 ; immediate w/ Character
+	cmp #$01 ; immediate w/ character
 	beq @readchar
-	cmp #$02 ; absolute
-	beq @read40
-	cmp #$03 ; zeropage
+	cmp #$02 ; zeropage
 	beq @read20
-	cmp #$04 ; indexed x
-	beq @read40
-	cmp #$05 ; indexed y
-	beq @read40
-	cmp #$06 ; zp indexed x
+	cmp #$03 ; zp indexed x
 	beq @read20
-	cmp #$07 ; zp indexed y
+	cmp #$04 ; zp indexed y
 	beq @read20
-	cmp #$08 ; indirect
-	beq @read41
-	cmp #$09 ; indirect x
+	cmp #$05 ; absolute
+	beq @read40
+	cmp #$06 ; indexed x
+	beq @read40
+	cmp #$07 ; indexed y
+	beq @read40
+	cmp #$08 ; relative
 	beq @read21
-	cmp #$0a ; indirect y
-	beq @read21
-	cmp #$0b ; relative
-	beq @read21
-	cmp #$0c ; relative w/ minus
+	cmp #$09 ; relative w/ minus
 	beq @relminus
+	cmp #$0a ; zp indirect x
+	beq @read21
+	cmp #$0b ; zp indirect y
+	beq @read21
+	cmp #$0c ; indirect
+	beq @read41
+	cmp #$0d ; indirect x
+	beq @read41
+	cmp #$0e ; zp indirect
+	beq @read21
+	cmp #$0f ; zp relative
+	beq @readzpr
+	cmp #$10 ; zp relative minus
+	beq @zprminus
 	bra @opskip
 @readchar:
 	ldx #$06
@@ -703,15 +715,25 @@ failboot:
 	jsr hex2val
 	jsr hex2val
 	bra @opskip
+@readzpr:
+	ldx #$06
+	jsr hex2val
+	ldx #$0b
+	jsr hex2val
+	bra @opskip
+@zprminus:
+	ldx #$06
+	jsr hex2val
+	ldx #$0c
+	bra :+
 @relminus:
 	ldx #$08
-	jsr hex2val
+:	jsr hex2val
 	dey
 	sec
 	lda #$00
 	sbc (curlow),Y
 	sta (curlow),Y
-	bra @opskip
 @opskip:
 	ldy addrmode
 	ldx length,Y
