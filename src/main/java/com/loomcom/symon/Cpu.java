@@ -217,9 +217,7 @@ public class Cpu implements InstructionTable {
 
 		/** Single Byte Instructions **/
 		case 0x00: // BRK - Force Interrupt - Implied
-			if (!getIrqDisableFlag()) {
-				handleIrq(state.pc + 1);
-			}
+			handleBrk(state.pc + 1);
 			break;
 		case 0x08: // PHP - Push Processor Status - Implied
 			// Break flag is always set in the stack value.
@@ -769,13 +767,18 @@ public class Cpu implements InstructionTable {
 		}
 	}
 
+	private void handleBrk(int returnPc) {
+		handleInterrupt(returnPc, IRQ_VECTOR_L, IRQ_VECTOR_H, true);
+		clearIrq();
+	}
+
 	private void handleIrq(int returnPc) {
-		handleInterrupt(returnPc, IRQ_VECTOR_L, IRQ_VECTOR_H);
+		handleInterrupt(returnPc, IRQ_VECTOR_L, IRQ_VECTOR_H, false);
 		clearIrq();
 	}
 
 	private void handleNmi() {
-		handleInterrupt(state.pc, NMI_VECTOR_L, NMI_VECTOR_H);
+		handleInterrupt(state.pc, NMI_VECTOR_L, NMI_VECTOR_H, false);
 		clearNmi();
 	}
 
@@ -784,9 +787,13 @@ public class Cpu implements InstructionTable {
 	 *
 	 * @throws MemoryAccessException
 	 */
-	private void handleInterrupt(int returnPc, int vectorLow, int vectorHigh) {
-		// Set the break flag before pushing.
-		setBreakFlag();
+	private void handleInterrupt(int returnPc, int vectorLow, int vectorHigh, boolean isBreak) {
+		// Set the break flag accordingly.
+		if (isBreak) {
+			setBreakFlag();
+		} else {
+			clearBreakFlag();
+		}
 		// Push program counter + 1 onto the stack
 		stackPush((returnPc >> 8) & 0xff); // PC high byte
 		stackPush(returnPc & 0xff); // PC low byte
