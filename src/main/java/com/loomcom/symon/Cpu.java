@@ -800,6 +800,8 @@ public class Cpu implements InstructionTable {
 		stackPush(state.getStatusFlag());
 		// Set the Interrupt Disabled flag.  RTI will clear it.
 		setIrqDisableFlag();
+		// The 65C02 clears the Decimal flag on interrupts.
+		clearDecimalModeFlag();
 
 		// Load interrupt vector address into PC
 		state.pc = Utils.address(bus.read(vectorLow), bus.read(vectorHigh));
