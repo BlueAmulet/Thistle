@@ -334,9 +334,11 @@ bootdrive:
 	; Checks and boots from a drive
 	lda $D000
 	cmp #$00
-	beq @boot
+	beq :+
 	rts
-@boot:	copys_up bootmsg, $E003, .sizeof(bootmsg)
+:	copys_up bootmsg, $E003, .sizeof(bootmsg)
+	pla ; Remove address from stack
+	pla ; We're not returning to havemem
 	lda #$01 ; Setup Copy Engine
 	sta $E041
 	lda #$D0
@@ -355,17 +357,21 @@ bootdrive:
 	sta $E040
 
 	stz $E046
-	jmp $0200 ; Boot
+	jsr $0200 ; Boot
+	jmp fschk
 
 bootfs:
 	; Boots from a file
 	lda $D000
 	cmp #$00
-	beq @boot
+	beq :+
 	rts ; No file opened
-@boot:	copys_up bootmsg, $E003, .sizeof(bootmsg)
+:	copys_up bootmsg, $E003, .sizeof(bootmsg)
+	pla ; Remove address from stack
+	pla ; We're not returning to fschk
 	jsr loadfile
-	jmp $0200 ; Boot
+	jsr $0200 ; Boot
+	jmp commands
 
 reset:
 	; Display boot greeting
@@ -471,6 +477,7 @@ inc_y:
 
 failboot:
 	copys_up noboot, $E003, .sizeof(noboot)
+commands:
 	stz $E001 ; Drop all input
 	stz curlow
 	lda #$02
