@@ -267,6 +267,20 @@ loaduuid:
 	stz $E010 ; Map Component
 	rts
 
+closehandle:
+	; Closes an open file handle
+	; $08-$0C - Handle to close
+	; Clobbers: A
+	copys_up fsclose, $D001, .sizeof(fsclose) ; Call close
+	copys_up $0008, $D001, 5
+	stz $D001
+	stz $D000
+	copys_up $0008, $E012, 5 ; Destroy value
+	stz $E012
+	lda #$04
+	sta $E010
+	rts
+
 loadfile:
 	; Reads a file into memory starting at $0200
 	stz curlow
@@ -313,14 +327,7 @@ loadfile:
 	bra @loop
 @done:
 	stz $E046 ; Put high byte of size back to 0
-	copys_up fsclose, $D001, .sizeof(fsclose) ; Call close
-	copys_up $0008, $D001, 5
-	stz $D001
-	stz $D000
-	copys_up $0008, $E012, 5 ; Destroy value
-	stz $E012
-	lda #$04
-	sta $E010
+	jsr closehandle
 	rts
 
 bootdrive:
@@ -886,7 +893,8 @@ cmd_save:
 	rts
 :	copys_up savemsg, $E003, .sizeof(savemsg)
 	copys_up fswrite, $D001, .sizeof(fswrite) ; Copy write command
-	copys_pp $D001, $D001, 5 ; Inject handle
+	copys_pu $D001, $0008, 5 ; Save handle
+	copys_up $0008, $D001, 5
 	lda #9
 	sta $D001
 	ldx curlow
@@ -907,8 +915,9 @@ cmd_save:
 	lda #$02 ; Copy
 	sta $E040
 	stz $E046 ; Put high byte back to zero
-	stz $D001
-	stz $D000
+	stz $D001 ; TSF End Tag
+	stz $D000 ; Invoke
+	jsr closehandle
 	rts
 
 cmd_run:
