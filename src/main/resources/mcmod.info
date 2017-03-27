@@ -2,7 +2,7 @@
 {
   "modid": "thistle",
   "name": "Thistle Computer",
-  "description": "6502 Architecture for OpenComputers.",
+  "description": "65C02 Architecture for OpenComputers.",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",
