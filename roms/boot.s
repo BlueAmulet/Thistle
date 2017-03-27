@@ -181,7 +181,8 @@ uuidprint:
 	; $00, $01 - Address of UUID
 	; Clobbers: A, X (hexprint), Y
 	ldy #$00
-@loop:	lda ($00),Y
+@loop:
+	lda ($00),Y
 	jsr hexprint
 	iny
 	cpy #$10
@@ -195,10 +196,12 @@ uuidprint:
 	cpy #$0A
 	beq @dash
 	bra @loop
-@dash:	lda #$2D
+@dash:
+	lda #$2D
 	sta $E003
 	bra @loop
-@done:	lda #$0a
+@done:
+	lda #$0a
 	sta $E003
 	rts
 
@@ -206,34 +209,40 @@ _readlist:
 	; Reads component list to $0200
 	; $02 - Bytes to skip for component type
 	; Clobbers: A, X, Y, $00, $01
+	lda $E011
+	sta $03
 	stz $00
 	ldy #$00
 	lda #$02
 	sta $01
-@loop1:	lda $E012
+@loop1:
+	lda $E012
 	cmp #$00 ; TSF End Tag
 	beq @done
 
 	; Read UUID
 	ldx #$10
-@loop2:	lda $E012
+@loop2:
+	lda $E012
 	sta ($00),Y
 	iny
 	cpy #$00
-	bne @skip
+	bne :+
 	inc $01 ; Increment $01 when Y wraps to 0
-@skip:	dex
+:	dex
 	cpx #$00
 	bne @loop2
 
 	; Drop component name
 	ldx $02
-@loop3:	lda $E012
+@loop3:
+	lda $E012
 	dex
 	cpx #$00
 	bne @loop3
 	bra @loop1
-@done:	lda #$02
+@done:
+	lda #$02
 	sta $01
 	rts
 
@@ -253,13 +262,14 @@ loaduuid:
 	ldx #$10
 	lda #$0b ; UUID Tag
 	sta $E012
-@loop:	lda ($00),Y ; UUID Byte loop
+@loop:
+	lda ($00),Y ; UUID Byte loop
 	sta $E012
 	iny
 	cpy #$00
-	bne @skip
+	bne :+
 	inc $01
-@skip:	dex
+:	dex
 	cpx #$00
 	bne @loop
 	sty $00
@@ -288,8 +298,8 @@ loadfile:
 	sta curhigh
 	copys_uu fsread, $0001, .sizeof(fsread) ; Copy read command
 	copys_pu $D001, $0008, 5 ; Inject handle
-
-@loop:	ldx curhigh
+@loop:
+	ldx curhigh
 	cpx #$D0
 	beq @done ; Too much data read
 	copys_up $0001, $D001, .sizeof(fsread) ; Call "read"
@@ -297,12 +307,11 @@ loadfile:
 
 	lda $D001 ; Check TSF Tag
 	cmp #$09 ; Byte array?
-	beq @skip
+	beq :+
 	cmp #$0A ; String?
-	beq @skip
-	bra @done ; No more data to read
+	bne @done ; No more data to read
 
-@skip:	lda $D001 ; Read length
+:	lda $D001 ; Read length
 	sta indlow
 	lda $D001
 	sta indhigh
@@ -396,11 +405,10 @@ havemem:
 	sta $E010
 
 	; Store list to memory
-	lda $E011
-	sta $03
 	readlist 8
 
 	; Parse list
+@loop:
 	lda $03
 	cmp #$00
 	beq fschk ; No "drive" componets left to check
@@ -409,8 +417,7 @@ havemem:
 	stz $D000
 	jsr bootdrive
 	dec $03
-
-	; Check the drive components
+	bra @loop
 
 fschk:
 	copys_up fsmsg, $E003, .sizeof(fsmsg)
@@ -420,12 +427,11 @@ fschk:
 	sta $E010
 
 	; Store list to memory
-	lda $E011
-	sta $03
 	readlist 13
 
 	; Parse list
-@loop:	lda $03
+@loop:
+	lda $03
 	cmp #$00
 	bne :+
 	jmp failboot ; No "filesystem" componets left to check
@@ -928,8 +934,7 @@ cmd_save:
 	rts
 
 cmd_run:
-	jsr $0200
-	rts
+	jmp $0200
 
 .segment "RODATA"
 
