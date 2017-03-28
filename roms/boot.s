@@ -287,6 +287,7 @@ loaduuid:
 	; indlow, indhigh - Address to read from
 	; Clobbers: A, X, Y, (uuidprint)
 	jsr uuidprint
+loaduuid2:
 	ldy indlow
 	stz indlow
 	ldx #$10
@@ -511,6 +512,42 @@ inc_y:
 
 failboot:
 	dmacopy noboot, $E003, .sizeof(noboot), mode_up
+
+	; Try to select a non tmpfs filesystem
+	dmacopy fslist, $E012, .sizeof(fslist), mode_up
+	lda #$03
+	sta $E010
+	readlist 13 ; Store list to memory
+
+@loop:
+	lda $03
+	cmp #$00
+	beq commands
+	ldx #$00
+	ldy #$00
+	stz good
+@loop2:
+	lda (indlow),Y
+	cmp $E110,X
+	beq :+
+	sty good
+	lda indlow
+	clc
+	adc good
+	stx good
+	sec
+	sbc indlow
+	sta indlow
+	jsr loaduuid2
+	bra commands
+:	inx
+	jsr inc_y
+	cpx #$10
+	bne @loop2
+	ldx #$00
+	dec $03
+	bra @loop
+
 commands:
 	stz $E001 ; Drop all input
 	stz curlow
