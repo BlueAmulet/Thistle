@@ -43,7 +43,7 @@ cmdlist:
 .word cmd_run
 .asciiz ""
 
-.define inval $FF,$FF,$FF
+.define inval $FF
 
 opcodetbl:
 .byte "BRK",$07,"ORA",$09,inval,$00,inval,$07,"TSB",$01,"ORA",$01,"ASL",$01,"RB0",$01,"PHP",$07,"ORA",$00,"ASL",$07,inval,$07,"TSB",$04,"ORA",$04,"ASL",$04,"BR0",$0E
@@ -686,9 +686,13 @@ commands:
 	beq :+
 	sta good ; Mark as bad
 :	inx
-	iny
+	jsr inc_y
 	cpx #$03
-	bne @oploop
+	beq @opcheck
+	cmp #$FF
+	beq @opcheck
+	bra @oploop
+@opcheck:
 	lda (indlow),Y
 	cmp addrmode
 	beq :+
@@ -696,7 +700,8 @@ commands:
 :	lda #$00
 	cmp good
 	beq @opfound
-	sta good ; Wrong opcode, reset
+
+	stz good ; Wrong opcode, reset
 	ldx #$00
 	jsr inc_y
 	inc opcode
