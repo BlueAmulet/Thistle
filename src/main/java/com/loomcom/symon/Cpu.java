@@ -738,8 +738,7 @@ public class Cpu implements InstructionTable {
 		case 0xe7: // Zero Page
 		case 0xf7: // Zero Page
 			tmp = 1 << ((state.ir & 0x70) >> 4);
-			if ((bus.read(state.args[0]) & tmp) == 0)
-				state.pc = relAddress(state.args[1]);
+			bus.write(effectiveAddress, bus.read(effectiveAddress) | tmp);
 			break;
 
 		/** BBR - Branch on Bit Reset *******************************************/
@@ -752,7 +751,8 @@ public class Cpu implements InstructionTable {
 		case 0x6f: // Zero Page Relative
 		case 0x7f: // Zero Page Relative
 			tmp = 1 << ((state.ir & 0x70) >> 4);
-			bus.write(effectiveAddress, bus.read(effectiveAddress) | tmp);
+			if ((bus.read(state.args[0]) & tmp) == 0)
+				state.pc = relAddress(state.args[1]);
 			break;
 
 		/** BBS - Branch on Bit Set *********************************************/
