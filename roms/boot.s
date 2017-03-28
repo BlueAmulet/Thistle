@@ -28,7 +28,6 @@ noboot: .byte "Nothing to boot from",10
 
 hexlookup: .byte "0123456789abcdef"
 
-unkop: .byte "Unknown Opcode",10
 unkcmd: .byte "Unknown Command",10
 
 cmdlist:
@@ -98,36 +97,42 @@ format:
 .define curlow $87
 .define curhigh $88
 
-.macro _copy_base_short src, dest, len, mode
-	.if .const(src) .and .lobyte(src) = 0
-		stz $E041
-	.else
-		lda #<src
-		sta $E041
+.macro dmacopy src, dest, len, mode
+	.ifnblank src
+		.if .const(src) .and .lobyte(src) = 0
+			stz $E041
+		.else
+			lda #<src
+			sta $E041
+		.endif
+		.if .const(src) .and .hibyte(src) = 0
+			stz $E042
+		.else
+			lda #>src
+			sta $E042
+		.endif
 	.endif
-	.if .const(src) .and .hibyte(src) = 0
-		stz $E042
-	.else
-		lda #>src
-		sta $E042
+	.ifnblank dest
+		.if .const(dest) .and .lobyte(dest) = 0
+			stz $E043
+		.else
+			lda #<dest
+			sta $E043
+		.endif
+		.if .const(dest) .and .hibyte(dest) = 0
+			stz $E044
+		.else
+			lda #>dest
+			sta $E044
+		.endif
 	.endif
-	.if .const(dest) .and .lobyte(dest) = 0
-		stz $E043
-	.else
-		lda #<dest
-		sta $E043
-	.endif
-	.if .const(dest) .and .hibyte(dest) = 0
-		stz $E044
-	.else
-		lda #>dest
-		sta $E044
-	.endif
-	.if .const(len) .and len = 0
-		stz $E045
-	.else
-		lda #<len
-		sta $E045
+	.ifnblank len
+		.if .const(len) .and len = 0
+			stz $E045
+		.else
+			lda #<len
+			sta $E045
+		.endif
 	.endif
 	.if .const(mode) .and mode = 0
 		stz $E040
@@ -137,21 +142,49 @@ format:
 	.endif
 .endmacro
 
-.macro copys_pp src, dest, len
-	_copy_base_short src, dest, len, $00
+.macro dmaload src, dest, len
+	.ifnblank src
+		.if .const(src) .and .lobyte(src) = 0
+			stz $E041
+		.else
+			lda #<src
+			sta $E041
+		.endif
+		.if .const(src) .and .hibyte(src) = 0
+			stz $E042
+		.else
+			lda #>src
+			sta $E042
+		.endif
+	.endif
+	.ifnblank dest
+		.if .const(dest) .and .lobyte(dest) = 0
+			stz $E043
+		.else
+			lda #<dest
+			sta $E043
+		.endif
+		.if .const(dest) .and .hibyte(dest) = 0
+			stz $E044
+		.else
+			lda #>dest
+			sta $E044
+		.endif
+	.endif
+	.ifnblank len
+		.if .const(len) .and len = 0
+			stz $E045
+		.else
+			lda #<len
+			sta $E045
+		.endif
+	.endif
 .endmacro
 
-.macro copys_pu src, dest, len
-	_copy_base_short src, dest, len, $01
-.endmacro
-
-.macro copys_up src, dest, len
-	_copy_base_short src, dest, len, $02
-.endmacro
-
-.macro copys_uu src, dest, len
-	_copy_base_short src, dest, len, $03
-.endmacro
+.define mode_pp $00
+.define mode_pu $01
+.define mode_up $02
+.define mode_uu $03
 
 hexprint:
 	; Prints a byte to the screen
@@ -281,11 +314,11 @@ closehandle:
 	; Closes an open file handle
 	; $08-$0C - Handle to close
 	; Clobbers: A
-	copys_up fsclose, $D001, .sizeof(fsclose) ; Call close
-	copys_up $0008, $D001, 5
+	dmacopy fsclose, $D001, .sizeof(fsclose), mode_up ; Call close
+	dmacopy $0008, , 5, mode_up ; ($0008, $D001, 5, mode_up)
 	stz $D001
 	stz $D000
-	copys_up $0008, $E012, 5 ; Destroy value
+	dmacopy , $E012, , mode_up ; ($0008, $E012, 5, mode_up) Destroy value
 	stz $E012
 	lda #$04
 	sta $E010
@@ -296,13 +329,13 @@ loadfile:
 	stz curlow
 	lda #$02
 	sta curhigh
-	copys_uu fsread, $0001, .sizeof(fsread) ; Copy read command
-	copys_pu $D001, $0008, 5 ; Inject handle
+	dmacopy fsread, $0001, .sizeof(fsread), mode_uu ; Copy read command
+	dmacopy $D001, $0008, 5, mode_pu ; Inject handle
 @loop:
 	ldx curhigh
 	cpx #$D0
 	beq @done ; Too much data read
-	copys_up $0001, $D001, .sizeof(fsread) ; Call "read"
+	dmacopy $0001, $D001, .sizeof(fsread), mode_up ; Call "read"
 	stz $D000
 
 	lda $D001 ; Check TSF Tag
@@ -345,7 +378,7 @@ bootdrive:
 	cmp #$00
 	beq :+
 	rts
-:	copys_up bootmsg, $E003, .sizeof(bootmsg)
+:	dmacopy bootmsg, $E003, .sizeof(bootmsg), mode_up
 	pla ; Remove address from stack
 	pla ; We're not returning to havemem
 	lda #$01 ; Setup Copy Engine
@@ -362,7 +395,7 @@ bootdrive:
 	lda $D001
 	sta $E046
 
-	lda #$01 ; Copy
+	lda #mode_pu ; Copy
 	sta $E040
 
 	stz $E046
@@ -375,7 +408,7 @@ bootfs:
 	cmp #$00
 	beq :+
 	rts ; No file opened
-:	copys_up bootmsg, $E003, .sizeof(bootmsg)
+:	dmacopy bootmsg, $E003, .sizeof(bootmsg), mode_up
 	pla ; Remove address from stack
 	pla ; We're not returning to fschk
 	jsr loadfile
@@ -384,7 +417,7 @@ bootfs:
 
 reset:
 	; Display boot greeting
-	copys_up greeting, $E003, .sizeof(greeting)
+	dmacopy greeting, $E003, .sizeof(greeting), mode_up
 
 	; Memory Check
 	lda $E018
@@ -394,13 +427,13 @@ reset:
 	cmp #$00
 	bne havemem
 	; No Memory Installed
-	copys_up nomem, $E003, .sizeof(nomem)
+	dmacopy nomem, , .sizeof(nomem), mode_up ; (nomem, $E003, .sizeof(nomem), mode_up)
 @loop:	bra @loop
 
 havemem:
-	copys_up drives, $E003, .sizeof(drives)
+	dmacopy drives, , .sizeof(drives), mode_up ; (drives, $E003, .sizeof(drives), mode_up)
 	; Look for "drive" components
-	copys_up umlist, $E012, .sizeof(umlist)
+	dmacopy umlist, $E012, .sizeof(umlist), mode_up
 	lda #$03
 	sta $E010
 
@@ -413,16 +446,16 @@ havemem:
 	cmp #$00
 	beq fschk ; No "drive" componets left to check
 	jsr loaduuid
-	copys_up secread, $D001, .sizeof(secread) ; Call readSector
+	dmacopy secread, $D001, .sizeof(secread), mode_up ; Call readSector
 	stz $D000
 	jsr bootdrive
 	dec $03
 	bra @loop
 
 fschk:
-	copys_up fsmsg, $E003, .sizeof(fsmsg)
+	dmacopy fsmsg, $E003, .sizeof(fsmsg), mode_up
 	; Look for "filesystem" components
-	copys_up fslist, $E012, .sizeof(fslist)
+	dmacopy fslist, $E012, .sizeof(fslist), mode_up
 	lda #$03
 	sta $E010
 
@@ -436,10 +469,11 @@ fschk:
 	bne :+
 	jmp failboot ; No "filesystem" componets left to check
 :	jsr loaduuid
-	copys_up fsopend, $D001, .sizeof(fsopend) ; open Thistle/boot
+	dmaload , $D001
+	dmacopy fsopend, , .sizeof(fsopend), mode_up ; (fsopend, $D001, .sizeof(fsopend), mode_up) open Thistle/boot
 	stz $D000
 	jsr bootfs
-	copys_up fsopenf, $D001, .sizeof(fsopenf) ; open Thistle
+	dmacopy fsopenf, , .sizeof(fsopenf), mode_up ; (fsopenf, $D001, .sizeof(fsopenf), mode_up) open Thistle
 	stz $D000
 	jsr bootfs
 	dec $03
@@ -482,7 +516,7 @@ inc_y:
 :	rts
 
 failboot:
-	copys_up noboot, $E003, .sizeof(noboot)
+	dmacopy noboot, $E003, .sizeof(noboot), mode_up
 commands:
 	stz $E001 ; Drop all input
 	stz curlow
@@ -669,7 +703,7 @@ commands:
 	lda opcode
 	cmp #$00 ; Wrapped back to 0
 	bne :+
-	jmp @badop
+	jmp @badcmd
 :	bra @oploop
 @opfound:
 	ldy #$00
@@ -767,13 +801,10 @@ commands:
 	cpx #$00
 	bne @incloop
 	sty curlow
-	jmp @setup
-@badop:
-	copys_up unkop, $E003, .sizeof(unkop)
-	jmp @setup
+	bra :+
 @badcmd:
-	copys_up unkcmd, $E003, .sizeof(unkcmd)
-	jmp @setup
+	dmacopy unkcmd, $E003, .sizeof(unkcmd), mode_up ; (unkcmd, $E003, .sizeof(unkcmd), mode_up)
+:	jmp @setup
 
 loadinput:
 	; Loads string from input buffer into Component 1
@@ -795,7 +826,7 @@ loadinput:
 	sta $E043
 	lda #$D0
 	sta $E044
-	lda #$02 ; Copy
+	lda #mode_up ; Copy
 	sta $E040
 	rts
 
@@ -813,14 +844,14 @@ cmd_ls:
 cmd_list:
 	lda #$05 ; inputlen
 	sta good
-:	copys_up listtest, $D001, .sizeof(listtest)
+:	dmacopy listtest, $D001, .sizeof(listtest), mode_up
 	jsr loadinput
 	stz $D001 ; TSF End Tag
 	stz $D000 ; Invoke
 	lda $D000
 	cmp #$00
 	beq :+
-	copys_up listfail, $E003, .sizeof(listfail)
+	dmacopy listfail, $E003, .sizeof(listfail), mode_up
 	rts
 :	lda $D001 ; Drop Array Tag
 @loop:
@@ -859,7 +890,7 @@ cmd_load:
 	cmp #$06
 	bcs :+
 	rts
-:	copys_up fsopenf, $D001, 8 ; Copy 10,4,0,"open",10
+:	dmacopy fsopenf, $D001, 8, mode_up ; Copy 10,4,0,"open",10
 	lda #$05 ; inputlen
 	sta good
 	jsr loadinput
@@ -868,9 +899,9 @@ cmd_load:
 	lda $D000
 	cmp #$00
 	beq :+
-	copys_up openfail, $E003, .sizeof(openfail) ; No file opened
+	dmacopy openfail, $E003, .sizeof(openfail), mode_up ; No file opened
 	rts
-:	copys_up loadmsg, $E003, .sizeof(loadmsg)
+:	dmacopy loadmsg, $E003, .sizeof(loadmsg), mode_up
 	jsr loadfile
 	rts
 
@@ -886,7 +917,7 @@ cmd_save:
 	cmp #$06
 	bcs :+
 	rts
-:	copys_up fsopenf, $D001, 8 ; Copy 10,4,0,"open",10
+:	dmacopy fsopenf, $D001, 8, mode_up ; Copy 10,4,0,"open",10
 	lda #$05 ; inputlen
 	sta good
 	jsr loadinput
@@ -902,12 +933,12 @@ cmd_save:
 	lda $D000
 	cmp #$00
 	beq :+
-	copys_up openfail, $E003, .sizeof(openfail) ; No file opened
+	dmacopy openfail, $E003, .sizeof(openfail), mode_up ; No file opened
 	rts
-:	copys_up savemsg, $E003, .sizeof(savemsg)
-	copys_up fswrite, $D001, .sizeof(fswrite) ; Copy write command
-	copys_pu $D001, $0008, 5 ; Save handle
-	copys_up $0008, $D001, 5
+:	dmacopy savemsg, $E003, .sizeof(savemsg), mode_up
+	dmacopy fswrite, $D001, .sizeof(fswrite), mode_up ; Copy write command
+	dmacopy $D001, $0008, 5, mode_pu ; Save handle
+	dmacopy $0008, $D001, 5, mode_up
 	lda #9
 	sta $D001
 	ldx curlow
@@ -925,7 +956,7 @@ cmd_save:
 	sta $E044
 	stx $E045
 	sty $E046
-	lda #$02 ; Copy
+	lda #mode_up ; Copy
 	sta $E040
 	stz $E046 ; Put high byte back to zero
 	stz $D001 ; TSF End Tag
