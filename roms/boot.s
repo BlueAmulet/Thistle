@@ -474,30 +474,27 @@ fschk:
 	dec $03
 	bra @loop
 
+_hex2val:
+	; Converts one hexadecimal characters to a value
+	lda $00,X
+	clc
+	sbc #$2f
+	cmp #$11
+	bcc :+
+	sbc #$07
+:	dex
+	rts
+
 hex2val:
 	; Converts two hexadecimal characters to a value
-	lda $00,X
-	clc
-	sbc #$2f
-	cmp #$11
-	bcc :+
-	clc
-	sbc #$06
-:	sta good
-	dex
-	lda $00,X
-	clc
-	sbc #$2f
-	cmp #$11
-	bcc :+
-	clc
-	sbc #$06
-:	asl
+	jsr _hex2val
+	sta good
+	jsr _hex2val
+	asl
 	asl
 	asl
 	asl
 	eor good
-	dex
 	sta (curlow),Y
 	iny
 	rts
