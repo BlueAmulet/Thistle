@@ -215,7 +215,7 @@ uuidprint:
 	; Clobbers: A, X (hexprint), Y
 	ldy #$00
 @loop:
-	lda ($00),Y
+	lda (indlow),Y
 	jsr hexprint
 	iny
 	cpy #$10
@@ -241,13 +241,13 @@ uuidprint:
 _readlist:
 	; Reads component list to $0200
 	; $02 - Bytes to skip for component type
-	; Clobbers: A, X, Y, $00, $01
+	; Clobbers: A, X, Y, indlow, indhigh
 	lda $E011
 	sta $03
-	stz $00
+	stz indlow
 	ldy #$00
 	lda #$02
-	sta $01
+	sta indhigh
 @loop1:
 	lda $E012
 	cmp #$00 ; TSF End Tag
@@ -257,12 +257,9 @@ _readlist:
 	ldx #$10
 @loop2:
 	lda $E012
-	sta ($00),Y
-	iny
-	cpy #$00
-	bne :+
-	inc $01 ; Increment $01 when Y wraps to 0
-:	dex
+	sta (indlow),Y
+	jsr inc_y
+	dex
 	cpx #$00
 	bne @loop2
 
@@ -276,7 +273,7 @@ _readlist:
 	bra @loop1
 @done:
 	lda #$02
-	sta $01
+	sta indhigh
 	rts
 
 .macro readlist skip
@@ -287,25 +284,22 @@ _readlist:
 
 loaduuid:
 	; Load a UUID into the component selector buffer
-	; $00, $01 - Address to read from
+	; indlow, indhigh - Address to read from
 	; Clobbers: A, X, Y, (uuidprint)
 	jsr uuidprint
-	ldy $00
-	stz $00
+	ldy indlow
+	stz indlow
 	ldx #$10
 	lda #$0b ; UUID Tag
 	sta $E012
 @loop:
-	lda ($00),Y ; UUID Byte loop
+	lda (indlow),Y ; UUID Byte loop
 	sta $E012
-	iny
-	cpy #$00
-	bne :+
-	inc $01
-:	dex
+	jsr inc_y
+	dex
 	cpx #$00
 	bne @loop
-	sty $00
+	sty indlow
 	stz $E012 ; End Tag
 	stz $E010 ; Map Component
 	rts
@@ -440,9 +434,7 @@ havemem:
 	dmacopy umlist, $E012, .sizeof(umlist), mode_up
 	lda #$03
 	sta $E010
-
-	; Store list to memory
-	readlist 8
+	readlist 8 ; Store list to memory
 
 	; Parse list
 @loop:
@@ -462,9 +454,7 @@ fschk:
 	dmacopy fslist, $E012, .sizeof(fslist), mode_up
 	lda #$03
 	sta $E010
-
-	; Store list to memory
-	readlist 13
+	readlist 13 ; Store list to memory
 
 	; Parse list
 @loop:
