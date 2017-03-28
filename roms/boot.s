@@ -372,13 +372,17 @@ loadfile:
 	jsr closehandle
 	rts
 
+dispboot:
+	dmacopy bootmsg, $E003, .sizeof(bootmsg), mode_up
+	rts
+
 bootdrive:
 	; Checks and boots from a drive
 	lda $D000
 	cmp #$00
 	beq :+
 	rts
-:	dmacopy bootmsg, $E003, .sizeof(bootmsg), mode_up
+:	jsr dispboot
 	pla ; Remove address from stack
 	pla ; We're not returning to havemem
 	lda #$01 ; Setup Copy Engine
@@ -408,7 +412,7 @@ bootfs:
 	cmp #$00
 	beq :+
 	rts ; No file opened
-:	dmacopy bootmsg, $E003, .sizeof(bootmsg), mode_up
+:	jsr dispboot
 	pla ; Remove address from stack
 	pla ; We're not returning to fschk
 	jsr loadfile
