@@ -581,7 +581,7 @@ commands:
 	beq @nccheck
 	cmp $00,X ; Matches
 	beq :+
-	stx good ; Mark as bad
+	smb0 good ; Mark as bad
 :	inx
 	jsr inc_y
 	bra @ncloop
@@ -650,7 +650,7 @@ commands:
 	beq :+
 	cmp $00,X ; Matches
 	beq :+
-	stx good ; Mark as bad
+	smb0 good ; Mark as bad
 :	inx
 	iny
 	bra @amloop
@@ -688,7 +688,7 @@ commands:
 	lda (indlow),Y
 	cmp $00,X
 	beq :+
-	sta good ; Mark as bad
+	smb0 good ; Mark as bad
 :	inx
 	jsr inc_y
 	cpx #$03
@@ -700,7 +700,7 @@ commands:
 	lda (indlow),Y
 	cmp addrmode
 	beq :+
-	stx good ; Mark as bad
+	smb0 good ; Mark as bad
 :	lda #$00
 	cmp good
 	beq @opfound
