@@ -149,6 +149,7 @@ public class ComponentSelector extends Device {
 			outputbuf.clear();
 			switch (data) {
 			case 0: // map
+				status = 1;
 				Object tsfdata = parseTSF(inputbuf, false);
 				if (tsfdata == null || tsfdata instanceof Integer) {
 					status = 2;
@@ -156,7 +157,7 @@ public class ComponentSelector extends Device {
 					String name = (String) tsfdata;
 					for (Map.Entry<String, String> entry : machine.components().entrySet()) {
 						if (entry.getValue().equals(name)) {
-							status = mapComponent(entry.getKey(), select, fSpecific) ? 0 : 1;
+							status = mapComponent(entry.getKey(), select, fSpecific) ? 0 : 3;
 							break;
 						}
 					}
@@ -164,7 +165,7 @@ public class ComponentSelector extends Device {
 					String uuid = ((UUID) tsfdata).toString();
 					for (Map.Entry<String, String> entry : machine.components().entrySet()) {
 						if (entry.getKey().equals(uuid)) {
-							status = mapComponent(entry.getKey(), select, fSpecific) ? 0 : 1;
+							status = mapComponent(entry.getKey(), select, fSpecific) ? 0 : 3;
 							break;
 						}
 					}
