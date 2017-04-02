@@ -7,19 +7,12 @@ import java.util.TimeZone;
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.Cpu;
 import com.loomcom.symon.devices.Device;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
-import li.cil.oc.api.machine.Context;
 import li.cil.oc.api.machine.Machine;
 import net.minecraft.nbt.NBTTagCompound;
 
 public class RTC extends Device {
 
-    private Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+	private Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
 	private Machine machine;
 	private int timerA = 0;
 	private int timerB = 0;
@@ -45,9 +38,8 @@ public class RTC extends Device {
 	static final int RTC_IRQMASK_REG = 14;
 	static final int RTC_NMIMASK_REG = 15;
 
-	public RTC(int address) throws MemoryRangeException {
+	public RTC(int address) {
 		super(address, 16, "Real Time Clock");
-		FMLCommonHandler.instance().bus().register(this);
 	}
 
 	private int num2bcd(int value) {
@@ -59,30 +51,22 @@ public class RTC extends Device {
 		return bcd;
 	}
 
-	@SubscribeEvent
-	public void onServerTick(TickEvent.ServerTickEvent event) {
-		Context context = this.getBus().getMachine().getContext();
-		if (!context.isRunning() && !context.isPaused()) {
-			FMLCommonHandler.instance().bus().unregister(this);
-			return;
-		}
-		if (event.phase == Phase.START) {
-			Cpu cpu = this.getBus().getMachine().getCpu();
-			if (timerA > 0) {
-				if (--timerA <= 0) {
-					if ((nmimask & 1) != 0)
-						cpu.assertNmi();
-					else if ((irqmask & 1) != 0)
-						cpu.assertIrq();
-				}
+	public void onServerTick() {
+		Cpu cpu = this.getBus().getMachine().getCpu();
+		if (timerA > 0) {
+			if (--timerA <= 0) {
+				if ((nmimask & 1) != 0)
+					cpu.assertNmi();
+				else if ((irqmask & 1) != 0)
+					cpu.assertIrq();
 			}
-			if (timerB > 0) {
-				if (--timerB <= 0) {
-					if ((nmimask & 2) != 0)
-						cpu.assertNmi();
-					else if ((irqmask & 2) != 0)
-						cpu.assertIrq();
-				}
+		}
+		if (timerB > 0) {
+			if (--timerB <= 0) {
+				if ((nmimask & 2) != 0)
+					cpu.assertNmi();
+				else if ((irqmask & 2) != 0)
+					cpu.assertIrq();
 			}
 		}
 	}

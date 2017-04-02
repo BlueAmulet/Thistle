@@ -1,5 +1,7 @@
 package gamax92.thistle.exceptions;
 
+import li.cil.oc.api.machine.Context;
+
 /*
  * Allows us to re invoke the desired method without resorting to repeating the
  * last instruction, which has side effects.
@@ -39,7 +41,7 @@ public class CallSynchronizedException extends RuntimeException {
 	}
 
 	public abstract static class Cleanup {
-		public void run(Object[] results) {};
+		public void run(Object[] results, Context context) {};
 
 		public void error(Exception error) {};
 

@@ -6,22 +6,23 @@ import java.util.Queue;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.lwjgl.input.Keyboard;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.EvictingQueue;
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.Cpu;
 import com.loomcom.symon.devices.Device;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
 import gamax92.thistle.util.ConsoleDriver;
 import gamax92.thistle.util.TSFHelper;
+import li.cil.oc.api.machine.Context;
 import li.cil.oc.api.machine.Machine;
 import li.cil.oc.api.machine.Signal;
 import net.minecraft.nbt.NBTTagCompound;
 
-public class ThistleIO extends Device {
+public class GeneralIO extends Device {
 
+	private Context context;
 	private EvictingQueue<Byte> inputbuf = EvictingQueue.create(255);
 	private LinkedList<byte[]> signalbuf = new LinkedList<byte[]>();
 	private Queue<Byte> queuebuf = new LinkedList<Byte>();
@@ -46,8 +47,8 @@ public class ThistleIO extends Device {
 	static final int GIO_IRQMASK_REG = 8;
 	static final int GIO_NMIMASK_REG = 9;
 
-	public ThistleIO(int address) throws MemoryRangeException {
-		super(address, 16, "Generic IO");
+	public GeneralIO(int address) {
+		super(address, 16, "General IO");
 	}
 
 	private void utf8clear(int len, int data) {
@@ -142,7 +143,7 @@ public class ThistleIO extends Device {
 			break;
 		case GIO_QUEUESTAT_REG:
 			if (data == 0) {
-				Object[] tsfdata = TSFHelper.readArray(queuebuf, true);
+				Object[] tsfdata = TSFHelper.readArray(queuebuf, context, true);
 				if (tsfdata == null || tsfdata.length < 1 || !(tsfdata[0] instanceof String)) {
 					queuestat = 2;
 					break;
@@ -219,10 +220,20 @@ public class ThistleIO extends Device {
 		Object[] args = signal.args();
 		Cpu cpu = this.getBus().getMachine().getCpu();
 		if (name.equals("key_down")) {
-			int character = (int) (double) (Double) args[1];
+			int character = ((Double) args[1]).intValue();
+			int lwjglcode = ((Double) args[2]).intValue();
+
+			// Fix various key issues
+			if (character == 13) // Make \r into \n
+				character = 10;
+			if (lwjglcode == Keyboard.KEY_BACK) // Normalize Backspace
+				character = 8;
+			if (lwjglcode == Keyboard.KEY_DELETE) // Normalize Delete
+				character = 127;
+
 			if (character == 0) {
 				inputbuf.add((byte) 0);
-				inputbuf.add((byte) (double) (Double) args[2]);
+				inputbuf.add((byte) lwjglcode);
 			} else if (character > 0 && character < 128) {
 				inputbuf.add((byte) character);
 			} else {
@@ -248,7 +259,7 @@ public class ThistleIO extends Device {
 		if (signalbuf.size() < 255) {
 			Queue<Byte> signaldata = new LinkedList<Byte>();
 			TSFHelper.writeString(signaldata, name);
-			TSFHelper.writeArray(signaldata, args, 0x08);
+			TSFHelper.writeArray(signaldata, args, context, 0x08);
 			signalbuf.add(ArrayUtils.toPrimitive(signaldata.toArray(new Byte[0])));
 			if ((nmimask & 2) != 0)
 				cpu.assertNmi();
@@ -260,6 +271,7 @@ public class ThistleIO extends Device {
 	@Override
 	public void setBus(Bus bus) {
 		super.setBus(bus);
-		console = new ConsoleDriver((Machine) bus.getMachine().getContext());
+		this.context = getBus().getMachine().getContext();
+		this.console = new ConsoleDriver((Machine) this.context);
 	}
 }

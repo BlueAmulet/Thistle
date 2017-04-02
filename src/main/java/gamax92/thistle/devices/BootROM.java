@@ -5,8 +5,6 @@ import java.util.Map;
 
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.devices.Device;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
 import gamax92.thistle.Thistle;
 import li.cil.oc.Settings;
 import li.cil.oc.api.machine.Machine;
@@ -19,7 +17,7 @@ public class BootROM extends Device {
 	private String eepromAddress;
 	private Machine machine;
 
-	public BootROM(int address) throws MemoryRangeException {
+	public BootROM(int address) {
 		super(address, 4096+256, "EEPROM");
 	}
 
@@ -27,10 +25,10 @@ public class BootROM extends Device {
 		if (this.eepromAddress != null && this.machine.components().containsKey(this.eepromAddress))
 			return true;
 		for (Map.Entry<String, String> entry : this.machine.components().entrySet()) {
-		    if (entry.getValue().equals("eeprom")) {
-		    	this.eepromAddress = entry.getKey();
-		    	return true;
-		    }
+			if (entry.getValue().equals("eeprom")) {
+				this.eepromAddress = entry.getKey();
+				return true;
+			}
 		}
 		return false;
 	}
@@ -40,10 +38,8 @@ public class BootROM extends Device {
 		if (!checkEEPROM())
 			return 0;
 		Node node = this.machine.node().network().node(this.eepromAddress);
-		if (node == null) {
-			Thistle.log.warn("EEPROM vanished from us.");
+		if (node == null)
 			return 0;
-		}
 		EEPROM eeprom = (EEPROM) node.host();
 		if (address < 256) {
 			byte[] volatileData = eeprom.volatileData();
@@ -66,10 +62,8 @@ public class BootROM extends Device {
 		if (!checkEEPROM())
 			return;
 		Node node = this.machine.node().network().node(this.eepromAddress);
-		if (node == null) {
-			Thistle.log.warn("EEPROM vanished from us.");
+		if (node == null)
 			return;
-		}
 		EEPROM eeprom = (EEPROM) node.host();
 		if (eeprom.readonly())
 			return;

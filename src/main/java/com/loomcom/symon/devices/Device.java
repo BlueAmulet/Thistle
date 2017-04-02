@@ -23,13 +23,8 @@
 
 package com.loomcom.symon.devices;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.MemoryRange;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
 import li.cil.oc.api.machine.Signal;
 import net.minecraft.nbt.NBTTagCompound;
 
@@ -64,17 +59,11 @@ public abstract class Device implements Comparable<Device> {
 	 */
 	private Bus bus;
 
-	/**
-	 * Listeners to notify on update.
-	 */
-	private Set<DeviceChangeListener> deviceChangeListeners;
-
-	public Device(int startAddress, int deviceLength, String name) throws MemoryRangeException {
+	public Device(int startAddress, int deviceLength, String name) {
 		this.memoryRange = new MemoryRange(startAddress, startAddress + deviceLength - 1);
 		this.size = deviceLength;
 		this.name = name;
 		this.shortname = name.replaceAll("\\s+", "");
-		this.deviceChangeListeners = new HashSet<DeviceChangeListener>();
 	}
 
 	/* Methods required to be implemented by inheriting classes. */
@@ -118,16 +107,6 @@ public abstract class Device implements Comparable<Device> {
 
 	public int getSize() {
 		return size;
-	}
-
-	public void registerListener(DeviceChangeListener listener) {
-		deviceChangeListeners.add(listener);
-	}
-
-	public void notifyListeners() {
-		for (DeviceChangeListener listener : deviceChangeListeners) {
-			listener.deviceStateChanged();
-		}
 	}
 
 	public void onSignal(Signal signal) {

@@ -17,6 +17,7 @@ public class ThistleVM {
 
 	public ThistleVM(Context context) {
 		super();
+		FMLCommonHandler.instance().bus().register(this);
 		try {
 			machine = new ThistleMachine(context);
 			if (context.node().network() == null) {
@@ -24,7 +25,6 @@ public class ThistleVM {
 				return;
 			}
 			machine.getCpu().reset();
-			FMLCommonHandler.instance().bus().register(this);
 		} catch (Exception e) {
 			Thistle.log.warn("Failed to setup Thistle", e);
 		}
@@ -33,8 +33,11 @@ public class ThistleVM {
 	void run() throws Exception {
 		machine.getComponentSelector().checkDelay();
 		Cpu mCPU = machine.getCpu();
-		while (mCPU.getCycles() > 0)
+		while (mCPU.getCycles() > 0) {
 			mCPU.step();
+			if (ThistleConfig.debugCpuTraceLog)
+				Thistle.log.info("[Cpu] " + mCPU.getCpuState().toTraceEvent());
+		}
 		machine.getGioDev().flush();
 	}
 
@@ -45,8 +48,11 @@ public class ThistleVM {
 			FMLCommonHandler.instance().bus().unregister(this);
 			return;
 		}
+		if (event.phase != Phase.START)
+			return;
 		Cpu mCPU = machine.getCpu();
-		if (event.phase == Phase.START && mCPU.getCycles() < cyclesPerTick)
+		if (mCPU.getCycles() < cyclesPerTick)
 			mCPU.addCycles(cyclesPerTick);
+		machine.getRTC().onServerTick();
 	}
 }

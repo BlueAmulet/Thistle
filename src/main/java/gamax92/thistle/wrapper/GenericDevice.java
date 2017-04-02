@@ -7,7 +7,9 @@ import java.util.Queue;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import gamax92.thistle.Thistle;
 import gamax92.thistle.ThistleArchitecture;
+import gamax92.thistle.ThistleConfig;
 import gamax92.thistle.api.ThistleWrapper;
 import gamax92.thistle.exceptions.CallSynchronizedException;
 import gamax92.thistle.exceptions.CallSynchronizedException.Cleanup;
@@ -33,14 +35,18 @@ public class GenericDevice extends ThistleWrapper {
 
 	private Cleanup cleanup = new Cleanup() {
 		@Override
-		public void run(Object[] results) {
+		public void run(Object[] results, Context context) {
 			status = 0;
+			if (ThistleConfig.debugComponentCalls)
+				Thistle.log.info("[Generic] (" + host().node().address() + ") Results: " + Arrays.deepToString(results));
 			if (results != null) {
-				TSFHelper.writeArray(outputbuf, results, flag);
+				TSFHelper.writeArray(outputbuf, results, context, flag);
 			}
 		}
 		@Override
 		public void error(Exception e) {
+			if (ThistleConfig.debugComponentCalls)
+				Thistle.log.info("[Generic] (" + host().node().address() + ") Error: ", e);
 			if (e instanceof IllegalArgumentException) {
 				status = 2;
 			} else {
@@ -108,7 +114,9 @@ public class GenericDevice extends ThistleWrapper {
 			outputbuf.clear();
 			switch (data) {
 			case 0: // invoke
-				Object[] tsfdata = TSFHelper.readArray(inputbuf, flag);
+				Object[] tsfdata = TSFHelper.readArray(inputbuf, context, flag);
+				if (ThistleConfig.debugComponentCalls)
+					Thistle.log.info("[Generic] (" + host().node().address() + ") Invoke: " + Arrays.deepToString(tsfdata));
 				if (tsfdata == null || tsfdata.length < 1) {
 					status = 3;
 					break;
@@ -126,7 +134,7 @@ public class GenericDevice extends ThistleWrapper {
 						status = 3;
 						break;
 					}
-					cleanup.run(results);
+					cleanup.run(results, context);
 				} catch (CallSynchronizedException e) {
 					e.setRunnable(cleanup);
 					throw e;
@@ -156,7 +164,7 @@ public class GenericDevice extends ThistleWrapper {
 				}
 				break;
 			case 3: // documentation
-				tsfdata = TSFHelper.readArray(inputbuf, false);
+				tsfdata = TSFHelper.readArray(inputbuf, context, false);
 				if (tsfdata == null || tsfdata.length != 0 || !(tsfdata[0] instanceof String)) {
 					status = 3;
 					break;
