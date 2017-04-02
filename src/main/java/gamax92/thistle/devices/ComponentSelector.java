@@ -157,7 +157,7 @@ public class ComponentSelector extends Device {
 					String name = (String) tsfdata;
 					for (Map.Entry<String, String> entry : machine.components().entrySet()) {
 						if (entry.getValue().equals(name)) {
-							status = mapComponent(entry.getKey(), select, fSpecific) ? 0 : 3;
+							status = mapComponent(entry.getKey(), select, fSpecific) ? 0 : 1;
 							break;
 						}
 					}
@@ -165,7 +165,7 @@ public class ComponentSelector extends Device {
 					String uuid = ((UUID) tsfdata).toString();
 					for (Map.Entry<String, String> entry : machine.components().entrySet()) {
 						if (entry.getKey().equals(uuid)) {
-							status = mapComponent(entry.getKey(), select, fSpecific) ? 0 : 3;
+							status = mapComponent(entry.getKey(), select, fSpecific) ? 0 : 1;
 							break;
 						}
 					}
