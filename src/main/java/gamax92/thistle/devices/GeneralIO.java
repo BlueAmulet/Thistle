@@ -6,6 +6,7 @@ import java.util.Queue;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.lwjgl.input.Keyboard;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.EvictingQueue;
@@ -219,12 +220,20 @@ public class GeneralIO extends Device {
 		Object[] args = signal.args();
 		Cpu cpu = this.getBus().getMachine().getCpu();
 		if (name.equals("key_down")) {
-			int character = (int) (double) (Double) args[1];
+			int character = ((Double) args[1]).intValue();
+			int lwjglcode = ((Double) args[2]).intValue();
+
+			// Fix various key issues
+			if (character == 13) // Make \r into \n
+				character = 10;
+			if (lwjglcode == Keyboard.KEY_BACK) // Normalize Backspace
+				character = 8;
+			if (lwjglcode == Keyboard.KEY_DELETE) // Normalize Delete
+				character = 127;
+
 			if (character == 0) {
 				inputbuf.add((byte) 0);
-				inputbuf.add((byte) (double) (Double) args[2]);
-			} else if (character == 13) {
-				inputbuf.add((byte) 10); // Make \r into \n
+				inputbuf.add((byte) lwjglcode);
 			} else if (character > 0 && character < 128) {
 				inputbuf.add((byte) character);
 			} else {
