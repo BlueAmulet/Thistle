@@ -69,6 +69,16 @@ public class Utils {
 	}
 
 	/**
+	 * 8-bit signed value to prefixed decimal conversion.
+	 *
+	 * @param val The signed 8-bit value to convert to a prefixed decimal string.
+	 * @return Prefixed decimal string.
+	 */
+	public static String byteToString(int val) {
+		return ((val < 0x80) ? "+" : "") + Byte.toString((byte) val);
+	}
+
+	/**
 	 * Given two bytes, return an address.
 	 */
 	public static int address(int lowByte, int hiByte) {

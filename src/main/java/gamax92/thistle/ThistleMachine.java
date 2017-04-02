@@ -37,13 +37,13 @@ import gamax92.thistle.devices.ComputerInfo;
 import gamax92.thistle.devices.CopyEngine;
 import gamax92.thistle.devices.RTC;
 import gamax92.thistle.devices.BankSelector;
-import gamax92.thistle.devices.ThistleIO;
+import gamax92.thistle.devices.GeneralIO;
 
 public class ThistleMachine {
 
 	// Constants used by the simulated system. These define the memory map.
 
-	// Generic IO at $E000-$E00F
+	// General IO at $E000-$E00F
 	private static final int GIODEV_BASE = 0xE000;
 
 	// Component Mapper at $E010-$E01F
@@ -68,7 +68,7 @@ public class ThistleMachine {
 	// The simulated peripherals
 	private final Bus bus;
 	private final Cpu cpu;
-	private final ThistleIO genericio;
+	private final GeneralIO generalio;
 	private final ComponentSelector compsel;
 	private final BankSelector banksel;
 	private final CopyEngine copyeng;
@@ -84,7 +84,7 @@ public class ThistleMachine {
 		this.context = context;
 		this.bus = new Bus();
 		this.cpu = new Cpu();
-		this.genericio = new ThistleIO(GIODEV_BASE);
+		this.generalio = new GeneralIO(GIODEV_BASE);
 		this.compsel = new ComponentSelector(COMPMAP_BASE);
 		this.banksel = new BankSelector(BANKSEL_BASE);
 		this.copyeng = new CopyEngine(COPYENG_BASE);
@@ -94,7 +94,7 @@ public class ThistleMachine {
 
 		bus.setMachine(this);
 		bus.setCpu(this.cpu);
-		bus.addDevice(this.genericio);
+		bus.addDevice(this.generalio);
 		bus.addDevice(this.compsel);
 		bus.addDevice(this.banksel);
 		bus.addDevice(this.copyeng);
@@ -111,8 +111,8 @@ public class ThistleMachine {
 		return cpu;
 	}
 
-	public ThistleIO getGioDev() {
-		return genericio;
+	public GeneralIO getGioDev() {
+		return generalio;
 	}
 
 	public ComponentSelector getComponentSelector() {

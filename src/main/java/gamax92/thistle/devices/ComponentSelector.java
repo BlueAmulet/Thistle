@@ -10,8 +10,6 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.devices.Device;
-import com.loomcom.symon.exceptions.MemoryRangeException;
-
 import gamax92.thistle.api.IThistleDevice;
 import gamax92.thistle.api.ThistleWrapper;
 import gamax92.thistle.api.WrapperRegistry;
@@ -48,7 +46,7 @@ public class ComponentSelector extends Device {
 	static final int COMPSEL_MEM_REG_H = 9;
 	static final int COMPSEL_MASK_REG = 10;
 
-	public ComponentSelector(int address) throws MemoryRangeException {
+	public ComponentSelector(int address) {
 		super(address, 16, "Component Selector");
 	}
 
@@ -83,7 +81,7 @@ public class ComponentSelector extends Device {
 				return select;
 			}
 		}
-		Object[] tsfdata = TSFHelper.readArray(buffer, false);
+		Object[] tsfdata = TSFHelper.readArray(buffer, machine, false);
 		if (tsfdata == null || tsfdata.length != 1 || !(tsfdata[0] instanceof String || tsfdata[0] instanceof UUID)) {
 			return null;
 		} else {
@@ -131,11 +129,11 @@ public class ComponentSelector extends Device {
 		case COMPSEL_FLAG_REG:
 			return fSpecific ? 1 : 0;
 		case COMPSEL_MEM_REG_L:
-			int memavail = Math.min((this.getBus().getMachine().getMemsize() / 0x1000), 0xFFFF);
+			int memavail = Math.min(this.getBus().getMachine().getMemsize() / 0x1000, 0xFFFF);
 			return memavail & 0xFF;
 		case COMPSEL_MEM_REG_H:
-			memavail = Math.min((this.getBus().getMachine().getMemsize() / 0x1000), 0xFFFF);
-			return (memavail >>> 8);
+			memavail = Math.min(this.getBus().getMachine().getMemsize() / 0x1000, 0xFFFF);
+			return memavail >>> 8;
 		case COMPSEL_MASK_REG:
 			return bankMask;
 		default:
@@ -151,6 +149,7 @@ public class ComponentSelector extends Device {
 			outputbuf.clear();
 			switch (data) {
 			case 0: // map
+				status = 1;
 				Object tsfdata = parseTSF(inputbuf, false);
 				if (tsfdata == null || tsfdata instanceof Integer) {
 					status = 2;
@@ -212,24 +211,30 @@ public class ComponentSelector extends Device {
 				break;
 			case 3: // list
 				status = 0;
-				tsfdata = parseTSF(inputbuf, true);
-				if (tsfdata == null) {
-					status = 1;
-					break;
-				}
-				if (tsfdata instanceof String) {
-					String name = (String) tsfdata;
-					for (Map.Entry<String, String> entry : machine.components().entrySet()) {
-						if (entry.getValue().equals(name)) {
-							info++;
-							TSFHelper.writeUUID(outputbuf, UUID.fromString(entry.getKey()));
-							TSFHelper.writeString(outputbuf, entry.getValue());
-						}
+				tsfdata = null;
+				if (inputbuf.size() > 0) {
+					Object[] tsfdataz = TSFHelper.readArray(inputbuf, machine, false);
+					if (tsfdataz == null || tsfdataz.length != 1 || !(tsfdataz[0] instanceof String || tsfdataz[0] instanceof UUID || tsfdataz[0] instanceof Number)) {
+						status = 1;
+						break;
+					} else {
+						tsfdata = tsfdataz[0];
 					}
-				} else if (tsfdata instanceof UUID) {
-					String uuid = ((UUID) tsfdata).toString();
+				}
+				if (tsfdata instanceof Number) {
+					int select = ((Number) tsfdata).intValue() & 0x3F;
+					Environment environment = getEnvironment(select);
+					if (environment != null) {
+						info++;
+						TSFHelper.writeUUID(outputbuf, UUID.fromString(environment.node().address()));
+						TSFHelper.writeString(outputbuf, ((Component) environment.node()).name());
+					}
+				} else {
 					for (Map.Entry<String, String> entry : machine.components().entrySet()) {
-						if (entry.getKey().equals(uuid)) {
+						if (tsfdata == null ||
+						    tsfdata instanceof String && entry.getValue().equals(tsfdata) ||
+						    tsfdata instanceof UUID && entry.getKey().equals(((UUID) tsfdata).toString()))
+						{
 							info++;
 							TSFHelper.writeUUID(outputbuf, UUID.fromString(entry.getKey()));
 							TSFHelper.writeString(outputbuf, entry.getValue());
@@ -239,7 +244,7 @@ public class ComponentSelector extends Device {
 				break;
 			case 4: // destroy value
 				status = 0;
-				Object[] tsfarray = TSFHelper.readArray(inputbuf);
+				Object[] tsfarray = TSFHelper.readArray(inputbuf, machine);
 				if (tsfarray == null || tsfarray.length != 1 || !(tsfarray[0] instanceof Value)) {
 					status = 1;
 					break;

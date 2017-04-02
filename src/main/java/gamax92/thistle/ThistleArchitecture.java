@@ -9,6 +9,9 @@ import java.util.zip.GZIPOutputStream;
 import org.apache.commons.io.IOUtils;
 
 import com.loomcom.symon.Cpu;
+import com.loomcom.symon.CpuState;
+
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import gamax92.thistle.devices.BankSelector;
 import gamax92.thistle.exceptions.CallSynchronizedException;
 import gamax92.thistle.exceptions.CallSynchronizedException.Cleanup;
@@ -33,7 +36,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import scala.Option;
 
-@Architecture.Name("6502 Thistle")
+@Architecture.Name("65C02 Thistle")
 public class ThistleArchitecture implements Architecture {
 	private final Machine machine;
 
@@ -85,7 +88,7 @@ public class ThistleArchitecture implements Architecture {
 		vm.machine.reset();
 		for (ItemStack component : machine.host().internalComponents()) {
 			if (Driver.driverFor(component) instanceof Processor) {
-				vm.cyclesPerTick = (Driver.driverFor(component).tier(component) + 1) * ThistleConfig.clocksPerTick;
+				vm.cyclesPerTick = ThistleConfig.debugCpuSlowDown ? 10 : (Driver.driverFor(component).tier(component) + 1) * ThistleConfig.clocksPerTick;
 				break;
 			}
 		}
@@ -100,7 +103,10 @@ public class ThistleArchitecture implements Architecture {
 	@Override
 	public void close() {
 		ValueManager.removeAll(this.machine);
-		vm = null;
+		if (vm != null) {
+			FMLCommonHandler.instance().bus().unregister(vm.machine);
+			vm = null;
+		}
 	}
 
 	@Override
@@ -121,8 +127,11 @@ public class ThistleArchitecture implements Architecture {
 
 			return new ExecutionResult.Sleep(0);
 		} catch (CallSynchronizedException e) {
-			if (e.getCleanup() != null)
+			if (e.getCleanup() != null) {
+				if (ThistleConfig.debugCpuTraceLog) // Exceptions thrown cause ThistleVM to skip trace logging.
+					Thistle.log.info("[Cpu] " + vm.machine.getCpu().getCpuState().toTraceEvent());
 				syncCall = e;
+			}
 			return new ExecutionResult.SynchronizedCall();
 		} catch (LimitReachedException e) {
 			return new ExecutionResult.SynchronizedCall();
@@ -144,7 +153,7 @@ public class ThistleArchitecture implements Architecture {
 					results = machine.invoke((String) thing, syncCall.getMethod(), syncCall.getArgs());
 				else if (thing instanceof Value)
 					results = machine.invoke((Value) thing, syncCall.getMethod(), syncCall.getArgs());
-				cleanup.run(results);
+				cleanup.run(results, machine);
 			} catch (Exception e) {
 				cleanup.error(e);
 			}
@@ -224,18 +233,23 @@ public class ThistleArchitecture implements Architecture {
 		// Restore CPU
 		if (nbt.hasKey("cpu")) {
 			Cpu mCPU = vm.machine.getCpu();
+			CpuState cpuState = mCPU.getCpuState();
 			NBTTagCompound cpuTag = nbt.getCompoundTag("cpu");
-			mCPU.setAccumulator(cpuTag.getInteger("rA"));
+			cpuState.a = cpuTag.getInteger("rA");
 			mCPU.setProcessorStatus(cpuTag.getInteger("rP"));
-			mCPU.setProgramCounter(cpuTag.getInteger("rPC"));
-			mCPU.setStackPointer(cpuTag.getInteger("rSP"));
-			mCPU.setXRegister(cpuTag.getInteger("rX"));
-			mCPU.setYRegister(cpuTag.getInteger("rY"));
+			cpuState.pc = cpuTag.getInteger("rPC");
+			cpuState.sp = cpuTag.getInteger("rSP");
+			cpuState.x = cpuTag.getInteger("rX");
+			cpuState.y = cpuTag.getInteger("rY");
+			cpuState.irqAsserted = cpuTag.getBoolean("iI");
+			cpuState.nmiAsserted = cpuTag.getBoolean("iN");
+			cpuState.dead = cpuTag.getBoolean("sD");
+			cpuState.sleep = cpuTag.getBoolean("sS");
 		}
 
 		// Restore Values
 		if (nbt.hasKey("values"))
-			ValueManager.load(nbt.getCompoundTag("values"));
+			ValueManager.load(nbt.getCompoundTag("values"), this.machine);
 
 		vm.machine.getBus().load(nbt);
 	}
@@ -262,19 +276,24 @@ public class ThistleArchitecture implements Architecture {
 		// Persist CPU
 		Cpu mCPU = vm.machine.getCpu();
 		if (mCPU != null) {
+			CpuState cpuState = mCPU.getCpuState();
 			NBTTagCompound cpuTag = new NBTTagCompound();
-			cpuTag.setInteger("rA", mCPU.getAccumulator());
+			cpuTag.setInteger("rA", cpuState.a);
 			cpuTag.setInteger("rP", mCPU.getProcessorStatus());
-			cpuTag.setInteger("rPC", mCPU.getProgramCounter());
-			cpuTag.setInteger("rSP", mCPU.getStackPointer());
-			cpuTag.setInteger("rX", mCPU.getXRegister());
-			cpuTag.setInteger("rY", mCPU.getYRegister());
+			cpuTag.setInteger("rPC", cpuState.pc);
+			cpuTag.setInteger("rSP", cpuState.sp);
+			cpuTag.setInteger("rX", cpuState.x);
+			cpuTag.setInteger("rY", cpuState.y);
+			cpuTag.setBoolean("iI", cpuState.irqAsserted);
+			cpuTag.setBoolean("iN", cpuState.nmiAsserted);
+			cpuTag.setBoolean("sD", cpuState.dead);
+			cpuTag.setBoolean("sS", cpuState.sleep);
 			nbt.setTag("cpu", cpuTag);
 		}
 
 		// Persist Values
 		NBTTagCompound valueTag = new NBTTagCompound();
-		ValueManager.save(valueTag);
+		ValueManager.save(valueTag, this.machine);
 		nbt.setTag("values", valueTag);
 
 		vm.machine.getBus().save(nbt);

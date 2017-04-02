@@ -19,7 +19,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 public class Thistle {
 	public static final String MODID = "thistle";
 	public static final String NAME = "Thistle Computer";
-	public static final String VERSION = "1.0.4";
+	public static final String VERSION = "1.1.0";
 
 	@Mod.Instance
 	public static Thistle instance;
@@ -55,7 +55,7 @@ public class Thistle {
 		if (romImage != null) {
 			try {
 				byte[] code = IOUtils.toByteArray(romImage);
-				Items.registerEEPROM("Thistle", code, null, false);
+				Items.registerEEPROM("EEPROM (Thistle)", code, null, false);
 			} catch (IOException e) {
 				log.warn("Failed reading boot.rom, no custom EEPROMs available");
 				e.printStackTrace();

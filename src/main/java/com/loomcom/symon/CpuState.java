@@ -42,7 +42,6 @@ public class CpuState {
 	public int[] args = new int[2];
 
 	public int instSize;
-	public boolean opTrap;
 	public boolean irqAsserted;
 	public boolean nmiAsserted;
 	public int lastPc;
@@ -56,45 +55,11 @@ public class CpuState {
 	public boolean breakFlag;
 	public boolean overflowFlag;
 
-	// KIL opcode lockup
+	// Processor lockup
 	public boolean dead = false;
 
-	/**
-	 * Create an empty CPU State.
-	 */
-	public CpuState() {
-	}
-
-	/**
-	 * Snapshot a copy of the CpuState.
-	 *
-	 * (This is a copy constructor rather than an implementation of <code>Cloneable</code>
-	 * based on Josh Bloch's recommendation)
-	 *
-	 * @param s The CpuState to copy.
-	 */
-	public CpuState(CpuState s) {
-		this.a = s.a;
-		this.x = s.x;
-		this.y = s.y;
-		this.sp = s.sp;
-		this.pc = s.pc;
-		this.ir = s.ir;
-		this.lastPc = s.lastPc;
-		this.args[0] = s.args[0];
-		this.args[1] = s.args[1];
-		this.instSize = s.instSize;
-		this.opTrap = s.opTrap;
-		this.irqAsserted = s.irqAsserted;
-		this.carryFlag = s.carryFlag;
-		this.negativeFlag = s.negativeFlag;
-		this.zeroFlag = s.zeroFlag;
-		this.irqDisableFlag = s.irqDisableFlag;
-		this.decimalModeFlag = s.decimalModeFlag;
-		this.breakFlag = s.breakFlag;
-		this.overflowFlag = s.overflowFlag;
-		this.dead = s.dead;
-	}
+	// Processor sleep
+	public boolean sleep = false;
 
 	/**
 	 * Returns a string formatted for the trace log.
@@ -103,7 +68,7 @@ public class CpuState {
 	 */
 	public String toTraceEvent() {
 		String opcode = Cpu.disassembleOp(ir, args);
-		return getInstructionByteStatus() + "  " + String.format("%-14s", opcode) + "A:" + Utils.byteToHex(a) + " " + "X:" + Utils.byteToHex(x) + " " + "Y:" + Utils.byteToHex(y) + " " + "F:" + Utils.byteToHex(getStatusFlag()) + " " + "S:1" + Utils.byteToHex(sp) + " " + getProcessorStatusString() + "\n";
+		return getInstructionByteStatus() + "  " + String.format("%-14s", opcode) + "A:" + Utils.byteToHex(a) + " " + "X:" + Utils.byteToHex(x) + " " + "Y:" + Utils.byteToHex(y) + " " + "F:" + Utils.byteToHex(getStatusFlag()) + " " + "S:1" + Utils.byteToHex(sp) + " " + getProcessorStatusString();
 	}
 
 	/**
@@ -136,7 +101,7 @@ public class CpuState {
 	}
 
 	public String getInstructionByteStatus() {
-		switch (InstructionTable.instructionSizes[ir]) {
+		switch (InstructionTable.instructionModes[ir].getLength()) {
 		case 0:
 		case 1:
 			return Utils.wordToHex(lastPc) + "  " + Utils.byteToHex(ir) + "      ";
