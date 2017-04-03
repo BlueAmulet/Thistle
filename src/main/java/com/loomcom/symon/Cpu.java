@@ -1372,7 +1372,7 @@ public class Cpu implements InstructionTable {
 		String mnemonic = opcodeNames[opCode];
 
 		if (mnemonic == null) {
-			return "NOP";
+			return "KIL";
 		}
 
 		StringBuilder sb = new StringBuilder(mnemonic);
