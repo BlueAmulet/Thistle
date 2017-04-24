@@ -65,8 +65,6 @@ public class BootROM extends Device {
 		if (node == null)
 			return;
 		EEPROM eeprom = (EEPROM) node.host();
-		if (eeprom.readonly())
-			return;
 		if (address < 256) {
 			byte[] volatileData = eeprom.volatileData();
 			if (address < volatileData.length)
@@ -84,6 +82,8 @@ public class BootROM extends Device {
 				}
 			}
 		} else {
+			if (eeprom.readonly())
+				return;
 			address -= 256;
 			byte[] codeData = eeprom.codeData();
 			if (address < codeData.length)
