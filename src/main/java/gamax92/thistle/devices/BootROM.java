@@ -1,11 +1,9 @@
 package gamax92.thistle.devices;
 
-import java.lang.reflect.Field;
 import java.util.Map;
 
 import com.loomcom.symon.Bus;
 import com.loomcom.symon.devices.Device;
-import gamax92.thistle.Thistle;
 import li.cil.oc.Settings;
 import li.cil.oc.api.machine.Machine;
 import li.cil.oc.api.network.Node;
@@ -70,16 +68,10 @@ public class BootROM extends Device {
 			if (address < volatileData.length)
 				volatileData[address] = (byte) data;
 			else {
-				try {
-					Field field = EEPROM.class.getDeclaredField("volatileData");
-					field.setAccessible(true);
-					byte[] extendedData = new byte[Settings.get().eepromDataSize()];
-					System.arraycopy(volatileData, 0, extendedData, 0, volatileData.length);
-					extendedData[address] = (byte) data;
-					field.set(eeprom, extendedData);
-				} catch (Exception e) {
-					Thistle.log.error("Failed expanding EEPROM data", e);
-				}
+				byte[] extendedData = new byte[Settings.get().eepromDataSize()];
+				System.arraycopy(volatileData, 0, extendedData, 0, volatileData.length);
+				extendedData[address] = (byte) data;
+				eeprom.volatileData_$eq(extendedData);
 			}
 		} else {
 			if (eeprom.readonly())
@@ -89,16 +81,10 @@ public class BootROM extends Device {
 			if (address < codeData.length)
 				codeData[address] = (byte) data;
 			else {
-				try {
-					Field field = EEPROM.class.getDeclaredField("codeData");
-					field.setAccessible(true);
-					byte[] extendedData = new byte[Settings.get().eepromSize()];
-					System.arraycopy(codeData, 0, extendedData, 0, codeData.length);
-					extendedData[address] = (byte) data;
-					field.set(eeprom, extendedData);
-				} catch (Exception e) {
-					Thistle.log.error("Failed expanding EEPROM code", e);
-				}
+				byte[] extendedData = new byte[Settings.get().eepromSize()];
+				System.arraycopy(codeData, 0, extendedData, 0, codeData.length);
+				extendedData[address] = (byte) data;
+				eeprom.codeData_$eq(extendedData);
 			}
 		}
 	}
