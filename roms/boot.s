@@ -998,6 +998,7 @@ cmd_save:
 	rts
 
 cmd_run:
+	stz $E005
 	jmp $0200
 
 .segment "RODATA"

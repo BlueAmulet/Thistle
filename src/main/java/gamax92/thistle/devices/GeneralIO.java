@@ -90,6 +90,10 @@ public class GeneralIO extends Device {
 			}
 		case GIO_QUEUESTAT_REG:
 			return queuestat;
+		case GIO_IRQMASK_REG:
+			return irqmask;
+		case GIO_NMIMASK_REG:
+			return nmimask;
 		default:
 			return 0;
 		}
@@ -134,11 +138,12 @@ public class GeneralIO extends Device {
 			}
 			break;
 		case GIO_SIGNAL_REG:
-			if (data == 0) {
+			signalpos = 0;
+			if (data == 0 || data >= signalbuf.size()) {
 				signalbuf.clear();
 			} else {
-				while (data-- > 0)
-					signalbuf.poll();
+				while (--data > 0)
+					signalbuf.removeFirst();
 			}
 			break;
 		case GIO_QUEUESTAT_REG:
