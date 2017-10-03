@@ -143,7 +143,7 @@ public class GeneralIO extends Device {
 				signalbuf.clear();
 			} else {
 				while (data-- > 0)
-					inputbuf.poll();
+					signalbuf.poll();
 			}
 			break;
 		case GIO_QUEUESTAT_REG:
