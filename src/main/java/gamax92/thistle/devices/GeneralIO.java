@@ -142,8 +142,8 @@ public class GeneralIO extends Device {
 			if (data == 0 || data >= signalbuf.size()) {
 				signalbuf.clear();
 			} else {
-				while (--data > 0)
-					signalbuf.removeFirst();
+				while (data-- > 0)
+					inputbuf.poll();
 			}
 			break;
 		case GIO_QUEUESTAT_REG:
