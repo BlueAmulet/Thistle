@@ -133,8 +133,10 @@ public class RTC extends Device {
 			break;
 		case RTC_IRQMASK_REG:
 			irqmask = data;
+			break;
 		case RTC_NMIMASK_REG:
 			nmimask = data;
+			break;
 		}
 	}
 
