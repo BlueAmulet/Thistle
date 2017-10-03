@@ -25,6 +25,9 @@ package com.loomcom.symon;
 
 import com.loomcom.symon.util.Utils;
 
+import gamax92.thistle.Thistle;
+import gamax92.thistle.ThistleConfig;
+
 /**
  * This class provides a simulation of the MOS 65C02 CPU's state machine.
  * A simple interface allows this 65C02 to read and write to a simulated bus,
@@ -774,6 +777,9 @@ public class Cpu implements InstructionTable {
 			setDeadState();
 			break;
 		}
+
+		if (ThistleConfig.debugCpuTraceLog)
+			Thistle.log.info("[Cpu] " + this.state.toTraceEvent());
 	}
 
 	private void handleBrk(int returnPc) {
@@ -1372,7 +1378,7 @@ public class Cpu implements InstructionTable {
 		String mnemonic = opcodeNames[opCode];
 
 		if (mnemonic == null) {
-			return "NOP";
+			return "KIL";
 		}
 
 		StringBuilder sb = new StringBuilder(mnemonic);
