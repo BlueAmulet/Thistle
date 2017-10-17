@@ -229,8 +229,6 @@ public class GeneralIO extends Device {
 			int lwjglcode = ((Double) args[2]).intValue();
 
 			// Fix various key issues
-			if (character == 13) // Make \r into \n
-				character = 10;
 			if (lwjglcode == Keyboard.KEY_BACK) // Normalize Backspace
 				character = 8;
 			if (lwjglcode == Keyboard.KEY_DELETE) // Normalize Delete

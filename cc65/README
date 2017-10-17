@@ -4,13 +4,13 @@ The files contained in this directory can be used in cc65, allowing you to code 
 
 Example usage:
 ```
-$ cc65 -t none -O --cpu 6502 main.c
-$ ca65 --cpu 6502 main.s
+$ cc65 -t none -O --cpu 65c02 main.c
+$ ca65 --cpu 65c02 main.s
 $ ld65 -C thistle.cfg -m main.map main.o thistle.lib
 ```
 
 Compiling the boot rom:
 ```
-ca65 --cpu 6502 boot.s
-ld65 -C thistle-eeprom.cfg -m boot.map -o boot.rom boot.o
+ca65 --cpu 65c02 boot.s
+ld65 -o boot.rom -C thistle-eeprom.cfg -m boot.map boot.o
 ```

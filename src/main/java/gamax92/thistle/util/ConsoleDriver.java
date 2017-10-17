@@ -452,12 +452,12 @@ public class ConsoleDriver {
 							this.Y = dY;
 							break;
 						case 10:
-							this.X = 1;
 							this.Y = this.Y + 1;
 							if (this.Y > this.H)
 								scroll();
 							break;
 						case 13:
+							this.X = 1;
 							break;
 						case 27:
 							ansiDetect = true;

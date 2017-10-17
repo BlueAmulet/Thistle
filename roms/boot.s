@@ -19,16 +19,16 @@ fsclose: .byte 10,5,0,"close"
 fsread: .byte 10,4,0,"read",14,0,0,0,0,4,0,1,0
 
 ; Messages
-greeting: .byte "Thistle Boot ROM",10,10
+greeting: .byte "Thistle Boot ROM",13,10,10
 nomem: .byte "No Memory installed"
-drives: .byte "Checking drives ...",10
-fsmsg: .byte 10,"Checking filesystems ...",10
-bootmsg: .byte "Booting ...",10
-noboot: .byte "Nothing to boot from",10
+drives: .byte "Checking drives ...",13,10
+fsmsg: .byte 10,"Checking filesystems ...",13,10
+bootmsg: .byte "Booting ...",13,10
+noboot: .byte "Nothing to boot from",13,10
 
 hexlookup: .byte "0123456789abcdef"
 
-unkcmd: .byte "Unknown Command",10
+unkcmd: .byte "Unknown Command",13,10
 
 cmdlist:
 .asciiz "ls"
@@ -234,6 +234,8 @@ uuidprint:
 	sta $E003
 	bra @loop
 @done:
+	lda #$0d
+	sta $E003
 	lda #$0a
 	sta $E003
 	rts
@@ -578,7 +580,7 @@ commands:
 	sta $E003
 	dec inputlen
 	bra @loop
-:	cmp #$0A ; Enter
+:	cmp #$0D ; Return
 	beq @exec
 	cpx #$80 ; Character
 	beq @loop
@@ -587,6 +589,8 @@ commands:
 	inc inputlen
 	bra @loop
 @exec:
+	sta $E003
+	lda #$0A
 	sta $E003
 	cpx #$00 ; No Input
 	beq @setup
@@ -866,7 +870,7 @@ loadinput:
 .segment "RODATA"
 
 listtest: .byte 10,4,0,"list",10
-listfail: .byte "Listing failed",10
+listfail: .byte "Listing failed",13,10
 
 .segment "STARTUP"
 
@@ -898,6 +902,8 @@ cmd_list:
 	bne :+
 	cpx #$00
 	bne :+
+	lda #$0D
+	sta $E003
 	lda #$0A
 	sta $E003
 	bra @loop
@@ -913,8 +919,8 @@ cmd_list:
 
 .segment "RODATA"
 
-openfail: .byte "Could not open file",10
-loadmsg: .byte "Loading file ...",10
+openfail: .byte "Could not open file",13,10
+loadmsg: .byte "Loading file ...",13,10
 
 .segment "STARTUP"
 
@@ -940,7 +946,7 @@ cmd_load:
 
 .segment "RODATA"
 
-savemsg: .byte "Saving file ...",10
+savemsg: .byte "Saving file ...",13,10
 fswrite: .byte 10,5,0,"write"
 
 .segment "STARTUP"
