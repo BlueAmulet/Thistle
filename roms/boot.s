@@ -241,8 +241,7 @@ uuidprint:
 	sta $E003
 	bra @loop
 @done:
-	jsr crlf
-	rts
+	jmp crlf ; JSR/RTS
 
 _readlist:
 	; Reads component list to $0200
@@ -370,8 +369,7 @@ loadfile:
 	bra @loop
 @done:
 	stz $E046 ; Put high byte of size back to 0
-	jsr closehandle
-	rts
+	jmp closehandle ; JSR/RTS
 
 dispboot:
 	dmacopy bootmsg, $E003, .sizeof(bootmsg), mode_up
@@ -942,8 +940,7 @@ cmd_load:
 	dmacopy openfail, $E003, .sizeof(openfail), mode_up ; No file opened
 	rts
 :	dmacopy loadmsg, $E003, .sizeof(loadmsg), mode_up
-	jsr loadfile
-	rts
+	jmp loadfile ; JSR/RTS
 
 .segment "RODATA"
 
@@ -1001,8 +998,7 @@ cmd_save:
 	stz $E046 ; Put high byte back to zero
 	stz $D001 ; TSF End Tag
 	stz $D000 ; Invoke
-	jsr closehandle
-	rts
+	jmp closehandle ; JSR/RTS
 
 cmd_run:
 	stz $E005
