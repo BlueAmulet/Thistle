@@ -191,7 +191,7 @@ public class ConsoleDriver {
 		updateComponents();
 		if (canWrite) {
 			try {
-				if (showCursor && System.currentTimeMillis() - this.lastTime >= 500 && !setup && !parseANSI && !ansiDetect) {
+				if (showCursor && System.currentTimeMillis() - this.lastTime >= 500 && !setup && !parseANSI && !ansiDetect && X >= 1 && X <= W && Y >= 1 && Y <= H) {
 					lastTime = System.currentTimeMillis();
 					databuf.addFirst(-1004);
 					databuf.addFirst(-1003);
