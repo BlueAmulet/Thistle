@@ -209,6 +209,13 @@ hexprint:
 	pla
 	rts
 
+crlf:
+	lda #$0D
+	sta $E003
+	lda #$0A
+	sta $E003
+	rts
+
 uuidprint:
 	; Prints a UUID to the screen
 	; $00, $01 - Address of UUID
@@ -234,10 +241,7 @@ uuidprint:
 	sta $E003
 	bra @loop
 @done:
-	lda #$0d
-	sta $E003
-	lda #$0a
-	sta $E003
+	jsr crlf
 	rts
 
 _readlist:
@@ -580,7 +584,9 @@ commands:
 	sta $E003
 	dec inputlen
 	bra @loop
-:	cmp #$0D ; Return
+:	cmp #$0D ; Carriage Return
+	beq @exec
+	cmp #$0A ; Line Feed
 	beq @exec
 	cpx #$80 ; Character
 	beq @loop
@@ -589,9 +595,7 @@ commands:
 	inc inputlen
 	bra @loop
 @exec:
-	sta $E003
-	lda #$0A
-	sta $E003
+	jsr crlf
 	cpx #$00 ; No Input
 	beq @setup
 	; @setup for comparing cmd names
@@ -902,10 +906,7 @@ cmd_list:
 	bne :+
 	cpx #$00
 	bne :+
-	lda #$0D
-	sta $E003
-	lda #$0A
-	sta $E003
+	jsr crlf
 	bra @loop
 :	lda $D001
 	sta $E003
