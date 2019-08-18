@@ -15,7 +15,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
-@Mod(modid = Thistle.MODID, name = Thistle.NAME, version = Thistle.VERSION, dependencies = "required-after:OpenComputers@[1.6.0,)")
+@Mod(modid = Thistle.MODID, name = Thistle.NAME, version = Thistle.VERSION, dependencies = "required-after:opencomputers@[1.7.0,)")
 public class Thistle {
 	public static final String MODID = "thistle";
 	public static final String NAME = "Thistle Computer";
