@@ -11,7 +11,6 @@ import org.apache.commons.io.IOUtils;
 import com.loomcom.symon.Cpu;
 import com.loomcom.symon.CpuState;
 
-import cpw.mods.fml.common.FMLCommonHandler;
 import gamax92.thistle.devices.BankSelector;
 import gamax92.thistle.exceptions.CallSynchronizedException;
 import gamax92.thistle.exceptions.CallSynchronizedException.Cleanup;
@@ -34,6 +33,7 @@ import li.cil.oc.server.PacketSender;
 import li.cil.oc.server.machine.Callbacks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import scala.Option;
 
 @Architecture.Name("65C02 Thistle")
