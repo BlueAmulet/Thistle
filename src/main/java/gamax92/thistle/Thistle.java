@@ -15,11 +15,11 @@ import li.cil.oc.api.Items;
 import li.cil.oc.api.Machine;
 import net.minecraftforge.common.config.Configuration;
 
-@Mod(modid = Thistle.MODID, name = Thistle.NAME, version = Thistle.VERSION, dependencies = "required-after:OpenComputers@[1.6.0,)")
+@Mod(modid = Thistle.MODID, name = Thistle.NAME, version = Thistle.VERSION, dependencies = "required-after:OpenComputers@[1.7.0,)")
 public class Thistle {
 	public static final String MODID = "thistle";
 	public static final String NAME = "Thistle Computer";
-	public static final String VERSION = "1.1.0";
+	public static final String VERSION = "1.1.1";
 
 	@Mod.Instance
 	public static Thistle instance;
