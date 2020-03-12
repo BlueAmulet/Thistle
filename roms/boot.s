@@ -41,6 +41,12 @@ cmdlist:
 .word cmd_save
 .asciiz "run"
 .word cmd_run
+.asciiz "db"
+.word cmd_db
+.asciiz "at"
+.word cmd_at
+.asciiz "fs"
+.word cmd_fs
 .asciiz ""
 
 .define inval $FF
@@ -87,13 +93,25 @@ format:
 
 .segment "STARTUP"
 
+; ZEROPAGE
+; The input is stored at $00 forwards.
+
+; this is the length of the input.
 .define inputlen $80
+; arguably various forms of temporary.
 .define good $81
 .define formattype $82
 .define addrmode $83
+
+; these 3 make up a runtime codegen buffer for indirect jumps,
+;  but indlow/indhigh are also used as temporaries by themselves too.
 .define opcode $84
+; used in "($__),Y"-form
 .define indlow $85
 .define indhigh $86
+
+; this is the writing pointer (cursor/current) ; it's used a lot.
+; used in "($__),Y"-form
 .define curlow $87
 .define curhigh $88
 
@@ -489,9 +507,17 @@ _hex2val:
 :	dex
 	rts
 
-hex2val:
-	; Converts two hexadecimal characters to a value
+hex2val_a:
+	; Converts two hexadecimal characters from $00,X to a value
+	;  and stores that value in A.
+	; Clobbers: A, the carry flag, good
+	; Advances X *backwards* (as this is convenient for little-endian).
+	; So for the string "0000", you would want X to start at the last 0 and make 2 calls.
 	jsr _hex2val
+	; if a non-capital letter is placed in the lower nibble,
+	;  then #$20 is OR'd into the result. this isn't great.
+	; flush it out completely here (doesn't matter if it happens to the upper nibble)
+	and #$0F
 	sta good
 	jsr _hex2val
 	asl
@@ -499,6 +525,11 @@ hex2val:
 	asl
 	asl
 	eor good
+	rts
+
+hex2val:
+	; Like hex2val_a, but stores to (curlow),Y & advances a Y 'relative-to-opcode' offset
+	jsr hex2val_a
 	sta (curlow),Y
 	iny
 	rts
@@ -876,6 +907,8 @@ listfail: .byte "Listing failed",13,10
 
 .segment "STARTUP"
 
+; ls [directory]
+; list [directory]
 cmd_ls:
 	lda #$03 ; inputlen
 	sta good
@@ -923,6 +956,7 @@ loadmsg: .byte "Loading file ...",13,10
 
 .segment "STARTUP"
 
+; load <filename>
 cmd_load:
 	lda inputlen
 	cmp #$06
@@ -949,6 +983,7 @@ fswrite: .byte 10,5,0,"write"
 
 .segment "STARTUP"
 
+; save <filename>
 cmd_save:
 	lda inputlen
 	cmp #$06
@@ -1000,9 +1035,81 @@ cmd_save:
 	stz $D000 ; Invoke
 	jmp closehandle ; JSR/RTS
 
+; run
 cmd_run:
 	stz $E005
 	jmp $0200
+
+; db __
+cmd_db:
+	ldy #$00
+	ldx #$04 ; 'db ' plus an additional 1 for hex2val quirks
+	jsr hex2val
+	; Completed the actual write.
+	; Need to adjust curlow/curhigh.
+	lda #$01
+	clc
+	adc curlow
+	sta curlow
+	; keep carry flag...
+	lda #$00
+	adc curhigh
+	sta curhigh
+	rts
+
+; at ____
+cmd_at:
+	; While using hex2val to overwrite curlow/curhigh would be good,
+	;  it destroys curlow/curhigh as hex2val is trying to use it.
+	; So take the manual route.
+	ldx #$06
+	jsr hex2val_a
+	sta curlow
+	jsr hex2val_a
+	sta curhigh
+	rts
+
+; fs ________-____-____-____-____________
+cmd_fs:
+	; the part where the UUID is read is a little 'fun', and it starts here.
+
+	ldx #$03 ; see below:
+	; $03 : after 'fs '
+	; $04 : inc because it needs to be pointed at the RHS digit
+	; $03 : dec due to the placement of @dash
+	
+	ldy #$00
+	; this part is similar to the UUID printer in principle.
+@dash:
+	inx
+@loop:
+	jsr hex2val_a
+	inx
+	inx
+	inx
+	inx
+	; the command buffer is used as the storage, for convenience.
+	sta $00,Y
+	iny
+	; This is the same pattern as in the UUID printer.
+	; The question is, if having a separate pattern table would be an improvement...
+	cpy #$10
+	beq @done
+	cpy #$04
+	beq @dash
+	cpy #$06
+	beq @dash
+	cpy #$08
+	beq @dash
+	cpy #$0A
+	beq @dash
+	bra @loop
+@done:
+	; the UUID is now written at $00
+	lda #$00
+	sta indlow
+	sta indhigh
+	jmp loaduuid ; JSR/RTS
 
 .segment "RODATA"
 
@@ -1010,14 +1117,11 @@ cmd_run:
 
 .segment "STARTUP"
 
-nmi:
-	rti
-
-irq:
+interrupt_handler:
 	rti
 
 .segment	"VECTORS"
 
-.word nmi
+.word interrupt_handler
 .word reset
-.word irq
+.word interrupt_handler
